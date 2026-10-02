@@ -6,7 +6,7 @@
   • Identity: the SAME name as the normal app profile (profiles.data.name), the
     year on the team (Freshman/Sophomore/…), and height/weight — all editable.
   • Current status: tap to change (Active / Sick / Injured / Away).
-  • Statistics: pick a WINDOW (week / 2 weeks / month / 3 months, or two dates
+  • Statistics: pick a WINDOW (week / month / 3 months, or two dates
     of your own) and a MEASURE (metres / hours / consistency); a graph — columns
     or a line — follows both, the expand icon opens it full size with the whole
     reading of the window under it, and tapping through opens the Training mix.
@@ -713,7 +713,7 @@ export default function ProfileScreen() {
 
     The sheet off the Training mix row has no graph above it, so nothing else
     there says what stretch of days the bars cover — it keeps this pill, opening
-    on 2 weeks and going up to three months. On the STATISTICS FULL SCREEN the
+    on Month and going up to three months. On the STATISTICS FULL SCREEN the
     mix has no pill at all: the graph is right above it and the mix reads the
     graph's window, zoom included (owner, 2026-09-22).
   */

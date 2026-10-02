@@ -39,21 +39,22 @@ export type StatRange = {
   /*
     A CUSTOM window says exactly where it starts and ends, because it need not
     end today — "how did March go" is a question about a stretch that finished.
-    The four built-in windows leave these empty and are measured back from today
+    The three built-in windows leave these empty and are measured back from today
     the way they always were.
   */
   start?: string;
   end?: string;
 };
 
+/* No "2 weeks" (owner, 2026-10-02: "just 1 week, 1 month, 3 months, and choose
+   dates"); statistics opens on Month, which it fell back to before. */
 export const statRanges: StatRange[] = [
   { key: "week", label: "Week", days: 7, bucket: "day" },
-  { key: "2weeks", label: "2 weeks", days: 14, bucket: "day" },
   { key: "month", label: "Month", days: 28, bucket: "week" },
   { key: "3months", label: "3 months", days: 84, bucket: "week" },
 ];
 
-export const defaultStatRange = statRanges[1].key;
+export const defaultStatRange = "month";
 
 export const rangeByKey = (key: string): StatRange =>
   statRanges.find((r) => r.key === key) ?? statRanges[1];

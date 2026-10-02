@@ -52,7 +52,7 @@ export default function TrainingMixList({
   const [open, setOpen] = useState(false);
   const sessions = rows.reduce((s, r) => s + r.sessions, 0);
   const minutes = rows.reduce((s, r) => s + r.minutes, 0);
-  const label = statRanges.find((r) => r.key === rangeKey)?.label ?? "2 weeks";
+  const label = statRanges.find((r) => r.key === rangeKey)?.label ?? "Month";
   const ownWindow = rangeKey !== undefined && onRange !== undefined;
 
   return (
