@@ -46,7 +46,7 @@ import {
   type MetricKey,
   type TeamWorkout,
 } from "@/lib/varsity/teamBoard";
-import { secToClock } from "@/lib/varsity/ergMath";
+import { secToClock, secToSplit } from "@/lib/varsity/ergMath";
 import type { TeamResult } from "@/lib/varsity/resultsStore";
 import { IconFloors, IconChevronRight } from "@/components/icons";
 import { markColor } from "@/lib/colorMarks";
@@ -149,6 +149,36 @@ export default function WorkoutBoard({
   );
 
   const readable = board.rows.some((r) => r.value != null);
+
+  /*
+    THE LIST'S MIDDLE COLUMNS (owner, 2026-10-02: the gap between the name and
+    the result was empty space, with the time and rate squeezed under the name).
+    They now sit in that gap, in columns with their headings over the list:
+      • the number the piece did NOT fix — the time of a 2k / 5k, the metres of
+        a 30' (on a 30' everyone's time is 30:00, which says nothing). Not on a
+        set of reps, whose total is just the reps added up (see detailLine), and
+        not when it is already the result on the right.
+      • the rate.
+    When that number is the result on the right (the Time pill on a 2k), the
+    column shows the split instead, so time, split and rate are all on the row.
+    Watts and W/kg are in All stats.
+  */
+  const natural: MetricKey = kind === "time" ? "distance" : "time";
+  const middle: MetricKey = metric === natural ? "split" : natural;
+  const showMiddle = middle === "split" || !reps;
+  const showRate = board.rows.some((r) => r.result.strokeRate != null);
+  const middleValue = (r: TeamResult) =>
+    middle === "split"
+      ? r.splitSec != null
+        ? secToSplit(r.splitSec, true)
+        : "—"
+      : middle === "time"
+      ? r.minutes != null && r.minutes > 0
+        ? secToClock(r.minutes * 60)
+        : "—"
+      : r.metres != null
+        ? r.metres.toLocaleString("en-US")
+        : "—";
   const mine = board.rows.find((r) => r.mine);
 
   /*
@@ -338,15 +368,26 @@ export default function WorkoutBoard({
         </div>
       ) : (
         <div className="mt-2 overflow-hidden rounded-2xl border border-border bg-surface">
+          {/* The headings over the columns. Same widths as the rows below. */}
+          <div className="flex items-center gap-1.5 border-b border-border px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
+            {ranked && <span className="w-5 flex-shrink-0" />}
+            <span className="min-w-0 flex-1" />
+            {showMiddle && (
+              <span className="w-9 flex-shrink-0 text-right">{metricMeta(middle).label}</span>
+            )}
+            {showRate && <span className="w-6 flex-shrink-0 text-right">Rate</span>}
+            <span className="w-[52px] flex-shrink-0 text-right">{metricMeta(metric).label}</span>
+            {previous && <span className="w-[62px] flex-shrink-0" />}
+          </div>
           {board.rows.map((row, i) => (
             <button
               key={row.result.id}
               type="button"
               onClick={() => setOpenRow(row.result.id)}
-              /* gap-2.5 / px-2.5, not gap-3 / px-3: it buys ten pixels, and
-                 ten pixels is the difference between "Mason Cruz-Abrams" and
-                 "Mason Cruz-Abra…". A ranked board is a list of PEOPLE. */
-              className={`flex w-full items-center gap-2.5 px-2.5 py-2.5 text-left ${
+              /* gap-1.5 / px-2.5: every pixel goes to the name. A name too long
+                 for its share wraps onto a second line rather than being cut —
+                 a ranked board is a list of PEOPLE. */
+              className={`flex w-full items-center gap-1.5 px-2.5 py-2.5 text-left ${
                 i > 0 ? "border-t border-border" : ""
               } ${row.mine ? "bg-primary-tint" : "active:bg-surface-2"}`}
             >
@@ -368,24 +409,33 @@ export default function WorkoutBoard({
                   identical squares repeating the first letters of the name
                   written beside them. */}
               <div className="min-w-0 flex-1">
-                <div className="truncate text-[13px] font-semibold text-text">
+                <div className="line-clamp-2 break-words text-[13px] font-semibold leading-tight text-text">
                   {row.result.athleteName || "Unnamed"}
                 </div>
-                <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-muted">
-                  {row.detail && <span className="truncate">{row.detail}</span>}
-                  {/* How many REPS they logged — on a set of reps. A 2k also
-                      stores four rows, but those are its 500s, not four
-                      efforts, and "4" beside a 2k said nothing. */}
-                  {reps && !!row.result.intervals?.length && (
-                    <span className="flex flex-shrink-0 items-center gap-0.5">
-                      <IconFloors size={11} />
-                      {row.result.intervals.length}
-                    </span>
-                  )}
-                </div>
+                {/* How many REPS they logged — on a set of reps. A 2k also
+                    stores four rows, but those are its 500s, not four efforts,
+                    and "4" beside a 2k said nothing. */}
+                {reps && !!row.result.intervals?.length && (
+                  <div className="mt-0.5 flex items-center gap-0.5 text-[11px] text-muted">
+                    <IconFloors size={11} />
+                    {row.result.intervals.length}
+                  </div>
+                )}
               </div>
-              <div className="flex flex-shrink-0 items-center gap-2">
-                <span className="text-[13px] font-semibold tabular-nums text-text">{row.display}</span>
+              {showMiddle && (
+                <span className="w-9 flex-shrink-0 text-right text-[12px] tabular-nums text-text-2">
+                  {middleValue(row.result)}
+                </span>
+              )}
+              {showRate && (
+                <span className="w-6 flex-shrink-0 text-right text-[12px] tabular-nums text-text-2">
+                  {row.result.strokeRate ?? "—"}
+                </span>
+              )}
+              <div className="flex flex-shrink-0 items-center gap-1.5">
+                <span className="w-[52px] whitespace-nowrap text-right text-[13px] font-semibold tabular-nums text-text">
+                  {row.display}
+                </span>
                 {/* how much faster (or slower) than their own last go at this
                     piece — a chip, not small print, because it is the second
                     thing everyone reads on a ranking */}
