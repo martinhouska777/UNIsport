@@ -73,6 +73,8 @@ import {
   IconClock,
 } from "@/components/icons";
 import { markColor } from "@/lib/colorMarks";
+import KindTag from "@/components/varsity/KindTag";
+import DetailRow, { detailRowInput } from "@/components/ui/DetailRow";
 
 /* category → label + content color for the dot. Lives in the data layer
    (lib/varsity/coachPlan.ts) so no color literal sits in this component. */
@@ -92,6 +94,10 @@ const summaryOf = (l: LogEntry): string =>
 function Dot({ color }: { color: string }) {
   return <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ background: markColor(color) }} />;
 }
+
+/* A plan colour taken dark enough to read as words on white — what Home's
+   session cards hand their tag (KindTag). */
+const kindMark = (color: string) => markColor(color) ?? color;
 
 function SectionLabel({ children, hint }: { children: React.ReactNode; hint?: string }) {
   return (
@@ -315,25 +321,36 @@ function LogEditor({
     void scanErgPhoto(scanFile).then(applyScan);
   }, [scanFile, applyScan]);
 
+  /*
+    THE SAME LOOK AS THE STUDENT "LOG SESSION" (owner, 2026-10-01: "make it
+    similar the colors and consistent with the other part of the app"). Every
+    field and group is white on the page, like a card — the grey boxes this
+    editor had were the one place left where a block on the page was grey.
+    Grey (surface-2) is only for the options INSIDE a white card, and the one
+    you picked is the school colour's pale tint.
+  */
   const inputCls =
-    "w-full rounded-xl border border-border bg-surface-2 px-3.5 py-3 text-base text-text outline-none focus:border-primary placeholder:text-faint";
-  const labelCls = "mb-1.5 mt-4 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted";
+    "w-full rounded-xl border border-border bg-surface px-3 py-2.5 text-base text-text outline-none focus:border-primary placeholder:text-faint";
+  const labelCls = "mb-2 mt-6 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted";
+  const pick = (on: boolean) =>
+    on ? "border-primary bg-primary-tint text-primary" : "border-transparent bg-surface-2 text-text";
 
   // The type chips. An extra log picks from everything; a flex day picks from
-  // what a flex day can be.
+  // what a flex day can be. The dot is the colour the calendar draws it in.
   const typeGrid = (options: readonly string[]) => (
-    <div className="grid grid-cols-3 gap-1.5">
+    <div className="flex flex-wrap gap-2 rounded-2xl border border-border bg-surface p-3">
       {options.map((c) => (
         <button
           key={c}
           type="button"
           onClick={() => setCategory(c)}
-          className={`flex items-center justify-center gap-1.5 rounded-xl border py-2.5 ${
-            category === c ? "border-primary bg-primary-tint" : "border-border bg-surface"
-          }`}
+          aria-pressed={category === c}
+          className={`tap44 flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-[13px] font-medium ${pick(
+            category === c,
+          )}`}
         >
           <Dot color={catMeta[c].color} />
-          <span className="text-[12px] font-semibold text-text">{catMeta[c].label}</span>
+          {catMeta[c].label}
         </button>
       ))}
     </div>
@@ -440,16 +457,23 @@ function LogEditor({
 
   const overlay = (
     <div className="fixed inset-0 z-[60] flex h-dvh flex-col bg-background">
-      <div className="flex flex-shrink-0 items-center gap-2 border-b border-border px-4 py-3">
-        <button type="button" onClick={close} className="flex items-center gap-1 text-[13px] text-muted">
-          <IconArrowLeft size={18} /> Back
+      {/* Header — the white bar and round back button of the student Log
+          session (and every full screen there). */}
+      <div className="flex flex-shrink-0 items-center gap-2.5 border-b border-border bg-surface px-3.5 py-3">
+        <button
+          type="button"
+          onClick={close}
+          aria-label="Back"
+          className="tap44 press-icon flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-surface-2 text-text"
+        >
+          <IconArrowLeft size={16} />
         </button>
-        <div className="ml-1 text-[15px] font-semibold text-text">
+        <h1 className="text-base font-semibold text-text">
           {state.mode === "plan" ? "Log session" : existing ? "Edit session" : "Extra session"}
-        </div>
+        </h1>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 pb-6 pt-4">
+      <div className="flex-1 overflow-y-auto px-4 pb-8 pt-4">
         <div className="mx-auto w-full max-w-screen-sm">
           {/* The form opened from a draft that never saved. Say so, and offer
               the way back to a clean form — otherwise a wrong draft would sit
@@ -457,7 +481,7 @@ function LogEditor({
           {restored && (
             <div
               role="status"
-              className="mb-3 flex items-start gap-2 rounded-xl border border-border bg-surface-2 px-3.5 py-2.5"
+              className="mb-3 flex items-start gap-2 rounded-xl border border-border bg-surface px-3.5 py-2.5"
             >
               <p className="flex-1 text-[12px] leading-snug text-text-2">
                 <span className="font-semibold text-text">Picked up where you left off.</span> These
@@ -474,18 +498,26 @@ function LogEditor({
           )}
           {state.mode === "plan" ? (
             <>
-              <div className="rounded-2xl border border-border bg-surface px-3.5 py-3">
-                <div className="flex items-center gap-2">
-                  <Dot color={catMeta[state.session.category]?.color ?? "var(--faint)"} />
-                  <span className="text-[13px] font-semibold text-text">{sessionLabel(state.session)}</span>
-                  <span className="ml-auto flex items-center gap-1 text-[11px] text-muted">
-                    <IconClock size={12} /> {state.period} · {state.session.time}
-                    {state.session.location && ` · ${state.session.location}`}
-                  </span>
+              {/* The card you tapped on the tab, with the time and place it
+                  leaves out: the stripe and tag in the session's colour, AM / PM
+                  in the corner, the coach's words. */}
+              <div className="relative overflow-hidden rounded-2xl border border-border bg-surface py-3 pr-3.5 pl-5">
+                <span
+                  aria-hidden
+                  className="absolute inset-y-0 left-0 w-1.5"
+                  style={{ background: markColor(sessionColor(state.session)) }}
+                />
+                <span className="absolute top-1.5 right-4 font-mono text-[9px] font-medium tracking-[0.14em] text-muted">
+                  {state.period}
+                </span>
+                <KindTag label={sessionLabel(state.session)} color={kindMark(sessionColor(state.session))} />
+                <div className="mt-2 text-[15px] font-semibold leading-snug text-text">
+                  {state.session.description.trim() || sessionLabel(state.session)}
                 </div>
-                {state.session.description.trim() && (
-                  <p className="mt-1.5 text-[12px] leading-relaxed text-muted">{state.session.description}</p>
-                )}
+                <div className="mt-1 flex items-center gap-1 text-[12px] text-muted">
+                  <IconClock size={12} /> {state.session.time}
+                  {state.session.location && ` · ${state.session.location}`}
+                </div>
                 {teamWorkout && (
                   <div className="mt-2.5 flex items-start gap-2 border-t border-border pt-2.5">
                     <span className="mt-px text-primary">
@@ -510,7 +542,7 @@ function LogEditor({
             </>
           ) : (
             <>
-              <div className={labelCls.replace("mt-4", "mt-0")}>What did you do?</div>
+              <div className={labelCls.replace("mt-6", "mt-0")}>What did you do?</div>
               {/* No autoFocus: this editor opens on a phone with wet hands,
                   often straight from the camera, and a keyboard over the form
                   is the wrong first move. Tap the field when you want to type. */}
@@ -537,9 +569,14 @@ function LogEditor({
                 type="button"
                 onClick={() => fileRef.current?.click()}
                 disabled={scanning}
-                className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-primary-line bg-primary-tint py-3 text-[13px] font-semibold text-primary disabled:opacity-60"
+                /* White, like every second button in the app (the school
+                   colour is Save's): the camera carries the colour, as the
+                   plus does on "Add exercise". */
+                className="press mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-border bg-surface text-[14px] font-semibold text-text disabled:opacity-60"
               >
-                <IconCamera size={16} />{" "}
+                <span className="text-primary">
+                  <IconCamera size={17} />
+                </span>
                 {scanning ? "Reading photo…" : scanFilled ? "Scan again" : "Scan C2 / RP3 monitor"}
               </button>
               {scanFilled && !scanning && !scanMsg && (
@@ -557,47 +594,49 @@ function LogEditor({
             </>
           )}
 
-          <div className="mt-4 flex items-center justify-between">
+          <div className="mb-2 mt-6 flex items-center justify-between">
             <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">Result</span>
             {fromPlan && (
               <span className="text-[11px] text-accent">Estimated from the plan · edit if needed</span>
             )}
           </div>
-          <div className="mt-1.5 grid grid-cols-2 gap-2">
-            <div>
-              <label className="mb-1 block text-[11px] text-muted">Minutes</label>
+          {/* One card, a line each — the student Log session's distance and
+              duration card. */}
+          <div className="overflow-hidden rounded-2xl border border-border bg-surface">
+            <DetailRow label="Minutes">
               <input
                 value={minutes}
                 onChange={(e) => setMinutes(e.target.value.replace(/[^\d]/g, ""))}
                 inputMode="numeric"
-                placeholder="—"
-                className={inputCls}
+                className={detailRowInput}
               />
-            </div>
-            <div>
-              <label className="mb-1 block text-[11px] text-muted">Metres</label>
+            </DetailRow>
+            <DetailRow label="Metres">
               <input
                 value={metres}
                 onChange={(e) => setMetres(e.target.value.replace(/[^\d]/g, ""))}
                 inputMode="numeric"
-                placeholder="—"
-                className={inputCls}
+                className={detailRowInput}
               />
-            </div>
-          </div>
-          <div className="mt-2">
-            <label className="mb-1 block text-[11px] text-muted">Split /500m (optional)</label>
-            <input
-              value={split}
-              onChange={(e) => setSplit(e.target.value)}
-              className={inputCls}
-            />
+            </DetailRow>
+            <DetailRow label="Split /500m">
+              <input
+                value={split}
+                onChange={(e) => setSplit(e.target.value)}
+                className={detailRowInput}
+              />
+            </DetailRow>
           </div>
 
           {/* Five taps, no typing. The words come from data (logStore →
-              effortOptions); tapping the chosen one again clears it. */}
+              effortOptions); tapping the chosen one again clears it. In a
+              white card like the type chips, picked the same way. */}
           <div className={labelCls}>How did it feel?</div>
-          <div className="grid grid-cols-5 gap-1.5" role="radiogroup" aria-label="How hard it felt">
+          <div
+            className="grid grid-cols-5 gap-2 rounded-2xl border border-border bg-surface p-3"
+            role="radiogroup"
+            aria-label="How hard it felt"
+          >
             {effortOptions.map((o) => {
               const on = effort === o.value;
               return (
@@ -608,28 +647,29 @@ function LogEditor({
                   aria-checked={on}
                   aria-label={o.label}
                   onClick={() => setEffort(on ? null : o.value)}
-                  className={`flex items-center justify-center rounded-xl border py-3 ${
-                    on ? "border-primary bg-primary-tint" : "border-border bg-surface"
-                  }`}
+                  className={`flex h-11 items-center justify-center rounded-xl border text-[15px] font-semibold leading-none ${pick(on)}`}
                 >
-                  <span className={`text-[15px] font-semibold leading-none ${on ? "text-primary" : "text-text"}`}>
-                    {o.value}
-                  </span>
+                  {o.value}
                 </button>
               );
             })}
           </div>
 
-          <div className={labelCls}>Note (optional)</div>
-          <input
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            className={inputCls}
-          />
+          {/* A few lines, like the student "How did it go?" — a scan writes
+              the exact time, rate and watts in here. */}
+          <label className="block">
+            <span className={`${labelCls} block`}>Note</span>
+            <textarea
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              rows={3}
+              className={`${inputCls} resize-none leading-snug`}
+            />
+          </label>
         </div>
       </div>
 
-      <div className="flex-shrink-0 border-t border-border bg-background px-4 pb-6 pt-3">
+      <div className="flex-shrink-0 border-t border-border bg-surface px-4 pb-6 pt-3">
         {saveError && (
           <p role="alert" className="mx-auto mb-2 max-w-screen-sm text-[12px] leading-snug text-danger">
             {saveError}
@@ -712,17 +752,10 @@ function PrescribedRow({
       </span>
       <div className="min-w-0 flex-1">
         <div className="flex w-full flex-wrap items-center gap-x-2 gap-y-0.5">
-          {/* Only the little "ERG · HARD" label wears a wash of the session's
-              colour; the card stays white (owner, 2026-09-17). */}
-          <span
-            className="rounded border px-1.5 py-px text-[8px] font-bold uppercase tracking-[0.08em] text-text-2"
-            style={{
-              background: `color-mix(in srgb, ${color} 18%, var(--surface))`,
-              borderColor: `color-mix(in srgb, ${color} 40%, var(--surface))`,
-            }}
-          >
-            {kind}
-          </span>
+          {/* Only the little "Erg · Hard" tag wears the session's colour; the
+              card stays white (owner, 2026-09-17). It is Home's tag (KindTag,
+              2026-10-01), so a session is named the same way on both tabs. */}
+          <KindTag label={kind} color={kindMark(color)} />
           {session.teamWorkout && (
             <span className="flex items-center gap-1 text-[10px] font-semibold text-accent">
               <IconTrophy size={11} /> Team board
@@ -783,15 +816,7 @@ function ExtraRow({ log, onEdit }: { log: LogEntry; onEdit: () => void }) {
     >
       <span aria-hidden className="absolute inset-y-0 left-0 w-1.5" style={{ background: markColor(meta.color) }} />
       <div className="min-w-0 flex-1">
-        <span
-          className="rounded border px-1.5 py-px text-[8px] font-bold uppercase tracking-[0.08em] text-text-2"
-          style={{
-            background: `color-mix(in srgb, ${meta.color} 18%, var(--surface))`,
-            borderColor: `color-mix(in srgb, ${meta.color} 40%, var(--surface))`,
-          }}
-        >
-          {meta.label}
-        </span>
+        <KindTag label={meta.label} color={kindMark(meta.color)} />
         <div className="mt-2.5 text-[15px] font-semibold leading-snug text-text">{log.title}</div>
         {summaryOf(log) && <div className="mt-0.5 text-[12px] font-medium text-text-2">{summaryOf(log)}</div>}
       </div>
@@ -851,8 +876,8 @@ function CheckInRow({ userId, iso }: { userId: string; iso: string }) {
   const chip = (on: boolean) =>
     `rounded-xl border py-2.5 text-[12px] font-semibold transition-colors ${
       on
-        ? "border-primary bg-primary-tint text-text"
-        : "border-border bg-surface-2 text-text-2 active:bg-surface"
+        ? "border-primary bg-primary-tint text-primary"
+        : "border-transparent bg-surface-2 text-text"
     }`;
 
   return (

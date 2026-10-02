@@ -41,6 +41,7 @@ import { confirmPlan } from "@/lib/supabase/sessionPlans";
 import { PARTNER_CONFIRM_HOURS, sessionPoints } from "@/lib/points";
 import { IconArrowLeft, IconCheck, IconChevronRight, IconPlus, IconTrash, IconX } from "@/components/icons";
 import Segmented from "@/components/ui/Segmented";
+import DetailRow, { detailRowInput as rowInput } from "@/components/ui/DetailRow";
 
 const todayIso = () => {
   const d = new Date();
@@ -54,17 +55,6 @@ const emptySet = (): WorkoutSet => ({ weight: "", reps: "" });
 const SET_TYPE_CYCLE: (SetType | undefined)[] = [undefined, "W", "D", "F"];
 const SET_TYPE_LABEL: Record<SetType, string> = { W: "W", N: "N", D: "D", F: "F" };
 type SetType = NonNullable<WorkoutSet["type"]>;
-
-/* One line of a details card: the name on the left, the answer on the right.
-   A <label>, so a tap anywhere on the line lands in its field. */
-function DetailRow({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <label className="flex min-h-[52px] items-center gap-3 border-b border-border px-3.5 last:border-b-0">
-      <span className="w-20 flex-shrink-0 text-[14px] font-medium text-text">{label}</span>
-      <span className="flex min-w-0 flex-1 items-center justify-end">{children}</span>
-    </label>
-  );
-}
 
 export default function LogSessionSheet({
   userId,
@@ -284,9 +274,6 @@ export default function LogSessionSheet({
   const inputCls =
     "w-full rounded-xl border border-border bg-surface px-3 py-2.5 text-base text-text outline-none focus:border-primary placeholder:text-faint";
   const labelCls = "mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted";
-  // A field inside a DetailRow: no box of its own, the answer on the right.
-  const rowInput =
-    "w-full min-w-0 bg-transparent py-3 text-right text-base text-text outline-none";
 
   return (
     <div className="fixed inset-0 z-50 flex h-dvh flex-col bg-background">
