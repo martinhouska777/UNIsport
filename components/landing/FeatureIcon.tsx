@@ -20,6 +20,8 @@ const PATHS: Record<string, string> = {
   lock: "M6 11h12v10H6zM9 11V7a3 3 0 0 1 6 0v4",
   mentor: "M12 2l3 7 7 3-7 3-3 7-3-7-7-3 7-3z",
   clock: "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 7v5l3 2",
+  /* a map pin — the gym's address opens a map */
+  pin: "M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21zM12 7a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z",
   board: "M4 4h16v12H8l-4 4zM8 8h8M8 12h5",
   link: "M10 14a4 4 0 0 0 6 0l3-3a4 4 0 0 0-6-6l-1 1M14 10a4 4 0 0 0-6 0l-3 3a4 4 0 0 0 6 6l1-1",
   list: "M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01",

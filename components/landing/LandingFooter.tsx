@@ -2,9 +2,10 @@ import Link from "next/link";
 import { footer } from "@/lib/landingCopy";
 import Wordmark from "@/components/landing/Wordmark";
 
-/* The footer. Everything here is meant to be READ — the tagline, the two
-   legal links, the unaffiliated line — so nothing is in text-3 (2.7:1 on this
-   ground); text-2 clears AA at these sizes. */
+/* The footer. Everything here is meant to be READ — the two legal links, the
+   unaffiliated line — so nothing is in text-3 (2.7:1 on this ground); text-2
+   clears AA at these sizes. The wordmark stands alone: the tagline beside it
+   went on 2026-10-02 (see `footer` in lib/landingCopy.ts). */
 export default function LandingFooter() {
   return (
     <footer className="relative z-[1] border-t border-l-line px-6 py-10 sm:px-8">
@@ -13,8 +14,6 @@ export default function LandingFooter() {
           <Link href="/" className="tap44 inline-block">
             <Wordmark className="text-lg" />
           </Link>
-          <span className="h-3.5 w-px bg-l-line" />
-          <span>{footer.tagline}</span>
         </div>
         <div className="flex flex-col items-start gap-2 sm:items-end">
           {/* Google's brand verification checks the privacy policy is reachable

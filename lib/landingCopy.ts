@@ -413,16 +413,17 @@ export const studentStory: Beat[] = [
     id: "S4",
     kicker: "04 · Gyms",
     head: "See every gym on your campus in one place.",
-    /* 2026-09-22: the equipment lists left the gym page (nobody was going to
-       count kit in every gym at every school), so the promise here follows —
-       the pictures now come from the people who train there. */
-    sub: "See when each gym is open, how busy it is right now, and photos from the people who train there.",
+    /* Only what the gym page really has. The equipment lists left it on
+       2026-09-22, and "how busy" with them (owner: "just rating and opening
+       hours and location"); gym photos went on 2026-10-02 (owner: "there will
+       be no photos for the gyms, only in memories and later in feed"). */
+    sub: "See when each gym is open, where it is, and how students rate it.",
     shot: "01-gyms.webp",
     ann: [],
     points: [
-      { icon: "memories", title: "Photos", text: "Added by the students who train there." },
+      { icon: "clock", title: "Opening hours", text: "See which gyms are open right now." },
       { icon: "star", title: "Ratings", text: "Know which gyms students rate best." },
-      { icon: "crowd", title: "How busy", text: "Check how full it is right now." },
+      { icon: "pin", title: "Location", text: "Tap the address to get directions." },
     ],
   },
 ];
@@ -745,10 +746,11 @@ export const studentFeatures: { kicker: string; rows: FeatureRow[]; coming: Feat
   },
   rows: [
     {
-      /* /gyms — hours, ratings, equipment lists, favourites, the crowd meter (lib/gymSocial.ts) */
+      /* /gyms — hours, ratings, the address as a map link, favourites. No
+         equipment and no "how busy" since 2026-09-22. */
       icon: "gym",
       title: "Overview of all gyms on campus.",
-      detail: "See the opening hours, equipment, rating and how busy it usually is, including the house gyms. Or find a partner who trains directly at your gym.",
+      detail: "See the opening hours, rating and location of every gym, including the house gyms. Or find a partner who trains directly at your gym.",
     },
     {
       /* /match — ranked by compatibility; /people/[id] — the Why-you-match facts */
@@ -943,7 +945,7 @@ export const about = {
   /* The old "Built at Harvard, for every campus." headline sat above a
      product paragraph; the paragraph is personal now, so the headline
      introduces the person instead (the owner's own wording, 2026-09-03).
-     That line still closes the page, in footer.tagline. */
+     The line is gone from the footer too (owner, 2026-10-02). */
   headline: "Who's",
   headlineEm: "behind this.",
   body: "My name is Martin Houska. I am a rower from the Czech Republic, currently rowing for the Harvard heavyweight team.",
@@ -1030,8 +1032,11 @@ export const notFound = {
 
 /* ─────────────────────────── FOOTER ─────────────────────────── */
 
+/* No tagline. "Built at Harvard, for every campus" closed the page until
+   2026-10-02, when the owner cut it: Harvard's name used to sell the app is
+   what the Trademark Program's use-of-name rules forbid. Harvard appears only
+   as a plain fact in the About line. */
 export const footer = {
-  tagline: "Built at Harvard, for every campus",
   privacy: "Privacy",
   terms: "Terms",
   unaffiliated: "Officially unaffiliated with Harvard University",
