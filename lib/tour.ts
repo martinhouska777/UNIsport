@@ -174,13 +174,12 @@ export const tourSteps: TourStep[] = [
   },
 
   /* ── Messages ─────────────────────────────────────────────────────────── */
-  {
-    press: "tab-/messages",
-    route: "/messages",
-    anchor: "tab-/messages",
-    title: "Messages",
-    body: "Plan your sessions easily in the chat.",
-  },
+  /*
+    NO STOP ON THE MESSAGES TAB (owner, 2026-10-03: "you don't need to zoom in
+    on messages … then he scheduled a session, and then you click it and
+    accept it"). The finger taps the tab and then the chat in one go, and the
+    first light is on the session that was planned.
+  */
   /*
     AN INVITE, ACCEPTED FOR REAL, THEN ON YOUR PROFILE (owner, 2026-10-02:
     "it zooms the chat where somebody scheduled with you, then you accept and
@@ -197,11 +196,14 @@ export const tourSteps: TourStep[] = [
       arrow is pressed until that day is on screen.
 
     One group: with no invite waiting — every brand-new student — the whole
-    run is skipped after the first step gives up, rather than each one
-    waiting out its own four seconds.
+    run is skipped, and without even opening Messages: the shell says up
+    front that there is no invite (components/tour/TourInviteProbe.tsx).
+    The accept is real, so a demo account has nothing left after one run —
+    db/seed_tour_invite.sql puts a fresh invite back.
   */
   {
-    press: "msg-invite-dm",
+    press: ["tab-/messages", "msg-invite-dm"],
+    route: "/messages",
     anchor: "dm-plan",
     group: "chat",
     title: "Someone planned a session with you",

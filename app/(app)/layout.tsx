@@ -15,6 +15,7 @@ import LoadingGate from "@/components/LoadingGate";
 import BottomNav from "@/components/BottomNav";
 import SideNav from "@/components/SideNav";
 import TourGate from "@/components/tour/TourGate";
+import TourInviteProbe from "@/components/tour/TourInviteProbe";
 import SchoolIntro from "@/components/SchoolIntro";
 import { appTour } from "@/lib/tour";
 import { getUniversity, neutralTheme } from "@/lib/themes";
@@ -95,6 +96,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         It decides for itself whether to appear (components/tour/TourGate).
       */}
       {userId && welcomeOver && <TourGate key={userId} tour={appTour} userId={userId} />}
+      {/* While it runs: is there an invite to show? (components/tour/TourInviteProbe) */}
+      <TourInviteProbe />
       {/*
         The welcome, last of all so it covers everything. It decides for itself
         whether this is an arrival worth greeting (components/SchoolIntro) and

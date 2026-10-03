@@ -133,8 +133,9 @@ function visibleAnchor(anchor: string): HTMLElement | null {
 }
 
 /*
-  A screen can say outright that an anchor is NOT coming — Messages does, once
-  it knows nobody has planned a session with you — with an empty
+  The app can say outright that an anchor is NOT coming — the student shell
+  does, once it knows nobody has planned a session with you
+  (components/tour/TourInviteProbe.tsx) — with an empty
   `data-tour-absent="<anchor>"` element. The walk moves on at once instead of
   sitting on a frozen screen for its full four and a half seconds.
 */
@@ -340,7 +341,15 @@ export default function TourOverlay({
       if (cancelled) return;
       const arrived = () => !step.route || window.location.pathname === step.route;
 
-      // 1. Press the control that leads here — visibly, each its own tap.
+      // 1. The app has said this step's thing is not coming. Don't wait — and
+      //    don't tap your way towards it either (no trip into Messages for an
+      //    invite that isn't there).
+      if ([...queue, step.anchor].some((name) => name && declaredAbsent(name))) {
+        giveUp();
+        return;
+      }
+
+      // 2. Press the control that leads here — visibly, each its own tap.
       const control = nextControl();
       if (control) {
         let r = control.getBoundingClientRect();
@@ -363,12 +372,6 @@ export default function TourOverlay({
             attempt();
           }, TAP_HOLD);
         }, TAP_LEAD);
-        return;
-      }
-
-      // 2. The screen has said this step's thing is not coming. Don't wait.
-      if ([...queue, step.anchor].some((name) => name && declaredAbsent(name))) {
-        giveUp();
         return;
       }
 
