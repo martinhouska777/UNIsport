@@ -104,12 +104,15 @@ export default function MessagesList({
      (lib/tour.ts). Only asked while a walk is running; nothing else uses it. */
   const touring = useTourRunning();
   const [inviteChat, setInviteChat] = useState<string | null>(null);
+  // …and whether that has been asked yet, so "none" can be told from "not yet".
+  const [invitesChecked, setInvitesChecked] = useState(false);
   useEffect(() => {
     if (!touring) return;
     let active = true;
     listPendingInvites()
       .then((invites) => active && setInviteChat(invites[0]?.conversationId ?? null))
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => active && setInvitesChecked(true));
     return () => {
       active = false;
     };
@@ -217,6 +220,10 @@ export default function MessagesList({
           </button>
         )}
       </div>
+
+      {/* Nobody has planned a session with you: tells the walk to skip its
+          invite steps now rather than wait for a chat that isn't coming. */}
+      {touring && invitesChecked && !inviteChat && <span hidden data-tour-absent="msg-invite-dm" />}
 
       {/* List */}
       <div className="min-h-0 flex-1 overflow-y-auto bg-surface">

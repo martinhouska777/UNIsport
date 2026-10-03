@@ -50,6 +50,7 @@ const PATIENCE = 30; // that many beats — about 4.5s — then move on
 const TAP_LEAD = 560; // let the finger glide in and land before the control is pressed
 const TAP_HOLD = 260; // and stay a moment after, so the cause outlives the effect
 const GRACE = 6; // beats to let a pressed control do its work before forcing the route
+const ALSO_WAIT = 10; // beats a step waits for its `alsoAnchor` once its anchor is there (~1.5s)
 const DEMO_WAIT = 800; // a demo step waits for its hole (and any scroll) to settle first
 const SHOT_LAND = 36; // the demo photo's size once it lands in Memories (the row's h-9 tiles)
 
@@ -131,6 +132,68 @@ function visibleAnchor(anchor: string): HTMLElement | null {
   );
 }
 
+/*
+  A screen can say outright that an anchor is NOT coming — Messages does, once
+  it knows nobody has planned a session with you — with an empty
+  `data-tour-absent="<anchor>"` element. The walk moves on at once instead of
+  sitting on a frozen screen for its full four and a half seconds.
+*/
+function declaredAbsent(anchor: string) {
+  return !!document.querySelector(`[data-tour-absent~="${anchor}"]`);
+}
+
+/*
+  The lit box around an element (and its partner, when a step lights two):
+  padded, clamped to the screen, with corners that fit what is inside.
+*/
+function boxAround(el: HTMLElement, also: HTMLElement | null): Box {
+  const r = el.getBoundingClientRect();
+  /*
+    The ring borrows the target's OWN corner radius instead of imposing one.
+    A fixed 16px radius on a square segmented-control button reads as a
+    different shape parked near the button rather than a ring around it.
+    Anything already rounded to half its height is a pill and stays one.
+  */
+  let own = parseFloat(window.getComputedStyle(el).borderTopLeftRadius) || 0;
+  let pill = own >= Math.min(r.width, r.height) / 2 - 1;
+
+  /*
+    TWO THINGS IN ONE LIGHT (`alsoAnchor`): the hole grows to the box around
+    both — the Sessions tab and the post row under it. Neither one's corners
+    fit the pair, so it takes a card's rounding.
+  */
+  let edges = { left: r.left, top: r.top, right: r.right, bottom: r.bottom };
+  if (also) {
+    const a = also.getBoundingClientRect();
+    edges = {
+      left: Math.min(edges.left, a.left),
+      top: Math.min(edges.top, a.top),
+      right: Math.max(edges.right, a.right),
+      bottom: Math.max(edges.bottom, a.bottom),
+    };
+    own = 12;
+    pill = false;
+  }
+
+  /*
+    Clamped to the screen. A bottom-nav tab is a quarter-width cell that
+    starts at x=0, so its ring used to hang off the left edge; a full-width
+    block hung off both.
+  */
+  const left = Math.max(EDGE, edges.left - PAD);
+  const top = Math.max(EDGE, edges.top - PAD);
+  const right = Math.min(window.innerWidth - EDGE, edges.right + PAD);
+  const bottom = Math.min(window.innerHeight - EDGE, edges.bottom + PAD);
+
+  return {
+    top,
+    left,
+    width: Math.max(0, right - left),
+    height: Math.max(0, bottom - top),
+    radius: pill ? 9999 : own + PAD,
+  };
+}
+
 export default function TourOverlay({
   tour,
   onDone,
@@ -154,6 +217,10 @@ export default function TourOverlay({
   const [tapAt, setTapAt] = useState<{ x: number; y: number } | null>(null);
   // The demo photo (steps with `demo`) — where it is, and whether it is flying.
   const [shot, setShot] = useState<Shot | null>(null);
+  /* Steps passed over because their screen had nothing to show (no invite
+     waiting, say). The counter leaves them out, so a walk without them counts
+     on from where it was instead of jumping from 6 to 11. */
+  const [skipped, setSkipped] = useState(0);
   const captionRef = useRef<HTMLDivElement | null>(null);
   const nextRef = useRef<HTMLButtonElement | null>(null);
   const titleId = useId();
@@ -197,8 +264,23 @@ export default function TourOverlay({
     let n = i + 1;
     if (group) while (n < steps.length && steps[n].group === group) n++;
     if (n >= steps.length) finish();
-    else setI(n);
+    else {
+      setSkipped((s) => s + (n - i));
+      setI(n);
+    }
   }, [i, steps, finish]);
+
+  /*
+    setBox, but only when the box has actually moved. The measuring loop below
+    runs on every frame; without this it would re-render on each one and keep
+    restarting the hole's CSS travel.
+  */
+  const boxRef = useRef<Box | null>(null);
+  const apply = useCallback((next: Box | null) => {
+    if (same(boxRef.current, next)) return;
+    boxRef.current = next;
+    setBox(next);
+  }, []);
 
   /*
     GETTING TO THE STEP — and being SEEN to. The step names the control that
@@ -220,47 +302,92 @@ export default function TourOverlay({
   */
   useEffect(() => {
     let cancelled = false;
-    let pressesLeft = step.press ? (step.pressTimes ?? 1) : 0;
+    /*
+      What is left to press, in order. One name pressed `pressTimes` times is
+      that name listed that many times — and each press still only happens
+      while the control is on screen (the calendar's arrow lets go of its name
+      once the planned day is showing).
+    */
+    let queue: string[] = !step.press
+      ? []
+      : Array.isArray(step.press)
+        ? [...step.press]
+        : Array.from({ length: step.pressTimes ?? 1 }, () => step.press as string);
     let pushed = false;
     let beats = 0;
+    let alsoBeats = 0;
     let timer: ReturnType<typeof setTimeout>;
+
+    /*
+      The next control to press: the first one in the queue that is on screen,
+      passing over any before it (the profile's Back arrow, when there was no
+      profile to open). A link to the page you are already on is dropped, not
+      pressed — the Profile tab tapped while on the Profile did nothing you
+      could see, and only left you wondering what the finger was for.
+    */
+    const nextControl = (): HTMLElement | null => {
+      for (let k = 0; k < queue.length; k++) {
+        const el = visibleAnchor(queue[k]);
+        if (!el) continue;
+        queue = queue.slice(k + 1);
+        if (el.closest("a")?.getAttribute("href") === window.location.pathname) return nextControl();
+        return el;
+      }
+      return null;
+    };
 
     const attempt = () => {
       if (cancelled) return;
       const arrived = () => !step.route || window.location.pathname === step.route;
 
-      // 1. Press the control that leads here — visibly, and as many times as
-      //    the step asks (each one its own tap).
-      if (step.press && pressesLeft > 0) {
-        const control = visibleAnchor(step.press);
-        if (control) {
-          pressesLeft--;
-          let r = control.getBoundingClientRect();
-          if (r.top < 0 || r.bottom > window.innerHeight) {
-            control.scrollIntoView({ block: "center", behavior: "instant" as ScrollBehavior });
-            r = control.getBoundingClientRect();
-          }
-          setTapAt({ x: r.left + r.width / 2, y: r.top + r.height / 2 });
+      // 1. Press the control that leads here — visibly, each its own tap.
+      const control = nextControl();
+      if (control) {
+        let r = control.getBoundingClientRect();
+        if (r.top < 0 || r.bottom > window.innerHeight) {
+          control.scrollIntoView({ block: "center", behavior: "instant" as ScrollBehavior });
+          r = control.getBoundingClientRect();
+        }
+        setTapAt({ x: r.left + r.width / 2, y: r.top + r.height / 2 });
+        /* …and LIGHT it while the finger is on it (owner, 2026-10-03: "what
+           are you tapping"). The finger used to press things sitting in the
+           dim; now the light travels to the control, the tap lands, and then
+           it travels on to what the tap opened. */
+        apply(boxAround(control, null));
+        timer = setTimeout(() => {
+          if (cancelled) return;
+          control.click();
           timer = setTimeout(() => {
             if (cancelled) return;
-            control.click();
-            timer = setTimeout(() => {
-              if (cancelled) return;
-              setTapAt(null);
-              attempt();
-            }, TAP_HOLD);
-          }, TAP_LEAD);
-          return;
-        }
+            setTapAt(null);
+            attempt();
+          }, TAP_HOLD);
+        }, TAP_LEAD);
+        return;
       }
 
-      // 2. The press didn't get us there (or there was none to make). Go.
+      // 2. The screen has said this step's thing is not coming. Don't wait.
+      if ([...queue, step.anchor].some((name) => name && declaredAbsent(name))) {
+        giveUp();
+        return;
+      }
+
+      // 3. The press didn't get us there (or there was none to make). Go.
       if (!arrived() && step.route && !pushed && (!step.press || beats >= GRACE)) {
         pushed = true;
         router.push(step.route);
       }
 
       if (arrived() && (step.anchor === null || !!visibleAnchor(step.anchor))) {
+        /* The second thing in the light often lands a beat after the first —
+           the first person on Match, "Why you match" on a profile, each its
+           own fetch. Give it a moment, so the light opens on both instead of
+           on half and then lurching. (Beats spent here aren't held against
+           the step: its anchor is already there.) */
+        if (step.alsoAnchor && !visibleAnchor(step.alsoAnchor) && ++alsoBeats < ALSO_WAIT) {
+          timer = setTimeout(attempt, BEAT);
+          return;
+        }
         setArmedFor(i);
         return;
       }
@@ -284,18 +411,6 @@ export default function TourOverlay({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [i]);
 
-  /*
-    setBox, but only when the box has actually moved. The measuring loop below
-    runs on every frame for a moment; without this it would re-render on each
-    one and keep restarting the hole's CSS travel.
-  */
-  const boxRef = useRef<Box | null>(null);
-  const apply = useCallback((next: Box | null) => {
-    if (same(boxRef.current, next)) return;
-    boxRef.current = next;
-    setBox(next);
-  }, []);
-
   const measure = useCallback(() => {
     if (!step.anchor) {
       apply(null);
@@ -310,56 +425,11 @@ export default function TourOverlay({
       scroll would still be moving when this measures, and the hole would land
       where the target used to be.
     */
-    let r = el.getBoundingClientRect();
+    const r = el.getBoundingClientRect();
     if (r.top < 0 || r.bottom > window.innerHeight) {
       el.scrollIntoView({ block: "center", behavior: "instant" as ScrollBehavior });
-      r = el.getBoundingClientRect();
     }
-    /*
-      The ring borrows the target's OWN corner radius instead of imposing one.
-      A fixed 16px radius on a square segmented-control button reads as a
-      different shape parked near the button rather than a ring around it.
-      Anything already rounded to half its height is a pill and stays one.
-    */
-    let own = parseFloat(window.getComputedStyle(el).borderTopLeftRadius) || 0;
-    let pill = own >= Math.min(r.width, r.height) / 2 - 1;
-
-    /*
-      TWO THINGS IN ONE LIGHT (`alsoAnchor`): the hole grows to the box around
-      both — the Sessions tab and the post row under it. Neither one's corners
-      fit the pair, so it takes a card's rounding.
-    */
-    let edges = { left: r.left, top: r.top, right: r.right, bottom: r.bottom };
-    const also = step.alsoAnchor ? visibleAnchor(step.alsoAnchor) : null;
-    if (also) {
-      const a = also.getBoundingClientRect();
-      edges = {
-        left: Math.min(edges.left, a.left),
-        top: Math.min(edges.top, a.top),
-        right: Math.max(edges.right, a.right),
-        bottom: Math.max(edges.bottom, a.bottom),
-      };
-      own = 12;
-      pill = false;
-    }
-
-    /*
-      Clamped to the screen. A bottom-nav tab is a quarter-width cell that
-      starts at x=0, so its ring used to hang off the left edge; a full-width
-      block hung off both.
-    */
-    const left = Math.max(EDGE, edges.left - PAD);
-    const top = Math.max(EDGE, edges.top - PAD);
-    const right = Math.min(window.innerWidth - EDGE, edges.right + PAD);
-    const bottom = Math.min(window.innerHeight - EDGE, edges.bottom + PAD);
-
-    apply({
-      top,
-      left,
-      width: Math.max(0, right - left),
-      height: Math.max(0, bottom - top),
-      radius: pill ? 9999 : own + PAD,
-    });
+    apply(boxAround(el, step.alsoAnchor ? visibleAnchor(step.alsoAnchor) : null));
   }, [step, apply]);
 
   /*
@@ -372,29 +442,23 @@ export default function TourOverlay({
     pixels low, every time. A step that presses its own control breaks it from
     the other end: the press re-lays-out the screen after the measurement.
 
-    So it keeps measuring for about three quarters of a second, which outlasts
-    both that entrance and the ring's own travel, and `apply` above makes the
-    frames where nothing moved cost nothing.
+    It used to stop after three quarters of a second. That outlasted the
+    entrance, but not the screens that keep arriving after it: on a profile,
+    "Why you match" is its own fetch and can land a second later, pushing the
+    lit times card down — the light stayed where the card had been (owner,
+    2026-10-03, steps 4 and 5). So it follows the target for as long as the
+    step is up, every frame; `apply` above makes the frames where nothing moved
+    cost nothing, and a resize or scroll is just another frame.
   */
   useEffect(() => {
     if (!armed) return;
     let raf = 0;
-    let frames = 0;
     const tick = () => {
       measure();
-      if (++frames < 45) raf = requestAnimationFrame(tick);
+      raf = requestAnimationFrame(tick);
     };
     tick(); // reads the target's real position — see the note above
-    window.addEventListener("resize", measure);
-    window.addEventListener("orientationchange", measure);
-    // Capture: the page scrolls inside <main> and inside sheets, not on window.
-    window.addEventListener("scroll", measure, true);
-    return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener("resize", measure);
-      window.removeEventListener("orientationchange", measure);
-      window.removeEventListener("scroll", measure, true);
-    };
+    return () => cancelAnimationFrame(raf);
   }, [armed, measure]);
 
   /*
@@ -559,7 +623,7 @@ export default function TourOverlay({
       role="dialog"
       aria-modal="true"
       aria-labelledby={titleId}
-      aria-describedby={bodyId}
+      aria-describedby={step.body ? bodyId : undefined}
     >
       {/*
         The dim. With an anchor it's the hole's shadow; without one (the opening
@@ -651,9 +715,12 @@ export default function TourOverlay({
           <h2 id={titleId} className="text-[15px] font-semibold text-text">
             {step.title}
           </h2>
-          <p id={bodyId} className="mt-1.5 text-[13px] leading-relaxed text-text-2">
-            {step.body}
-          </p>
+          {/* A step may be its title alone ("In your calendar"). */}
+          {step.body && (
+            <p id={bodyId} className="mt-1.5 text-[13px] leading-relaxed text-text-2">
+              {step.body}
+            </p>
+          )}
 
           <div className="mt-4 flex items-center justify-between gap-3">
             <button
@@ -668,7 +735,7 @@ export default function TourOverlay({
                   step one of ten — no counter on it. */}
               {!step.next && (
                 <span className="text-[11px] tabular-nums text-text-3">
-                  {i + 1} / {steps.length}
+                  {i + 1 - skipped} / {steps.length - skipped}
                 </span>
               )}
               <button

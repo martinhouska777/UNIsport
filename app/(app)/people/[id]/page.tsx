@@ -229,6 +229,8 @@ function PersonProfile() {
         <button
           type="button"
           aria-label="Back"
+          // The walk taps this to go back to Match (lib/tour.ts).
+          data-tour="person-back"
           onClick={() => router.back()}
           className="tap44 press-icon text-muted"
         >

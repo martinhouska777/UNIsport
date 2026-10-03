@@ -43,8 +43,11 @@ import { useSyncExternalStore } from "react";
 import { sessionPoints } from "@/lib/points";
 
 export type TourStep = {
-  /** Press this `data-tour` to reach the step — tapped visibly, then clicked. */
-  press?: string;
+  /** Press this `data-tour` to reach the step — tapped visibly, then clicked.
+      A list is pressed in order; one that isn't on screen when a later one
+      is gets passed over (the profile's Back arrow, when no profile was
+      opened). A link to the page you are already on is never pressed. */
+  press?: string | string[];
   /** Where that lands. Also the fallback if the control never turns up. */
   route?: string;
   /** The `data-tour` to light up; null = a centred card. */
@@ -157,8 +160,9 @@ export const tourSteps: TourStep[] = [
     body: "Open a profile to see what you have in common and when you’re both free.",
   },
   {
-    press: "match-tab-sessions",
-    // Back from the profile first — the route takes it there, then the tap.
+    // Back out of the profile with its own arrow, then Sessions — two taps
+    // you can see, where it used to jump back to Match with no tap at all.
+    press: ["person-back", "match-tab-sessions"],
     route: "/match",
     /* The Sessions tab on top AND the post row under it, in one light
        (owner, 2026-09-30: "highlight the tab on top and just see the Post
@@ -228,7 +232,9 @@ export const tourSteps: TourStep[] = [
     anchor: "cal-plan-day",
     group: "chat",
     title: "In your calendar",
-    body: "Dashed until you’ve trained together.",
+    // No line under it (owner, 2026-10-03: not the "Dashed until…" one) —
+    // the lit day says it.
+    body: "",
   },
 
   /* ── Profile ──────────────────────────────────────────────────────────── */
