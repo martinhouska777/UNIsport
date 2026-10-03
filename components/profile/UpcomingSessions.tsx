@@ -33,6 +33,7 @@ import {
   type UpcomingPlan,
 } from "@/lib/supabase/sessionPlans";
 import { activityLabel } from "@/lib/supabase/workouts";
+import { isTourExample, tourExamplePlan, useTourExample } from "@/lib/tourExample";
 import { IconCalendar, IconCheck, IconChevronRight, IconX } from "@/components/icons";
 
 const HEAD = "mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted";
@@ -89,6 +90,8 @@ export default function UpcomingSessions({
   const [reload, setReload] = useState(0); // bumped after an answer
   const [busy, setBusy] = useState<string | null>(null); // the plan being answered
   const [error, setError] = useState<string | null>(null);
+  // The walk's example session, once you've accepted it (lib/tourExample.ts).
+  const example = useTourExample();
 
   useEffect(() => {
     let active = true;
@@ -108,10 +111,14 @@ export default function UpcomingSessions({
   if (!plans) return null;
   // A session waiting on your answer is shown once, in that block.
   const waiting = new Set(toConfirm.map((p) => p.planId));
-  const upcoming = plans.filter((p) => !waiting.has(p.planId));
+  const upcoming = [
+    ...(example?.accepted ? [tourExamplePlan(example)] : []),
+    ...plans.filter((p) => !waiting.has(p.planId)),
+  ].sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime());
   if (upcoming.length === 0 && toConfirm.length === 0) return null;
 
   const open = async (p: UpcomingPlan) => {
+    if (isTourExample(p.planId)) return; // it has no chat to go back to
     try {
       router.push(await planChatHref(p));
     } catch {

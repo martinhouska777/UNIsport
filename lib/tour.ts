@@ -113,7 +113,8 @@ export type Tour = {
   • Sessions: lights "+ Post your session" and "Search by time" together, so
     the text sits UNDER them instead of over them.
   • Messages: the chat where someone planned a session with you — you accept
-    it for real, and the walk shows it on your Profile (2026-10-02).
+    it for real, and the walk shows it on your Profile (2026-10-02). With
+    nobody waiting on you, an example chat stands in (2026-10-03).
   • Profile: log your workouts → a photo with your training partner → it lands
     in Memories → the leaderboards, your house.
 
@@ -201,11 +202,15 @@ export const tourSteps: TourStep[] = [
     • Then the Profile: Upcoming sessions, and the day in the calendar — the
       arrow is pressed until that day is on screen.
 
-    One group: with no invite waiting — every brand-new student — the whole
-    run is skipped, and without even opening Messages: the shell says up
-    front that there is no invite (components/tour/TourInviteProbe.tsx).
-    The accept is real, so a demo account has nothing left after one run —
-    db/seed_tour_invite.sql puts a fresh invite back.
+    With no invite waiting — every brand-new student, and a demo account
+    after its first run, since the accept is real — the same four steps run
+    on an EXAMPLE chat instead (lib/tourExample.ts, started by
+    components/tour/TourInviteProbe.tsx): it exists only on screen while the
+    walk does, its Accept saves nothing and tells nobody, and it leaves
+    Messages, the Profile and the calendar when the walk ends. (These steps
+    used to be skipped then — owner, 2026-10-03: "I still don't see the
+    messages".) db/seed_tour_invite.sql still puts a REAL invite back on the
+    demo account, for a run that should accept one for real.
   */
   {
     press: ["tab-/messages", "msg-invite-dm"],

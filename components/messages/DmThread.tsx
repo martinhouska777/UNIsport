@@ -21,6 +21,13 @@ import PlanCard from "./PlanCard";
 import PlanSessionSheet from "./PlanSessionSheet";
 import ReadTicks from "./ReadTicks";
 import { dayLabel, sameDay } from "./dayLabel";
+import {
+  TOUR_EXAMPLE_ID,
+  acceptTourExample,
+  isTourExample,
+  tourExampleMessages,
+  useTourExample,
+} from "@/lib/tourExample";
 
 /*
   One-to-one conversation: message bubbles (mine on the right), with a composer.
@@ -53,6 +60,13 @@ export default function DmThread({
     into "You're on" — the walk lights it again then.
   */
   const [tourPlan, setTourPlan] = useState<string | null>(null);
+  /*
+    THE WALK'S EXAMPLE CHAT (lib/tourExample.ts), when nobody has planned a
+    session with you: drawn from that data, never loaded or polled, and its
+    Accept only turns the card into "You're on" — nothing is sent.
+  */
+  const tourExample = useTourExample();
+  const example = isTourExample(conversationId) ? tourExample : null;
   const bottomRef = useRef<HTMLDivElement>(null);
   // Load the other person's profile photo for the header (RLS-safe public read).
   useEffect(() => {
@@ -90,20 +104,24 @@ export default function DmThread({
   }, [conversationId, currentUserId]);
 
   useEffect(() => {
+    if (isTourExample(conversationId)) return; // nothing to load — see above
     load();
     const timer = setInterval(load, 5000);
     return () => clearInterval(timer);
-  }, [load]);
+  }, [load, conversationId]);
+
+  const shown = example ? tourExampleMessages(example) : messages;
 
   // Jump to the newest message only when there IS a new message. Keying this on
   // `messages` scrolled on every 5s poll (the poll replaces the array even when
   // nothing changed), which yanked you back down while reading older messages.
-  const lastMessageId = messages?.[messages.length - 1]?.id ?? null;
+  const lastMessageId = shown?.[shown.length - 1]?.id ?? null;
   useEffect(() => {
     bottomRef.current?.scrollIntoView();
   }, [lastMessageId]);
 
   const send = async (text: string) => {
+    if (example) return;
     const msg = await sendDirectMessage(conversationId, text);
     setMessages((prev) => [...(prev ?? []), msg]);
   };
@@ -132,7 +150,7 @@ export default function DmThread({
         )}
         <button
           type="button"
-          onClick={() => setPlanOpen(true)}
+          onClick={() => !example && setPlanOpen(true)}
           aria-label="Plan a session"
           className="tap44 ml-auto flex shrink-0 items-center gap-1.5 rounded-full border border-primary-line bg-primary-tint px-3 py-1.5 text-[12px] font-medium text-primary"
         >
@@ -144,14 +162,14 @@ export default function DmThread({
       {/* Messages */}
       <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-3.5 py-3">
         {error && <div className="py-10 text-center text-sm text-muted">{error}</div>}
-        {messages?.length === 0 && !error && (
+        {shown?.length === 0 && !error && (
           <div className="py-10 text-center text-[12px] text-muted">
             Say hi — this is the start of your conversation.
           </div>
         )}
-        {messages?.map((m, i) => {
+        {shown?.map((m, i) => {
           const mine = m.senderId === currentUserId;
-          const showDay = i === 0 || !sameDay(m.createdAt, messages[i - 1].createdAt);
+          const showDay = i === 0 || !sameDay(m.createdAt, shown[i - 1].createdAt);
           return (
             <div key={m.id} className="flex flex-col gap-2">
               {showDay && (
@@ -164,13 +182,14 @@ export default function DmThread({
               {m.kind === "plan" && m.plan ? (
                 <PlanCard
                   plan={m.plan}
-                  tour={m.plan.planId === tourPlan ? "dm-plan" : undefined}
+                  tour={m.plan.planId === (example ? TOUR_EXAMPLE_ID : tourPlan) ? "dm-plan" : undefined}
                   conversationId={conversationId}
                   mine={mine}
                   otherName={title}
                   otherId={otherId}
                   onChanged={load}
                   onReschedule={setEditPlan}
+                  onAnswer={example ? (yes) => yes && acceptTourExample() : undefined}
                 />
               ) : (
               <div className={`flex ${mine ? "justify-end" : "justify-start"}`}>

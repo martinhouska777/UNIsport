@@ -35,9 +35,9 @@ export default function TourGate({ tour, userId }: { tour: Tour; userId: string 
   return (
     <TourOverlay
       tour={tour}
-      onDone={() => {
-        setRun(false);
+      onDone={(stayUp) => {
         markTourSeen(tour, userId);
+        if (!stayUp) setRun(false);
       }}
     />
   );

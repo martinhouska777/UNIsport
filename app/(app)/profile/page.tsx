@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Button from "@/components/ui/Button";
 import { SkeletonLines, SkeletonRows } from "@/components/ui/Skeleton";
 import Link from "next/link";
@@ -45,6 +45,7 @@ import {
 import { fileToDataUrl } from "@/lib/image";
 import { getMyFollowCounts } from "@/lib/supabase/follows";
 import { listUpcomingPlans, planChatHref, type UpcomingPlan } from "@/lib/supabase/sessionPlans";
+import { tourExamplePlan, useTourExample } from "@/lib/tourExample";
 import { readLogLink, planCampusDay } from "@/lib/reminders";
 import { hometownLabel, nameError } from "@/lib/onboarding";
 import {
@@ -66,6 +67,12 @@ export default function ProfilePage() {
   const [logs, setLogs] = useState<WorkoutLog[]>([]);
   // Accepted sessions still to come — they sit on the calendar as dashed chips.
   const [plans, setPlans] = useState<UpcomingPlan[]>([]);
+  // …and the walk's example session once it is accepted (lib/tourExample.ts).
+  const tourExample = useTourExample();
+  const calendarPlans = useMemo(
+    () => (tourExample?.accepted ? [tourExamplePlan(tourExample), ...plans] : plans),
+    [tourExample, plans],
+  );
   const [sessionsCount, setSessionsCount] = useState(0);
   const [partners, setPartners] = useState<PartnerSummary[]>([]);
   const [partnersOpen, setPartnersOpen] = useState(false); // "Partners" stat → who list
@@ -666,7 +673,7 @@ export default function ProfilePage() {
           swipe to move through either. */}
       <TrainingCalendar
         logs={logs}
-        plans={plans}
+        plans={calendarPlans}
         anchor={calAnchor}
         mode={calMode}
         onAnchorChange={setCalAnchor}
@@ -892,7 +899,7 @@ export default function ProfilePage() {
         <SessionSheet
           date={openDate}
           logs={logs.filter((l) => l.date === openDate)}
-          plans={plansOn(plans, logs, openDate)}
+          plans={plansOn(calendarPlans, logs, openDate)}
           onClose={() => setOpenDate(null)}
           onOpen={(log) => setOpenLog(log)}
           onOpenPlan={async (p) => {

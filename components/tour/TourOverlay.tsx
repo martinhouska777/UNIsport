@@ -201,8 +201,10 @@ export default function TourOverlay({
 }: {
   /** Which walk to run — its steps, and what to shut on the way out. */
   tour: Tour;
-  /** Called when the tour ends, however it ends — finished, skipped, Escape. */
-  onDone: () => void;
+  /** Called when the tour ends, however it ends — finished, skipped, Escape.
+      `stayUp`: it is over, but a full page load is about to replace the
+      screen, so leave it standing until then. */
+  onDone: (stayUp?: boolean) => void;
 }) {
   const router = useRouter();
   const [i, setI] = useState(0);
@@ -262,8 +264,15 @@ export default function TourOverlay({
     router.push(home);
     let beats = 0;
     const arrivedHome = () => {
-      if (window.location.pathname === home || ++beats > 40) onDone();
-      else setTimeout(arrivedHome, 50);
+      if (window.location.pathname === home) onDone();
+      /* The move never landed (owner, 2026-10-03: "it gets stuck at 10 at
+         the leaderboards"). Giving up used to close the walk where it stood
+         — on the leaderboards, honour code and all. A real page load gets
+         there for certain; the walk still counts as seen. */
+      else if (++beats > 80) {
+        onDone(true);
+        window.location.assign(home);
+      } else setTimeout(arrivedHome, 50);
     };
     arrivedHome();
   }, [tour, onDone, router]);

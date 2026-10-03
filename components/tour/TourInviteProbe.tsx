@@ -5,36 +5,42 @@
 
   The app walk's Messages part opens the chat where someone planned a session
   with you (lib/tour.ts). Nobody has, for most students on their first day —
-  and the walk should know that BEFORE it taps into Messages, not after: a
-  finger that opens Messages, finds nothing and leaves again is a detour with
-  no reason (owner, 2026-10-03: "what are you tapping").
+  and for a demo account once its one invite was accepted on an earlier run.
 
   So the student shell mounts this. While a walk runs it asks for your pending
-  invites, and if there are none it says so with `data-tour-absent` — the walk
-  then passes over the whole chat group without moving (TourOverlay).
+  invites, and if there are none it puts the EXAMPLE invite in front of the
+  walk instead (lib/tourExample.ts): a chat that exists only on this screen,
+  for as long as the walk does. The Messages part is never skipped any more
+  (owner, 2026-10-03: "I still don't see the messages").
 
   Mounted fresh for each walk (the outer component only renders it while one
-  runs), so a replay asks again: an invite may have arrived since.
+  runs), so a replay asks again: an invite may have arrived since. Unmounting
+  — the walk is over — takes the example away again.
 */
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
+import { useAppState } from "@/components/AppState";
 import { listPendingInvites } from "@/lib/supabase/sessionPlans";
 import { useTourRunning } from "@/lib/tour";
+import { endTourExample, startTourExample } from "@/lib/tourExample";
 
 export default function TourInviteProbe() {
   return useTourRunning() ? <Probe /> : null;
 }
 
 function Probe() {
-  const [none, setNone] = useState(false);
+  const { universityKey } = useAppState();
   useEffect(() => {
     let active = true;
     listPendingInvites()
-      .then((invites) => active && setNone(invites.length === 0))
-      // Couldn't ask: the chat would not be found either, so don't go looking.
-      .catch(() => active && setNone(true));
+      // Couldn't ask: the example needs nothing from the database either.
+      .catch(() => [])
+      .then((invites) => {
+        if (active && invites.length === 0) startTourExample(universityKey);
+      });
     return () => {
       active = false;
+      endTourExample();
     };
-  }, []);
-  return none ? <span hidden data-tour-absent="msg-invite-dm" /> : null;
+  }, [universityKey]);
+  return null;
 }

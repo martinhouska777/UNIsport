@@ -33,6 +33,7 @@ import { teamFor } from "@/lib/cohorts";
 import type { HouseColors } from "@/lib/gyms";
 import { listPendingInvites } from "@/lib/supabase/sessionPlans";
 import { useTourRunning } from "@/lib/tour";
+import { isTourExample, tourExampleChat, useTourExample } from "@/lib/tourExample";
 
 // Channel icon keys (seeded in db/messages.sql) → icon components.
 const CHANNEL_ICONS: Record<string, (p: { size?: number }) => React.ReactElement> = {
@@ -114,6 +115,8 @@ export default function MessagesList({
       active = false;
     };
   }, [touring]);
+  // …or, with none waiting, the walk's example chat (lib/tourExample.ts).
+  const example = useTourExample();
 
   const filteredDms = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -228,7 +231,7 @@ export default function MessagesList({
 
         {!error && tab === "direct" && (
           <DirectList
-            list={filteredDms}
+            list={example ? [tourExampleChat(example), ...filteredDms] : filteredDms}
             loading={conversations === null}
             onOpen={onOpenDm}
             coloursOf={coloursOf}
@@ -284,8 +287,13 @@ function DirectList({
           type="button"
           onClick={() => onOpen(c)}
           /* data-tour: the walk opens the chat where someone planned a session
-             with you, wherever it sits in the list (lib/tour.ts). */
-          data-tour={c.conversationId === inviteChat ? "msg-invite-dm" : undefined}
+             with you, wherever it sits in the list — or its example, on top
+             (lib/tour.ts). */
+          data-tour={
+            c.conversationId === inviteChat || isTourExample(c.conversationId)
+              ? "msg-invite-dm"
+              : undefined
+          }
           className="flex w-full items-stretch gap-3 pl-3.5 text-left active:bg-surface-2"
         >
           <span className="flex items-center py-2.5">

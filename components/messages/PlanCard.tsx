@@ -28,6 +28,7 @@ export default function PlanCard({
   onChanged,
   onReschedule,
   tour,
+  onAnswer,
 }: {
   plan: DmPlan;
   conversationId: string; // so a response can ping the other person
@@ -38,6 +39,9 @@ export default function PlanCard({
   onReschedule: (plan: DmPlan) => void; // open the reschedule editor (proposer)
   /** A `data-tour` for the walk — set on the newest plan in the thread. */
   tour?: string;
+  /** Answers it HERE instead of in the database — the walk's example plan
+      (lib/tourExample.ts), which nobody is waiting on. Nothing to manage. */
+  onAnswer?: (accept: boolean) => void;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -66,6 +70,7 @@ export default function PlanCard({
   };
 
   const respond = async (accept: boolean) => {
+    if (onAnswer) return onAnswer(accept);
     if (busy) return;
     setBusy(true);
     setError(null);
@@ -127,7 +132,7 @@ export default function PlanCard({
   // An open plan that hasn't happened yet can be cancelled (either side) or
   // rescheduled (proposer only).
   const canManage =
-    (plan.status === "proposed" && mine) || (plan.status === "accepted" && !isPast);
+    !onAnswer && ((plan.status === "proposed" && mine) || (plan.status === "accepted" && !isPast));
 
   return (
     <div data-tour={tour} className="mx-auto w-full max-w-[88%] rounded-2xl border border-border bg-surface p-3.5">

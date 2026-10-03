@@ -17,6 +17,7 @@ import DmThread from "@/components/messages/DmThread";
 import ChannelThread from "@/components/messages/ChannelThread";
 import NewChannel from "@/components/messages/NewChannel";
 import { startDirectConversation, type Channel, type DmConversation } from "@/lib/supabase/messages";
+import { isTourExample, useTourExample } from "@/lib/tourExample";
 
 type Open =
   | { type: "dm"; id: string; name: string; otherId: string | null }
@@ -55,6 +56,11 @@ function Messages() {
   // of one — lands on Community rather than Direct (owner, 2026-09-14).
   const [tab, setTab] = useState<MessagesTab>("direct");
 
+  // The walk's example chat goes when the walk does (lib/tourExample.ts) —
+  // back to the list rather than a thread with nothing in it.
+  const example = useTourExample();
+  const exampleGone = open?.type === "dm" && isTourExample(open.id) && !example;
+
   const back = () => {
     setOpen(null);
     // Clear any deep-link params so a refresh doesn't reopen the thread.
@@ -74,7 +80,7 @@ function Messages() {
 
   return (
     <div className="mx-auto flex h-full w-full max-w-screen-sm flex-1 flex-col">
-      {open?.type === "dm" ? (
+      {open?.type === "dm" && !exampleGone ? (
         <DmThread
           conversationId={open.id}
           title={open.name}
