@@ -102,7 +102,7 @@ export async function GET(request: NextRequest) {
     next && next.startsWith("/") && !next.startsWith("//") && !/[@\\]/.test(next) ? next : null;
   let destination = safeNext;
   if (!destination) {
-    destination = profileUnknown || profile?.onboarding_completed ? "/gyms" : "/onboarding";
+    destination = profileUnknown || profile?.onboarding_completed ? "/match" : "/onboarding";
   }
 
   const response = NextResponse.redirect(`${origin}${destination}`);

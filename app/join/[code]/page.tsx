@@ -79,11 +79,11 @@ export default function JoinWithCodePage() {
   const teamName = preview?.teamName ?? "your team";
   /*
     Where "back to the app" should land. Someone who came in varsity-first has
-    no student side, so /gyms would bounce them into an onboarding they never
+    no student side, so the student app would bounce them into an onboarding they never
     asked for — send them to the waiting screen, which IS their app until a
     captain lets them in.
   */
-  const appHome = !loggedIn ? "/" : studentReady ? "/gyms" : "/varsity/waiting";
+  const appHome = !loggedIn ? "/" : studentReady ? "/match" : "/varsity/waiting";
 
   return (
     <JoinShell badge="Team invite">

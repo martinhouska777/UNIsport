@@ -87,7 +87,7 @@ export default function JoinPage() {
         </p>
         {loggedIn ? (
           <Link
-            href="/gyms"
+            href="/match"
             className="mt-8 inline-block w-full rounded-full bg-l-accent px-5 py-3 text-sm font-semibold text-l-bg"
           >
             You&apos;re already in — open the app

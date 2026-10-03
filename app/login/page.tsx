@@ -80,7 +80,7 @@ export default function LoginPage() {
       only for someone who has neither.
     */
     if (safeNext) router.replace(safeNext);
-    else if (studentReady) router.replace("/gyms");
+    else if (studentReady) router.replace("/match");
     else if (varsityReady) router.replace(VARSITY_HOME);
     else router.replace("/onboarding");
   }, [ready, loggedIn, studentReady, varsityReady, router]);

@@ -144,7 +144,7 @@ export default function StudentSettings() {
             onClick={() => {
               if (userId) resetTour(appTour, userId);
               requestTour(appTour);
-              router.push("/gyms");
+              router.push("/match");
             }}
           />
           <LegalRows />

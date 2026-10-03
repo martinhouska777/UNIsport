@@ -329,7 +329,7 @@ export default function OnboardingFlow() {
       return;
     }
     clearOnboardingDraft(); // the answers live in the database now
-    router.replace("/gyms");
+    router.replace("/match");
   };
 
   /*
@@ -344,7 +344,7 @@ export default function OnboardingFlow() {
       void sendTestNotification({
         title: "Welcome to UNIsport",
         body: "Notifications are on — we'll ping you the moment something matters.",
-        url: "/gyms",
+        url: "/match",
       });
     }
     await finish();

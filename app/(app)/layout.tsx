@@ -46,6 +46,25 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     else if (!studentReady) router.replace("/onboarding");
   }, [ready, loggedIn, studentReady, router]);
 
+  /*
+    THE APP OPENS ON MATCH (owner, 2026-10-03). New installs get that from the
+    manifest; a phone that installed the app before keeps the start address it
+    was given then — /gyms — and iOS never re-reads it. So a LAUNCH onto /gyms
+    (the installed app, a fresh page load, nowhere it came from, no history) is
+    sent on to Match. Tapping the Gyms tab is a client-side move and never
+    reaches this; it runs once, on the load.
+  */
+  useEffect(() => {
+    if (window.location.pathname !== "/gyms") return;
+    const nav = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined;
+    const launched =
+      window.matchMedia("(display-mode: standalone)").matches &&
+      nav?.type === "navigate" &&
+      !document.referrer &&
+      window.history.length <= 1;
+    if (launched) router.replace("/match");
+  }, [router]);
+
   const uni = getUniversity(universityKey);
   const theme = uni?.theme ?? neutralTheme;
 

@@ -33,12 +33,15 @@ export default function manifest(): MetadataRoute.Manifest {
       THE INSTALLED APP OPENS ON THE APP, not on the advert for it. This was
       "/" — so someone who had put UNIsport on their home screen, signed in,
       tapped the icon and got the marketing page with "Log in / Get started"
-      on it (audit, 2026-09-19). "/gyms" is the first tab, the same place
-      finishing onboarding leaves you; anyone not signed in is sent back to
-      the landing from there, so the front door still works.
+      on it (audit, 2026-09-19). It opens on MATCH (owner, 2026-10-03: "make
+      sure that the app lands on match when you open it") — the same place
+      signing in and finishing onboarding leave you; anyone not signed in is
+      sent back to the landing from there, so the front door still works.
+      (It was "/gyms" until then; phones that installed it before keep that
+      address, and app/(app)/layout.tsx turns such a launch into Match.)
     */
-    start_url: "/gyms",
-    // Both zones stay inside the installed window — "/gyms" as the start URL
+    start_url: "/match",
+    // Both zones stay inside the installed window — "/match" as the start URL
     // would otherwise narrow the scope to that one path and open the landing,
     // the join links and Varsity Mode in a browser tab instead.
     scope: "/",

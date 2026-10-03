@@ -145,7 +145,7 @@ export const nav = {
     2026-09-19). They get one button instead, and it goes to the app.
   */
   openApp: "Open the app",
-  openAppHref: "/gyms",
+  openAppHref: "/match",
   /* The phone menu button (opens the tabs from the left) and its close. */
   menu: "Menu",
   closeMenu: "Close menu",
