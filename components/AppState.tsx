@@ -120,6 +120,12 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   */
   const replayingSetup = useRef(false);
   /*
+    Whose setup flags are already loaded — see the auth listener below. Once
+    they are, another sign-in event for the SAME account is only the browser
+    re-checking the session, never a reason to start over.
+  */
+  const flagsFor = useRef<string | null>(null);
+  /*
     The two remembered schools, read after mount (localStorage) so the server
     and the first client render agree: `chosen` is the Settings switcher's
     pick, `demo` is the one rolled at the last sign-in. Held together in one
@@ -197,6 +203,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     if (error) return;
     setStudentReady(!!data?.onboarding_completed);
     setVarsityReady(!replayingSetup.current && !!data?.varsity_setup_completed);
+    flagsFor.current = userId;
   };
 
   useEffect(() => {
@@ -233,9 +240,24 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
       setSession(s);
       if (!s) {
+        flagsFor.current = null;
         setStudentReady(false);
         setVarsityReady(false);
         setReady(true);
+        return;
+      }
+      /*
+        The SAME account again. supabase-js says SIGNED_IN every time the page
+        comes back into view (another app, another tab, the phone unlocked) and
+        TOKEN_REFRESHED about once an hour. Flipping `ready` off for those
+        swapped the whole tab shell for the loading screen and back: the open
+        chat, a half-filled form and the tour all vanished mid-use. The flags
+        are re-read quietly instead.
+      */
+      if (s.user.id === flagsFor.current) {
+        setTimeout(() => {
+          if (active) void refreshOnboarded(s.user.id);
+        }, 0);
         return;
       }
       // Looking up onboarding status is async, so flip `ready` off while we do
@@ -272,6 +294,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     }
     setStudentReady(false);
     setVarsityReady(false);
+    flagsFor.current = null;
     replayingSetup.current = false;
     // The squad answer is remembered per account (lib/varsity/membership); drop
     // it so the next person to sign in on this browser is asked afresh.
