@@ -144,6 +144,18 @@ function declaredAbsent(anchor: string) {
 }
 
 /*
+  …and the opposite: `data-tour-pending="<anchor>"` says it IS coming, the
+  screen is still fetching it. A step's second light (`alsoAnchor`) normally
+  gets a second and a half; one that is declared pending is waited for as long
+  as a step's own target would be. The leaderboards' podium is the case — the
+  board is its own read, and arming without it lit the controls alone and then
+  lurched down over the houses when the board landed (owner, 2026-10-03).
+*/
+function declaredPending(anchor: string) {
+  return !!document.querySelector(`[data-tour-pending~="${anchor}"]`);
+}
+
+/*
   The lit box around an element (and its partner, when a step lights two):
   padded, clamped to the screen, with corners that fit what is inside.
 */
@@ -312,6 +324,37 @@ export default function TourOverlay({
     boxRef.current = next;
     setBox(next);
   }, []);
+  // What the light is on, and the page it was lit on.
+  const litRef = useRef<{ el: HTMLElement; path: string } | null>(null);
+  const light = useCallback(
+    (el: HTMLElement | null, box: Box | null) => {
+      if (litRef.current?.el !== el) litRef.current = el ? { el, path: window.location.pathname } : null;
+      apply(box);
+    },
+    [apply],
+  );
+
+  /*
+    A NEW SCREEN, and what the light was on went with the old one — the
+    Leaderboards strip the finger just pressed, or the last step's Memories
+    row when there was no strip to press. The light stayed behind over
+    whatever the new screen has in that spot: on the leaderboards that was one
+    of the houses, lit for seconds while the board loaded and then left
+    (owner, 2026-10-03: "it zooms on a random house and only then moves
+    there"). So it goes out, and comes back on the step's own target once that
+    is ready. Something still on screen after the move — a tab in the nav —
+    keeps its light, which travels on from it.
+  */
+  const dropStaleLight = useCallback(() => {
+    const lit = litRef.current;
+    if (
+      lit &&
+      window.location.pathname !== lit.path &&
+      !(lit.el.isConnected && lit.el.getBoundingClientRect().width > 0)
+    ) {
+      light(null, null);
+    }
+  }, [light]);
 
   /*
     GETTING TO THE STEP — and being SEEN to. The step names the control that
@@ -393,7 +436,7 @@ export default function TourOverlay({
            are you tapping"). The finger used to press things sitting in the
            dim; now the light travels to the control, the tap lands, and then
            it travels on to what the tap opened. */
-        apply(boxAround(control, null));
+        light(control, boxAround(control, null));
         timer = setTimeout(() => {
           if (cancelled || ending.current) return;
           control.click();
@@ -405,6 +448,9 @@ export default function TourOverlay({
         }, TAP_LEAD);
         return;
       }
+
+      // 2b. A new screen took what the light was on (dropStaleLight above).
+      dropStaleLight();
 
       // 3. The press didn't get us there (or there was none to make). Go.
       if (!arrived() && step.route && !pushed && (!step.press || beats >= GRACE)) {
@@ -418,7 +464,11 @@ export default function TourOverlay({
            own fetch. Give it a moment, so the light opens on both instead of
            on half and then lurching. (Beats spent here aren't held against
            the step: its anchor is already there.) */
-        if (step.alsoAnchor && !visibleAnchor(step.alsoAnchor) && ++alsoBeats < ALSO_WAIT) {
+        if (
+          step.alsoAnchor &&
+          !visibleAnchor(step.alsoAnchor) &&
+          (++alsoBeats < ALSO_WAIT || (declaredPending(step.alsoAnchor) && alsoBeats < PATIENCE))
+        ) {
           timer = setTimeout(attempt, BEAT);
           return;
         }
@@ -445,9 +495,23 @@ export default function TourOverlay({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [i]);
 
+  /* …checked every frame while a step is being reached, not only on the
+     approach's 150 ms beat — a board that loads fast would otherwise still get
+     a house lit for a moment. */
+  useEffect(() => {
+    if (armed) return;
+    let raf = 0;
+    const tick = () => {
+      dropStaleLight();
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [armed, dropStaleLight]);
+
   const measure = useCallback(() => {
     if (!step.anchor) {
-      apply(null);
+      light(null, null);
       return;
     }
     const el = visibleAnchor(step.anchor);
@@ -463,8 +527,8 @@ export default function TourOverlay({
     if (r.top < 0 || r.bottom > window.innerHeight) {
       el.scrollIntoView({ block: "center", behavior: "instant" as ScrollBehavior });
     }
-    apply(boxAround(el, step.alsoAnchor ? visibleAnchor(step.alsoAnchor) : null));
-  }, [step, apply]);
+    light(el, boxAround(el, step.alsoAnchor ? visibleAnchor(step.alsoAnchor) : null));
+  }, [step, light]);
 
   /*
     Re-measure on every step, and whenever the page moves under it.
@@ -483,8 +547,12 @@ export default function TourOverlay({
     2026-10-03, steps 4 and 5). So it follows the target for as long as the
     step is up, every frame; `apply` above makes the frames where nothing moved
     cost nothing, and a resize or scroll is just another frame.
+
+    A LAYOUT effect, so the first measurement lands before the caption is
+    painted: the caption appears beside the light where it comes to rest, not
+    for one frame wherever the light was before.
   */
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!armed) return;
     let raf = 0;
     const tick = () => {
@@ -669,9 +737,12 @@ export default function TourOverlay({
         The blur — ONLY on the cards with nothing lit (the opening question and
         the closing card). While a step is showing something, nothing is
         blurred: the owner, 2026-09-30, "they want to see the things that are
-        there" — with the blur on, Match showed no profile at all.
+        there" — with the blur on, Match showed no profile at all. And not in
+        the moment between a press that opened a new screen and that screen's
+        light coming on (2b above): that gap is a beat of plain dim, not a blur
+        flicking on and off.
       */}
-      {!box && <div aria-hidden="true" className="tour-blur absolute inset-0" />}
+      {!box && armed && <div aria-hidden="true" className="tour-blur absolute inset-0" />}
 
       {box ? (
         /*
@@ -749,7 +820,7 @@ export default function TourOverlay({
           <h2 id={titleId} className="text-[15px] font-semibold text-text">
             {step.title}
           </h2>
-          {/* A step may be its title alone ("In your calendar"). */}
+          {/* A step may be its title alone. */}
           {step.body && (
             <p id={bodyId} className="mt-1.5 text-[13px] leading-relaxed text-text-2">
               {step.body}

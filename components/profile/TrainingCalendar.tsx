@@ -195,18 +195,6 @@ export default function TrainingCalendar({
   const atLatest =
     calendarRange(anchor, mode).to >= calendarRange(new Date(`${lastIso}T00:00:00`), mode).to;
 
-  /*
-    For the walk (lib/tour.ts): the day of the soonest planned session wears
-    `cal-plan-day`, and while that day is further on than the week or month
-    on screen, the forward arrow wears `cal-next-plan` — the walk presses it
-    until the day comes into view, and then the arrow lets go of the name.
-  */
-  const planIso = plans.reduce<string | null>((soonest, p) => {
-    const day = planCampusDay(p.scheduledAt);
-    return soonest === null || day < soonest ? day : soonest;
-  }, null);
-  const planAhead = planIso !== null && planIso > calendarRange(anchor, mode).to;
-
   const go = (step: number) => {
     if (step > 0 && atLatest) return;
     onAnchorChange(shiftAnchor(anchor, mode, step));
@@ -286,7 +274,6 @@ export default function TrainingCalendar({
           aria-label={mode === "week" ? "Next week" : "Next month"}
           onClick={() => go(1)}
           disabled={atLatest}
-          data-tour={planAhead ? "cal-next-plan" : undefined}
           className="tap44 press-icon flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg border border-border bg-surface text-muted disabled:opacity-30"
         >
           <IconArrowRight size={14} />
@@ -309,7 +296,6 @@ export default function TrainingCalendar({
                   type="button"
                   disabled={!has}
                   onClick={() => has && onPickDate(d.iso)}
-                  data-tour={d.iso === planIso ? "cal-plan-day" : undefined}
                   aria-label={has ? `${dayWords(chips, planned)} on ${d.name}` : d.name}
                   className={`flex min-h-[64px] flex-col items-stretch overflow-hidden rounded-md p-1 text-left ${
                     chips.length > 0
@@ -371,7 +357,6 @@ export default function TrainingCalendar({
                           type="button"
                           disabled={!has}
                           onClick={() => has && onPickDate(iso)}
-                          data-tour={iso === planIso ? "cal-plan-day" : undefined}
                           aria-label={has ? `${dayWords(chips, planned)} on day ${n}` : `Day ${n}`}
                           className={`flex aspect-square flex-col items-stretch overflow-hidden rounded-md p-1 ${
                             chips.length > 0

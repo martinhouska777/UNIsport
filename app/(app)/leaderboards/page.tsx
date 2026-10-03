@@ -701,7 +701,12 @@ export default function LeaderboardsPage() {
               how, and everything longer than that is in the ⓘ. */}
           <div className="px-3.5">
             {loading ? (
-              <div className="px-4 py-16 text-center text-[12px] text-muted">Counting…</div>
+              /* data-tour-pending: the walk lights the podium WITH the controls,
+                 so it waits for the board instead of lighting the controls
+                 alone and lurching down when the houses land (TourOverlay). */
+              <div data-tour-pending="lb-podium" className="px-4 py-16 text-center text-[12px] text-muted">
+                Counting…
+              </div>
             ) : isGroupBoard ? (
               groups.length === 0 ? (
                 <div className="mt-3 rounded-xl border border-dashed border-border bg-surface px-4 py-10 text-center text-[12px] text-muted">
@@ -720,7 +725,9 @@ export default function LeaderboardsPage() {
                       />
                     </div>
                   ) : (
-                    <>
+                    // An empty podium is still the podium, as far as the walk
+                    // is concerned — it lights this in the same place.
+                    <div data-tour="lb-podium">
                       <div className="mt-3 flex justify-end">
                         <MetricSwitch value={metric} onPick={setMetric} />
                       </div>
@@ -728,7 +735,7 @@ export default function LeaderboardsPage() {
                         Nobody has logged a session this period. The first one puts a{" "}
                         {groupKind === "year" ? "year" : "house"} on the podium.
                       </div>
-                    </>
+                    </div>
                   )}
                   {listGroups.length > 0 && (
                     <div className="mt-2.5 flex flex-col gap-1.5">

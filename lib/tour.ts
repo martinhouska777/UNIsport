@@ -199,11 +199,12 @@ export const tourSteps: TourStep[] = [
       step taps the card's real Accept, so the session really is accepted and
       the other person is told, exactly as if you had tapped it yourself. (It
       used to be a drawn "Accepted" stamp that changed nothing.)
-    • Then the Profile: Upcoming sessions, and the day in the calendar — the
-      arrow is pressed until that day is on screen.
+    • Then the Profile: Upcoming sessions — and that is all. The day in the
+      calendar was a step of its own until the owner cut it (2026-10-03: "I
+      only wanted to show the upcoming sessions in profile").
 
     With no invite waiting — every brand-new student, and a demo account
-    after its first run, since the accept is real — the same four steps run
+    after its first run, since the accept is real — the same three steps run
     on an EXAMPLE chat instead (lib/tourExample.ts, started by
     components/tour/TourInviteProbe.tsx): it exists only on screen while the
     walk does, its Accept saves nothing and tells nobody, and it leaves
@@ -237,17 +238,6 @@ export const tourSteps: TourStep[] = [
     group: "chat",
     title: "Upcoming sessions",
     body: "Every session you accept waits here, with who and where.",
-  },
-  {
-    press: "cal-next-plan",
-    // The forward arrow lets go of this name once the day is on screen.
-    pressTimes: 4,
-    anchor: "cal-plan-day",
-    group: "chat",
-    title: "In your calendar",
-    // No line under it (owner, 2026-10-03: not the "Dashed until…" one) —
-    // the lit day says it.
-    body: "",
   },
 
   /* ── Profile ──────────────────────────────────────────────────────────── */
