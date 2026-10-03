@@ -638,6 +638,15 @@ export function metricsSummary(log: WorkoutLog): string {
   return "";
 }
 
+/** How many sessions somebody else has logged — the "Workouts" number on their
+    profile, the same count your own Profile shows (db/workout_count.sql). */
+export async function getWorkoutCount(userId: string): Promise<number> {
+  if (!userId || !hasSupabaseEnv()) return 0;
+  const { data, error } = await createClient().rpc("workout_count", { target: userId });
+  if (error) throw new Error(`getWorkoutCount failed: ${error.message}`);
+  return Number(data ?? 0);
+}
+
 /** How many different people `userId` has trained with — the number alone
     (db/partner_count.sql), for somebody else's profile. */
 export async function getPartnerCount(userId: string): Promise<number> {

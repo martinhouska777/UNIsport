@@ -6,7 +6,8 @@
   Restyled 2026-09-22 to the owner's pick, direction C of
   mockups/people-profile/person-profile-mockups.html: white lifted cards on the
   page, the photo beside the name, followers / following counts that open the
-  lists (Instagram-style), "Why you match" as the one crimson-tinted card,
+  lists (Instagram-style) — since 2026-10-03 Workouts · Following · Partners,
+  Following opening both lists — "Why you match" as the one crimson-tinted card,
   Training as four tiles plus their week laid over YOURS so the shared hours
   are visible without asking, and the Follow / Message bar kept at the bottom.
 
@@ -33,7 +34,7 @@ import ProfileBadge from "@/components/ProfileBadge";
 import ScheduleOverlap from "@/components/people/ScheduleOverlap";
 import FollowListSheet from "@/components/people/FollowListSheet";
 import { getFollowCounts, type FollowKind } from "@/lib/supabase/follows";
-import { getPartnerCount } from "@/lib/supabase/workouts";
+import { getPartnerCount, getWorkoutCount } from "@/lib/supabase/workouts";
 import SectionLabel from "@/components/ui/SectionLabel";
 
 // The real screen sits in a Suspense boundary. It was required while this page
@@ -66,7 +67,9 @@ function PersonProfile() {
   // Their two follow totals, and which list (if any) is open in the sheet.
   const [counts, setCounts] = useState<{ followers: number; following: number } | null>(null);
   const [listOpen, setListOpen] = useState<FollowKind | null>(null);
-  // How many different people they have trained with (the number alone).
+  // How many sessions they have logged, and how many different people they
+  // have trained with (both the number alone).
+  const [workoutCount, setWorkoutCount] = useState<number | null>(null);
   const [partnerCount, setPartnerCount] = useState<number | null>(null);
   // YOUR week, for the comparison grid — null until it has loaded.
   const [mySchedule, setMySchedule] = useState<Record<string, string[]> | null>(null);
@@ -119,6 +122,10 @@ function PersonProfile() {
     getPartnerCount(id)
       .then((n) => active && setPartnerCount(n))
       .catch(() => active && setPartnerCount(0));
+    // A count that couldn't be read stays a dash rather than claiming 0.
+    getWorkoutCount(id)
+      .then((n) => active && setWorkoutCount(n))
+      .catch(() => {});
     return () => {
       active = false;
     };
@@ -258,9 +265,10 @@ function PersonProfile() {
         <>
           <div className="flex flex-col gap-2.5 px-3.5 pb-3 pt-3">
             {/* WHO THEY ARE — laid out like your own Profile tab: photo on the
-                left; name, house · class and the three counts on the right.
-                Followers and Following open the lists; Partners is the number
-                alone. Varsity / Mentor under the photo; the bio underneath.
+                left; name, house · class and the three counts on the right:
+                Workouts, Following and Partners (owner, 2026-10-03). Following
+                opens the Followers / Following lists; the other two are the
+                number alone. Varsity / Mentor under the photo; the bio underneath.
                 No fit pill (owner, 2026-09-30: "I don't want there to be
                 strong fit") — "Why you match" says it in words. */}
             <div className="rounded-2xl border border-border bg-surface p-3.5">
@@ -308,7 +316,7 @@ function PersonProfile() {
                   <div className="grid grid-cols-3">
                     {(
                       [
-                        { key: "followers", label: "Followers", n: counts?.followers, open: true },
+                        { key: "workouts", label: "Workouts", n: workoutCount ?? undefined, open: false },
                         { key: "following", label: "Following", n: counts?.following, open: true },
                         { key: "partners", label: "Partners", n: partnerCount ?? undefined, open: false },
                       ] as { key: string; label: string; n: number | undefined; open: boolean }[]
