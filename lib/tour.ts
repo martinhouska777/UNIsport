@@ -93,6 +93,9 @@ export type Tour = {
   steps: TourStep[];
   /** `data-tour`s to click if the walk is abandoned — see `closeOnExit` below. */
   closeOnExit: string[];
+  /** Where the walk leaves you, however it ends — finished, skipped or
+      Escape. Unset: wherever it was. */
+  endRoute?: string;
 };
 
 /*
@@ -120,7 +123,8 @@ export type Tour = {
 */
 export const tourSteps: TourStep[] = [
   {
-    route: "/gyms",
+    // Asked wherever the app opened — Match (owner, 2026-10-03) — before
+    // anything moves.
     anchor: null,
     title: "Take a quick tour?",
     body: "The four tabs in thirty seconds.",
@@ -129,6 +133,8 @@ export const tourSteps: TourStep[] = [
 
   /* ── Gyms ─────────────────────────────────────────────────────────────── */
   {
+    press: "tab-/gyms",
+    route: "/gyms",
     anchor: "gyms-first-card",
     title: "Gyms",
     body: "Tap any gym to see its opening hours and ratings, see who’s going, or post that you’re going.",
@@ -280,7 +286,16 @@ export const tourSteps: TourStep[] = [
   },
   // No "pick the competition" step after this (owner, 2026-09-30: "we don't need
   // it twice") — the card above already lights the same controls and podium.
+  /*
+    THE END IS ON MATCH, never the leaderboards (owner, 2026-10-03: "make sure
+    it doesn't end on the Harvard Honor Code"): the honour code waits while a
+    walk runs and would be the first thing left on screen. The finger taps
+    Match and the closing card sits over it. A walk skipped part-way lands
+    there too (`endRoute` below).
+  */
   {
+    press: "tab-/match",
+    route: "/match",
     anchor: null,
     title: "That’s it",
     body: "See it again anytime: Settings → Take the tour.",
@@ -296,7 +311,7 @@ export const tourSteps: TourStep[] = [
 const closeOnExit = ["log-cancel"];
 
 /** The walk through the app itself. Its id is "app" — do not change it. */
-export const appTour: Tour = { id: "app", steps: tourSteps, closeOnExit };
+export const appTour: Tour = { id: "app", steps: tourSteps, closeOnExit, endRoute: "/match" };
 
 /* ── Has this account seen it? ──────────────────────────────────────────── */
 
@@ -342,7 +357,7 @@ export function resetTour(tour: Tour, userId: string) {
   two consoles need different answers:
 
   • The APP's Settings lives at /settings, OUTSIDE the tab shell. Asking there
-    leaves a request behind and navigates to /gyms, where the shell MOUNTS its
+    leaves a request behind and navigates to /match, where the shell MOUNTS its
     gate and reads it. sessionStorage rather than a query parameter: it
     survives the navigation, needs no Suspense boundary, and leaves no ?tour=1
     stuck in the address bar to re-fire on every refresh.

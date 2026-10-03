@@ -243,12 +243,33 @@ export default function TourOverlay({
     behalf first (lib/tour.ts) — walk out during the Log Session steps and you
     would otherwise be left standing in an editor you never asked to open.
   */
+  const ending = useRef(false);
   const finish = useCallback(() => {
+    if (ending.current) return;
+    ending.current = true;
     tour.closeOnExit.forEach((anchor) => visibleAnchor(anchor)?.click());
-    onDone();
-  }, [tour, onDone]);
+    /*
+      …and it leaves you where the walk says (`endRoute`: Match, for the app).
+      It stays up until it gets there: the screen being left may have
+      something waiting for the walk to end — the leaderboards' honour code —
+      and that must not get a moment on screen (owner, 2026-10-03).
+    */
+    const home = tour.endRoute;
+    if (!home || window.location.pathname === home) {
+      onDone();
+      return;
+    }
+    router.push(home);
+    let beats = 0;
+    const arrivedHome = () => {
+      if (window.location.pathname === home || ++beats > 40) onDone();
+      else setTimeout(arrivedHome, 50);
+    };
+    arrivedHome();
+  }, [tour, onDone, router]);
 
   const next = useCallback(() => {
+    if (ending.current) return; // on its way out — nothing more to step to
     if (i >= steps.length - 1) finish();
     else setI((n) => n + 1);
   }, [i, steps, finish]);
@@ -338,7 +359,8 @@ export default function TourOverlay({
     };
 
     const attempt = () => {
-      if (cancelled) return;
+      // Ending (Escape mid-approach) stops it: nothing is pressed after that.
+      if (cancelled || ending.current) return;
       const arrived = () => !step.route || window.location.pathname === step.route;
 
       // 1. The app has said this step's thing is not coming. Don't wait — and
@@ -364,7 +386,7 @@ export default function TourOverlay({
            it travels on to what the tap opened. */
         apply(boxAround(control, null));
         timer = setTimeout(() => {
-          if (cancelled) return;
+          if (cancelled || ending.current) return;
           control.click();
           timer = setTimeout(() => {
             if (cancelled) return;
