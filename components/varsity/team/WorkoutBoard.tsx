@@ -206,7 +206,7 @@ export default function WorkoutBoard({
       the session, the workout and the day it was pulled. The bar keeps the
       handle and the X.
     */
-    <Sheet title="" onClose={onClose} full>
+    <Sheet title="" onClose={onClose} full backTour="coach-board-back">
       {/*
         THE WORKOUT AND YOUR OWN RESULT, IN ONE CARD.
 
@@ -284,7 +284,12 @@ export default function WorkoutBoard({
       </div>
 
       {/* metric filter — an unpicked pill is white, like the cards (owner, 2026-10-02) */}
-      <div className={`mt-3 grid gap-1 ${metrics.length === 2 ? "grid-cols-2" : "grid-cols-4"}`}>
+      {/* data-tour: the console walk lights this with the List | All stats
+          switch, to say how a board is read. */}
+      <div
+        data-tour="coach-board-metrics"
+        className={`mt-3 grid gap-1 ${metrics.length === 2 ? "grid-cols-2" : "grid-cols-4"}`}
+      >
         {metrics.map((m) => (
           <button
             key={m.key}
@@ -337,7 +342,7 @@ export default function WorkoutBoard({
 
       {/* list or full table — the selected half fills its side, edge to edge,
           the same as the Roster / Workouts switch above it (owner, 2026-09-14). */}
-      <div className="mt-3 flex overflow-hidden rounded-xl border border-border bg-surface">
+      <div data-tour="coach-board-view" className="mt-3 flex overflow-hidden rounded-xl border border-border bg-surface">
         {(["list", "table"] as View[]).map((v) => (
           <button
             key={v}

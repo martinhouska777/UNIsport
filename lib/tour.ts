@@ -81,6 +81,10 @@ export type TourStep = {
     dive is reachable, and half a minute of dead air is worse than a gap.
   */
   group?: string;
+  /** A step that may simply not apply on a screen that opened fine — Share
+      results, for a session type that has none. Missing, it is passed over
+      on its own: it never takes the rest of its group with it. */
+  optional?: boolean;
 };
 
 /*

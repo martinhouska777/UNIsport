@@ -140,6 +140,9 @@ import {
 import { slotKey, useNameDrag, type Slot } from "./useNameDrag";
 import { markColor } from "@/lib/colorMarks";
 import KindTag from "@/components/varsity/KindTag";
+import ExampleTag from "@/components/varsity/ExampleTag";
+import { useTourRunning } from "@/lib/tour";
+import { exampleCrew } from "@/lib/varsity/coachTourExample";
 
 /*
   What the training plan prescribes for one AM or PM slot, reduced to the few
@@ -550,9 +553,12 @@ function Seat({
   onAssign,
   onClear,
   onCancelType,
+  tour,
 }: {
   /** The seat's number — "1" up to "8" — or the cox's "C". */
   label: string;
+  /** data-tour, so the console walk can tap this seat (lib/varsity/coachTour.ts). */
+  tour?: string;
   athlete?: Athlete;
   cox?: boolean;
   /** The text field is open here (the second tap on a filled seat, or the first on an empty one). */
@@ -632,6 +638,7 @@ function Seat({
         <div
           role="button"
           tabIndex={0}
+          data-tour={tour}
           onClick={onStartType}
           onKeyDown={(e) => {
             if (e.key === "Enter" || e.key === " ") {
@@ -710,6 +717,7 @@ function Seat({
   return (
     <button
       type="button"
+      data-tour={tour}
       onClick={onStartType}
       className={`flex h-10 w-full select-none items-center gap-2 rounded-[10px] border border-dashed pl-[7px] pr-[6px] text-left ${
         dropActive ? "border-primary bg-primary-tint" : "border-border"
@@ -926,8 +934,11 @@ function PoolChip({
   picked,
   onTap,
   carry,
+  tour,
 }: {
   a: Athlete;
+  /** data-tour, so the console walk can tap this name. */
+  tour?: string;
   out?: OutReason;
   /** Chosen, waiting for a seat. */
   picked?: boolean;
@@ -967,6 +978,7 @@ function PoolChip({
     <div
       role="button"
       tabIndex={0}
+      data-tour={tour}
       onClick={onTap}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
@@ -1075,6 +1087,21 @@ function Builder({
   nav: Nav;
   onBack: () => void;
 }) {
+  /*
+    THE CONSOLE WALK'S EXAMPLE (lib/varsity/coachTourExample.ts). A practice
+    opened while a walk is on screen is an example for as long as it stays
+    open: an empty practice offering to repeat an eight from the roster, with
+    one rower out sick — so the walk can press Repeat, swap two rowers and fill
+    the gap in front of the coach (owner, 2026-10-03).
+
+    IT NEVER TOUCHES THE DATABASE. Nothing is read for it and nothing is
+    written from it: no autosave, no flush on the way out, no Publish (persist
+    refuses). Decided once, when the practice opens, and never re-read — the
+    walk ending must not turn an example crew into a real draft. The walk shuts
+    it with ‹ Days on its way out (closeOnExit).
+  */
+  const touring = useTourRunning();
+  const [example] = useState(() => (touring ? exampleCrew(boatKinds) : null));
   const [boats, setBoats] = useState<Boat[]>([]);
   const [status, setStatus] = useState<LineupStatus>("draft");
   /*
@@ -1093,7 +1120,8 @@ function Builder({
     The flush on the way out reads this instead, so both writes agree.
   */
   const intended = useRef<LineupStatus>("draft");
-  const [loading, setLoading] = useState(true);
+  // The example has nothing to load.
+  const [loading, setLoading] = useState(!example);
   const [writing, setWriting] = useState(false);
   const [failed, setFailed] = useState(false);
   /*
@@ -1205,11 +1233,12 @@ function Builder({
     never rewritten from here, so this lasts until the builder is closed.
   */
   const [coachOut, setCoachOut] = useState<Record<string, OutReason>>({});
-  const [selfOut, setSelfOut] = useState<Record<string, OutReason>>({});
+  // The example's own absentee, and nobody else's.
+  const [selfOut, setSelfOut] = useState<Record<string, OutReason>>(() => example?.out ?? {});
   const [overruled, setOverruled] = useState<Set<string>>(() => new Set());
   // Both reads are in: until then "Repeat" is not offered, so it can never
   // seat somebody whose absence simply had not arrived yet.
-  const [outReady, setOutReady] = useState(false);
+  const [outReady, setOutReady] = useState(!!example);
   const outById = useMemo(() => {
     const out: Record<string, OutReason> = { ...selfOut, ...coachOut };
     for (const id of overruled) if (!coachOut[id]) delete out[id];
@@ -1236,6 +1265,7 @@ function Builder({
 
   useEffect(() => {
     let active = true;
+    if (example) return; // set up as it opened, above — nothing to read
     Promise.all([fetchOutOn(dayIso), fetchSelfOutOn(dayIso)]).then(([coach, self]) => {
       if (!active) return;
       setCoachOut(coach);
@@ -1245,7 +1275,7 @@ function Builder({
     return () => {
       active = false;
     };
-  }, [dayIso]);
+  }, [dayIso, example]);
 
   /*
     What the DATABASE holds, as text. Anything else in `boats` is work not
@@ -1279,12 +1309,16 @@ function Builder({
     Null for a practice that already has a lineup of its own — even an empty
     one the coach cleared: that was a decision, and it stands.
   */
-  const [carried, setCarried] = useState<{ from: string; boats: Boat[] } | null>(null);
+  // The example opens empty, with its crew on offer.
+  const [carried, setCarried] = useState<{ from: string; boats: Boat[] } | null>(() =>
+    example ? { from: example.from, boats: example.boats } : null,
+  );
   const [carriedFrom, setCarriedFrom] = useState<string | null>(null);
 
   // Load this practice's lineup — or, when it has none, the last one published.
   useEffect(() => {
     let active = true;
+    if (example) return; // set up as it opened, above — nothing to read
     (async () => {
       const stored = await fetchLineup(dayKey);
       if (!active) return;
@@ -1322,7 +1356,7 @@ function Builder({
     return () => {
       active = false;
     };
-  }, [dayKey]);
+  }, [dayKey, example]);
 
   /* Yes — repeat that crew here. Except anybody who is out on THIS day: their
      seat comes across empty, so the hole to fill is the first thing the coach
@@ -1593,6 +1627,7 @@ function Builder({
      (publishing) can hold its notification back. */
   const persist = useCallback(
     async (newStatus?: LineupStatus, announcedNow?: string | null) => {
+      if (example) return false; // the walk's example is never written
       const s = newStatus ?? status;
       const snap = JSON.stringify(boats);
       intended.current = s;
@@ -1612,7 +1647,7 @@ function Builder({
       setFailed(false);
       return true;
     },
-    [boats, dayKey, status],
+    [boats, dayKey, status, example],
   );
 
   /*
@@ -1621,10 +1656,10 @@ function Builder({
     already has — a draft stays a draft, a live lineup stays live.
   */
   useEffect(() => {
-    if (loading || !dirty || writing) return;
+    if (loading || !dirty || writing || example) return;
     const t = window.setTimeout(() => void persist(), 700);
     return () => window.clearTimeout(t);
-  }, [loading, dirty, writing, persist]);
+  }, [loading, dirty, writing, persist, example]);
 
   /* Leaving inside that pause — an arrow, the Days list, another tab — must not
      outrun it, so the last crew is flushed on the way out. */
@@ -1637,9 +1672,9 @@ function Builder({
       const p = pending.current;
       // `intended`, not the rendered status: a Publish still in the air is
       // what this practice is about to be, and the flush must agree with it.
-      if (p.dirty) void saveLineup(dayKey, p.boats, intended.current);
+      if (p.dirty && !example) void saveLineup(dayKey, p.boats, intended.current);
     },
-    [dayKey],
+    [dayKey, example],
   );
 
   /*
@@ -1696,6 +1731,19 @@ function Builder({
   const planSaysTwice =
     !!planContext && planContext.title.trim().toLowerCase() === planContext.sub.trim().toLowerCase();
 
+  /*
+    WHAT THE CONSOLE WALK TAPS IN THE FIRST BOAT: a filled rowing seat answers
+    to "coach-lineup-seat-<n>" (bow is 0), and the first empty one to
+    "coach-lineup-open-seat" — the gap Repeat left where the sick rower sat.
+  */
+  const firstBoat = boats[0];
+  const openSeatIdx = firstBoat ? firstBoat.seats.findIndex((x) => !x.athleteId) : -1;
+  const seatTour = (slot: Slot, athleteId: string | null): string | undefined => {
+    if (!firstBoat || slot.boatId !== firstBoat.id || slot.kind !== "seat") return undefined;
+    if (athleteId) return `coach-lineup-seat-${slot.idx}`;
+    return slot.idx === openSeatIdx ? "coach-lineup-open-seat" : undefined;
+  };
+
   const renderSeat = (slot: Slot, label: string, athleteId: string | null, cox = false) => {
     const key = slotKey(slot);
     const active = !!typing && slotKey(typing) === key;
@@ -1708,6 +1756,7 @@ function Builder({
         <div data-slot={key}>
         <Seat
           label={label}
+          tour={seatTour(slot, athleteId)}
           cox={cox}
           athlete={athleteId ? rosterById[athleteId] : undefined}
           typing={!!typing && slotKey(typing) === key && keyboard}
@@ -1757,6 +1806,7 @@ function Builder({
     <button
       type="button"
       onClick={useCarried}
+      data-tour="coach-lineup-repeat"
       className="flex h-7 flex-shrink-0 items-center gap-1 rounded-full border border-border bg-surface-2 px-2.5 text-[11px] font-semibold text-text active:bg-surface"
     >
       <IconRepeat size={12} /> Repeat {nav.label(carried.from)}
@@ -1835,13 +1885,16 @@ function Builder({
           and an end of the plan leaves the arrow in place but dead, so the row
           never reflows under a thumb that is already reaching for it.
         */}
-        <div className="mt-1 flex items-center gap-2">
+        {/* data-tour: the walk lights this row with Publish, for the arrows. */}
+        <div data-tour="coach-lineup-day" className="mt-1 flex items-center gap-2">
           <StepArrow dir="prev" to={nav.prev} label={nav.label} onGo={step} busy={writing} />
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
               <h1 className="truncate text-2xl font-semibold text-text">
                 {context.weekday} {context.period}
               </h1>
+              {/* The walk's example says so, like every other example. */}
+              {example && <ExampleTag />}
               {/*
                 Same shapes as the day picker, so the badge a coach just tapped
                 is the badge at the top of the builder: a green PILL when it is
@@ -1927,7 +1980,7 @@ function Builder({
             {/* boats. NO "No boats added yet" BOX (owner, 2026-09-22): the
                 Add Boat button right under it is the whole message. */}
             <div className="mt-4 flex flex-col gap-3 lg:mt-0">
-              {boats.map((boat) => {
+              {boats.map((boat, boatIdx) => {
                 const isShut = shut.has(boat.id);
                 /* How full the boat is — shown ONLY while it is shut. Open, the
                    hull says it seat by seat, and the owner cut the footer that
@@ -2052,7 +2105,10 @@ function Builder({
                         one list bottom-up against the other.
                       */}
                       <div className="px-3 pb-4 pt-3">
-                        <div className="rounded-[44px] border-2 border-primary-line bg-surface-2 px-4 pb-3 pt-2.5">
+                        <div
+                          data-tour={boatIdx === 0 ? "coach-lineup-first-hull" : undefined}
+                          className="rounded-[44px] border-2 border-primary-line bg-surface-2 px-4 pb-3 pt-2.5"
+                        >
                           <HullCap arrow="▲" word="BOW" />
                           {/* The number comes from the seat's POSITION, not from
                               what an older saved lineup happens to have stored in
@@ -2206,12 +2262,16 @@ function Builder({
                       </div>
                     );
                   }
+                  // The walk taps the first ROWER here — a cox cannot take the
+                  // rowing seat it is about to fill.
+                  const firstRower = chips.find((a) => !a.cox)?.id;
                   return (
                     <div className="flex flex-wrap gap-1.5">
                       {chips.map((a) => (
                         <PoolChip
                           key={a.id}
                           a={a}
+                          tour={a.id === firstRower ? "coach-lineup-pool-first" : undefined}
                           picked={picked === a.id}
                           onTap={() => {
                             // A seat is already open and waiting: this name

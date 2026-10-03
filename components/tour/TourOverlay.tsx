@@ -123,7 +123,9 @@ function same(a: Box | null, b: Box | null) {
   layouts without asking how wide the window is.
 */
 function visibleAnchor(anchor: string): HTMLElement | null {
-  const all = Array.from(document.querySelectorAll<HTMLElement>(`[data-tour="${anchor}"]`));
+  /* `~=`, a word of the attribute rather than all of it, so one element can
+     answer to two names — the seat that is both "seat 4" and "the open seat". */
+  const all = Array.from(document.querySelectorAll<HTMLElement>(`[data-tour~="${anchor}"]`));
   return (
     all.find((el) => {
       const r = el.getBoundingClientRect();
@@ -153,6 +155,100 @@ function declaredAbsent(anchor: string) {
 */
 function declaredPending(anchor: string) {
   return !!document.querySelector(`[data-tour-pending~="${anchor}"]`);
+}
+
+/*
+  WHERE AN ELEMENT CAN ACTUALLY BE SEEN — the screen, cut down to every panel
+  that scrolls around it, minus any bar stuck to the top or bottom of one.
+
+  Checking against the window alone was the bug (2026-10-03). The workout
+  editor scrolls inside its own panel with the Done bar under it, so "Ranked /
+  Everyone" sat under the Done bar while being, as far as the window knew, on
+  screen — lit, and hidden. The lineup builder has the same thing at the top:
+  its Publish row is stuck there, and a seat scrolled up under it was "in view".
+*/
+function viewport(el: HTMLElement): { top: number; bottom: number } {
+  let top = 0;
+  let bottom = window.innerHeight;
+  for (let p = el.parentElement; p && p !== document.body; p = p.parentElement) {
+    if (!/(auto|scroll)/.test(window.getComputedStyle(p).overflowY)) continue;
+    const r = p.getBoundingClientRect();
+    top = Math.max(top, r.top);
+    bottom = Math.min(bottom, r.bottom);
+    for (const bar of Array.from(p.children) as HTMLElement[]) {
+      if (bar.contains(el) || window.getComputedStyle(bar).position !== "sticky") continue;
+      const b = bar.getBoundingClientRect();
+      if (b.height === 0) continue;
+      if (Math.abs(b.top - r.top) < 2) top = Math.max(top, b.bottom);
+      else if (Math.abs(b.bottom - r.bottom) < 2) bottom = Math.min(bottom, b.top);
+    }
+  }
+  return { top, bottom };
+}
+
+/*
+  BRING IT INTO SIGHT — the element and, when a step lights two, its partner
+  with it: the pair is centred in what can be seen (or, taller than that, its
+  top is). The overlay eats taps, so nobody can scroll to it themselves.
+
+  Done by scrolling each panel around it in turn, innermost first, by what is
+  left to move — not with scrollIntoView, which centres the one element and
+  knows nothing about the partner or the bars. Instant on purpose: a smooth
+  scroll would still be moving when the hole is measured.
+
+  `tried` keeps it from fighting the page: something that cannot be brought
+  fully into sight (a panel already scrolled to its end) is moved once per
+  step, and again only if it ends up entirely out of view.
+*/
+const SIGHT_MARGIN = 12;
+
+/* Inside a bar stuck to its panel — it does not move when the panel scrolls,
+   and is always in sight. The lineup's Publish button is. */
+function pinned(x: HTMLElement): boolean {
+  for (let p: HTMLElement | null = x; p && p !== document.body; p = p.parentElement) {
+    const style = window.getComputedStyle(p);
+    if (style.position === "sticky") return true;
+    if (p !== x && /(auto|scroll)/.test(style.overflowY)) return false;
+  }
+  return false;
+}
+
+function reveal(el: HTMLElement, also: HTMLElement | null, tried: WeakSet<HTMLElement>) {
+  /* Only what scrolls is scrolled to. When one of the pair is pinned (Publish,
+     up in the lineup's stuck top row), the other is brought just inside the
+     edge nearest it rather than centred — centred, the day under Publish was
+     pushed up under the bar, half hidden (2026-10-03). */
+  const moving = [el, also].filter((x): x is HTMLElement => !!x && !pinned(x));
+  if (moving.length === 0) return;
+  const lead = moving[0];
+  const nearest = moving.length < (also ? 2 : 1);
+  const v = viewport(lead);
+  let top = Infinity;
+  let bottom = -Infinity;
+  for (const x of moving) {
+    const r = x.getBoundingClientRect();
+    top = Math.min(top, r.top);
+    bottom = Math.max(bottom, r.bottom);
+  }
+  if (top >= v.top + SIGHT_MARGIN - 1 && bottom <= v.bottom - SIGHT_MARGIN + 1) return;
+  const showing = bottom > v.top && top < v.bottom;
+  if (showing && tried.has(lead)) return;
+  tried.add(lead);
+
+  const room = v.bottom - v.top - SIGHT_MARGIN * 2;
+  let left =
+    bottom - top > room || (nearest && top < v.top + SIGHT_MARGIN)
+      ? top - (v.top + SIGHT_MARGIN)
+      : nearest
+        ? bottom - (v.bottom - SIGHT_MARGIN)
+        : (top + bottom) / 2 - (v.top + v.bottom) / 2;
+  for (let p = lead.parentElement; p && Math.abs(left) >= 1; p = p.parentElement) {
+    if (p.scrollHeight <= p.clientHeight + 1) continue;
+    if (p !== document.scrollingElement && !/(auto|scroll)/.test(window.getComputedStyle(p).overflowY)) continue;
+    const before = p.scrollTop;
+    p.scrollTo({ top: before + left, behavior: "instant" as ScrollBehavior });
+    left -= p.scrollTop - before;
+  }
 }
 
 /*
@@ -238,6 +334,8 @@ export default function TourOverlay({
   const [skipped, setSkipped] = useState(0);
   const captionRef = useRef<HTMLDivElement | null>(null);
   const nextRef = useRef<HTMLButtonElement | null>(null);
+  // What this step has already scrolled to, so it is not chased every frame.
+  const revealed = useRef(new WeakSet<HTMLElement>());
   const titleId = useId();
   const bodyId = useId();
 
@@ -303,7 +401,9 @@ export default function TourOverlay({
     would sit through eleven four-second waits in a row.
   */
   const giveUp = useCallback(() => {
-    const group = steps[i].group;
+    // An `optional` step only ever costs itself: it can be missing from a
+    // screen that is open and fine (Share results, for a type that has none).
+    const group = steps[i].optional ? undefined : steps[i].group;
     let n = i + 1;
     if (group) while (n < steps.length && steps[n].group === group) n++;
     if (n >= steps.length) finish();
@@ -376,6 +476,8 @@ export default function TourOverlay({
   */
   useEffect(() => {
     let cancelled = false;
+    // A new step: everything may be brought into sight again (see reveal).
+    revealed.current = new WeakSet();
     /*
       What is left to press, in order. One name pressed `pressTimes` times is
       that name listed that many times — and each press still only happens
@@ -426,11 +528,8 @@ export default function TourOverlay({
       // 2. Press the control that leads here — visibly, each its own tap.
       const control = nextControl();
       if (control) {
-        let r = control.getBoundingClientRect();
-        if (r.top < 0 || r.bottom > window.innerHeight) {
-          control.scrollIntoView({ block: "center", behavior: "instant" as ScrollBehavior });
-          r = control.getBoundingClientRect();
-        }
+        reveal(control, null, revealed.current);
+        const r = control.getBoundingClientRect();
         setTapAt({ x: r.left + r.width / 2, y: r.top + r.height / 2 });
         /* …and LIGHT it while the finger is on it (owner, 2026-10-03: "what
            are you tapping"). The finger used to press things sitting in the
@@ -517,17 +616,13 @@ export default function TourOverlay({
     const el = visibleAnchor(step.anchor);
     if (!el) return; // gone for a frame — keep the last good position
     /*
-      Bring it into view first. Some targets sit down the page — the rate/crowd
-      block on a gym, the photo grid in the Log Session editor — and the overlay
-      eats taps, so nobody can scroll to them. "instant" on purpose: a smooth
-      scroll would still be moving when this measures, and the hole would land
-      where the target used to be.
+      Bring it into view first. Some targets sit down the page — the photo grid
+      in the Log Session editor, Repeat at the foot of the workout editor — and
+      the overlay eats taps, so nobody can scroll to them (see reveal).
     */
-    const r = el.getBoundingClientRect();
-    if (r.top < 0 || r.bottom > window.innerHeight) {
-      el.scrollIntoView({ block: "center", behavior: "instant" as ScrollBehavior });
-    }
-    light(el, boxAround(el, step.alsoAnchor ? visibleAnchor(step.alsoAnchor) : null));
+    const also = step.alsoAnchor ? visibleAnchor(step.alsoAnchor) : null;
+    reveal(el, also, revealed.current);
+    light(el, boxAround(el, also));
   }, [step, light]);
 
   /*

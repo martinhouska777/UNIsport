@@ -495,6 +495,7 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
               type="button"
               onClick={() => setPickingRace(true)}
               aria-label="Time race pieces"
+              data-tour="coach-workouts-time"
               className="tap44 press-icon flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary text-primary-contrast"
             >
               <IconPlus size={16} />

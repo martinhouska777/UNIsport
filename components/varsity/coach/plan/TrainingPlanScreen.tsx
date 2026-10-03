@@ -75,6 +75,9 @@ import {
   IconPencil,
 } from "@/components/icons";
 import { markColor } from "@/lib/colorMarks";
+import ExampleTag from "@/components/varsity/ExampleTag";
+import { useTourRunning } from "@/lib/tour";
+import { EXAMPLE_BLOCK_ID, exampleTrainingWeek } from "@/lib/varsity/coachTourExample";
 
 /*
   THE TAB OPENS ON THE WEEK (owner, 2026-09-17: "I don't want to see the
@@ -160,6 +163,7 @@ export default function TrainingPlanScreen({
 }) {
   const vTheme = useVarsityTheme();
   const { membership } = useMembership();
+  const touring = useTourRunning();
   /*
     The squad's own words for everything in the editor — the session types, the
     zones, the most-used workouts and the preset times. Until it arrives (and
@@ -507,13 +511,33 @@ export default function TrainingPlanScreen({
     raceDate: "",
   });
 
+  /*
+    THE CONSOLE WALK'S EXAMPLE WEEK (lib/varsity/coachTourExample.ts). A coach
+    with no block yet would have nothing for the walk to open — and the workout
+    editor is the part a first-time coach most needs shown (owner, 2026-10-03).
+    So while a walk is on screen, and only then, an empty console draws an
+    example block instead.
+
+    DRAWN, NEVER HELD. The real plan underneath stays empty: `blocks` and
+    `sessions` are untouched, so the autosave has nothing to write, and the
+    moment the walk ends the example is simply not drawn any more. Everything
+    the screen SHOWS reads `shownBlocks` / `shownSessions`; everything it
+    WRITES reads the real ones.
+  */
+  const example = useMemo(
+    () => (touring && !loading && !loadFailed && blocks.length === 0 ? exampleTrainingWeek(cfg) : null),
+    [touring, loading, loadFailed, blocks.length, cfg],
+  );
+  const shownBlocks = useMemo(() => (example ? [example.block] : blocks), [example, blocks]);
+  const shownSessions = example ? example.sessions : sessions;
+
   /* Nothing picked yet: the current block's current week, or the empty console. */
   const view: View = useMemo<View>(() => {
     if (picked) return picked;
-    const home = homeBlock(blocks, todayISO);
+    const home = homeBlock(shownBlocks, todayISO);
     return home ? { name: "week", blockId: home.id, weekIdx: homeWeekIdx(home) } : { name: "empty" };
-  }, [picked, blocks, todayISO]);
-  const block = "blockId" in view ? blocks.find((b) => b.id === view.blockId) : undefined;
+  }, [picked, shownBlocks, todayISO]);
+  const block = "blockId" in view ? shownBlocks.find((b) => b.id === view.blockId) : undefined;
   const weeks: WeekRow[] = useMemo(() => (block ? buildWeeks(block) : []), [block]);
 
   /* ── create a block ── */
@@ -559,7 +583,7 @@ export default function TrainingPlanScreen({
 
   /* ── session editor ── */
   const openEditor = (date: Date, period: Period) => {
-    const existing = sessions[sessionKey(date, period)];
+    const existing = shownSessions[sessionKey(date, period)];
     setForm({
       category: existing?.category,
       intensity: existing?.intensity,
@@ -629,8 +653,19 @@ export default function TrainingPlanScreen({
     return keys;
   };
 
+  /* Is this slot inside a block the coach really has? Always, except on the
+     walk's example week — which must never be written into the real plan. */
+  const realSlot = (date: Date) => {
+    const iso = toISO(date);
+    return blocks.some((b) => b.start <= iso && iso <= b.end);
+  };
+
   const saveSession = () => {
     if (!editor || !form.category || !editorValid) return;
+    if (!realSlot(editor.date)) {
+      setEditor(null);
+      return;
+    }
     const s: Session = {
       category: form.category,
       intensity: asksZone(form.category) ? form.intensity : undefined,
@@ -656,6 +691,10 @@ export default function TrainingPlanScreen({
 
   const clearSession = () => {
     if (!editor) return;
+    if (!realSlot(editor.date)) {
+      setEditor(null);
+      return;
+    }
     setSessions((prev) => {
       const next = { ...prev };
       delete next[sessionKey(editor.date, editor.period)];
@@ -845,7 +884,7 @@ export default function TrainingPlanScreen({
     // A block that shrank under a picked index still shows its last week.
     const week = weeks[Math.min(view.weekIdx, weeks.length - 1)];
     const live = block.status === "published";
-    const others = blocks.filter((b) => b.id !== block.id);
+    const others = shownBlocks.filter((b) => b.id !== block.id);
     const race = daysToRace(block);
     return (
       <div className="mx-auto w-full max-w-screen-sm px-4 pb-8 pt-4">
@@ -908,6 +947,7 @@ export default function TrainingPlanScreen({
               <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
                 <span className="min-w-0 break-words text-[17px] font-semibold leading-snug text-text">{block.name}</span>
                 <StatusChip live={live} />
+                {block.id === EXAMPLE_BLOCK_ID && <ExampleTag />}
               </div>
               <div className="mt-1 text-[11px] text-muted">{week.rangeLabel}</div>
               {/* The race in a pill of its own, down at the foot of the left
@@ -930,6 +970,7 @@ export default function TrainingPlanScreen({
               <PublishBar
                 bare
                 full
+                tourId="coach-plan-publish"
                 live={live}
                 changed={blockChanged(block)}
                 busy={writing}
@@ -1024,7 +1065,7 @@ export default function TrainingPlanScreen({
               </div>
               <div className="flex flex-col gap-1.5 p-2">
                 {periods.map((p, pi) => {
-                  const s = sessions[sessionKey(d.date, p)];
+                  const s = shownSessions[sessionKey(d.date, p)];
                   // The tour presses this to open the workout editor. Named on
                   // BOTH shapes, because the first slot may be empty or filled.
                   const tour = di === 0 && pi === 0 ? "coach-plan-first-slot" : undefined;
@@ -1137,12 +1178,20 @@ export default function TrainingPlanScreen({
     if (!editor || typeof document === "undefined") return null;
     const cat = form.category;
     const sugg = workoutsFor(cfg, cat, form.intensity);
-    /* The tour presses the first zoned type and the first zone, so the walk
-       works whatever a squad has called them (lib/varsity/coachTour.ts). */
-    const firstZonedType = cfg.types.find((t) => t.hasZones && cfg.zones.length > 0)?.key;
+    /* The tour presses one type and the first zone, so the walk works whatever
+       a squad has called them (lib/varsity/coachTour.ts). The type it presses
+       is the one that shows the most of the form: an intensity AND a results
+       board (Water, for rowing), else one of the two, else any that isn't Off. */
+    const zonedOk = (t: (typeof cfg.types)[number]) => t.hasZones && cfg.zones.length > 0;
+    const firstZonedType = (
+      cfg.types.find((t) => zonedOk(t) && t.canBoard) ??
+      cfg.types.find(zonedOk) ??
+      cfg.types.find((t) => t.canBoard) ??
+      cfg.types.find((t) => t.key !== "off")
+    )?.key;
     const weekday = editor.date.toLocaleDateString("en-US", { weekday: "long" });
     const longDate = editor.date.toLocaleDateString("en-US", { month: "long", day: "numeric" });
-    const existing = !!sessions[sessionKey(editor.date, editor.period)];
+    const existing = !!shownSessions[sessionKey(editor.date, editor.period)];
     const inputCls =
       "w-full rounded-xl border border-border bg-surface-2 px-3.5 py-3 text-base text-text outline-none focus:border-primary placeholder:text-faint";
     const labelCls = "mb-1.5 mt-4 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted";
@@ -1199,9 +1248,9 @@ export default function TrainingPlanScreen({
           {/* category */}
           <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">Type</div>
           {/* data-tour: every field below this one only exists once a type is
-              chosen, so the tour presses the first type that asks for a zone —
-              the one that shows the whole form — and the rest of the walk has
-              something to point at. The types themselves come from the squad's
+              chosen, so the tour presses one (coach-plan-cat-first, picked
+              above as the type that shows the most of the form) and the rest
+              of the walk has something to point at. The types themselves come from the squad's
               settings, so the anchor cannot name one.
               The column count follows the list rather than being fixed at five,
               so three types are not three fifths of a row and seven wrap. */}
@@ -1326,13 +1375,16 @@ export default function TrainingPlanScreen({
             className={inputCls}
           />
 
-          {/* team workout — the switch that gives this session a shared board */}
+          {/* team workout — the switch that gives this session a shared board.
+              data-tour: the walk lights the switch and the two boards under it
+              together (coach-plan-share), and presses the switch only while it
+              is OFF — pressing one already on would hide what it is showing. */}
           {configCanBoard(cfg, cat) && (
-            <>
+            <div data-tour="coach-plan-share">
               <div className={labelCls}>Team workout</div>
               <button
                 type="button"
-                data-tour="coach-plan-team"
+                data-tour={form.teamWorkout ? undefined : "coach-plan-team"}
                 onClick={() =>
                   setForm((f) => ({
                     ...f,
@@ -1370,7 +1422,7 @@ export default function TrainingPlanScreen({
               </button>
 
               {form.teamWorkout && (
-                <div className="mt-1.5 grid grid-cols-2 gap-1.5">
+                <div data-tour="coach-plan-board" className="mt-1.5 grid grid-cols-2 gap-1.5">
                   {boardOptions.map((o) => {
                     const active = form.board === o.key;
                     return (
@@ -1391,14 +1443,16 @@ export default function TrainingPlanScreen({
                   })}
                 </div>
               )}
-            </>
+            </div>
           )}
 
-          {/* repeat weekly — lots of sessions recur (e.g. every Tue/Thu) */}
+          {/* repeat weekly — lots of sessions recur (e.g. every Tue/Thu).
+              data-tour: the walk lights the two buttons AND the line under them
+              that says what "Every week" is about to fill, so they share a box. */}
           {cat && (
-            <>
+            <div data-tour="coach-plan-repeat">
               <div className={labelCls}>Repeat</div>
-              <div data-tour="coach-plan-repeat" className="grid grid-cols-2 gap-1.5">
+              <div className="grid grid-cols-2 gap-1.5">
                 {(
                   [
                     ["once", "Just this day"],
@@ -1410,6 +1464,7 @@ export default function TrainingPlanScreen({
                     <button
                       key={key}
                       type="button"
+                      data-tour={key === "weekly" ? "coach-plan-repeat-weekly" : undefined}
                       onClick={() => setForm((f) => ({ ...f, repeat: key }))}
                       className={`flex items-center justify-center gap-1.5 rounded-xl border py-2.5 text-[12px] font-semibold ${
                         active ? "border-primary bg-primary-tint text-text" : "border-border bg-surface text-muted"
@@ -1428,7 +1483,7 @@ export default function TrainingPlanScreen({
                      the weeks list before pressing Done. */
                   const targets = weeklyTargets(editor.date, editor.period);
                   const others = targets.filter((k) => k !== sessionKey(editor.date, editor.period));
-                  const replaced = others.filter((k) => !!sessions[k]).length;
+                  const replaced = others.filter((k) => !!shownSessions[k]).length;
                   return (
                     <p className="mt-1.5 text-[11px] leading-relaxed text-muted">
                       Puts this on every {weekday} {editor.period} from this week to the end of the
@@ -1442,7 +1497,7 @@ export default function TrainingPlanScreen({
                     </p>
                   );
                 })()}
-            </>
+            </div>
           )}
         </div>
 
