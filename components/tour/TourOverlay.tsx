@@ -400,11 +400,11 @@ export default function TourOverlay({
     boxRef.current = next;
     setBox(next);
   }, []);
-  // What the light is on, and the page it was lit on.
-  const litRef = useRef<{ el: HTMLElement; path: string } | null>(null);
+  // What the light is on.
+  const litRef = useRef<{ el: HTMLElement } | null>(null);
   const light = useCallback(
     (el: HTMLElement | null, box: Box | null) => {
-      if (litRef.current?.el !== el) litRef.current = el ? { el, path: window.location.pathname } : null;
+      if (litRef.current?.el !== el) litRef.current = el ? { el } : null;
       apply(box);
     },
     [apply],
@@ -420,14 +420,16 @@ export default function TourOverlay({
     there"). So it goes out, and comes back on the step's own target once that
     is ready. Something still on screen after the move — a tab in the nav —
     keeps its light, which travels on from it.
+
+    THE SAME PAGE CAN DO IT TOO. The lineup's day list is swapped for the
+    builder without the address changing, so the practice the finger pressed
+    went and the light sat on the builder's empty top while its crew loaded
+    (owner, 2026-10-04: "mezi 10 a 11 se to zaseklo"). What the light was on
+    is gone — that is the test, wherever you are.
   */
   const dropStaleLight = useCallback(() => {
     const lit = litRef.current;
-    if (
-      lit &&
-      window.location.pathname !== lit.path &&
-      !(lit.el.isConnected && lit.el.getBoundingClientRect().width > 0)
-    ) {
+    if (lit && !(lit.el.isConnected && lit.el.getBoundingClientRect().width > 0)) {
       light(null, null);
     }
   }, [light]);

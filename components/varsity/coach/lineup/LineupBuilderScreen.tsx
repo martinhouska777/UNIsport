@@ -1334,6 +1334,11 @@ function Builder({
   useEffect(() => {
     let active = true;
     (async () => {
+      /* Both at once: the last published crew is two reads of its own, and
+         waiting for this practice's row before starting them made opening an
+         empty practice three round trips long — the console walk sat on it
+         (owner, 2026-10-04). It is only used when there is no row here. */
+      const carriedRead = fetchCarriedLineup(dayKey).catch(() => null);
       const stored = await fetchLineup(dayKey);
       if (!active) return;
       if (stored) {
@@ -1357,7 +1362,7 @@ function Builder({
         and nothing is dirty, so no draft is written for a practice that was
         only looked at.
       */
-      const found = await fetchCarriedLineup(dayKey);
+      const found = await carriedRead;
       if (!active) return;
       setSaved("[]");
       setAnnounced(null);
