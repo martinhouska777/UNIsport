@@ -279,10 +279,11 @@ function DaySheet({
   onDayOut: (v: DayOut | null) => void;
   onClose: () => void;
   onOpen: (log: LogEntry) => void;
-  /** A teammate's day: what they did, and nothing to press. */
+  /** A teammate's day: what they did, and no Missed / sick-day part. Their
+      sessions still open — read-only — like a row of a coach's Past workouts
+      (owner, 2026-10-04: "v kalendáři nemůžu kliknout na tu session"). */
   readOnly?: boolean;
 }) {
-  const Row = readOnly ? "div" : "button";
   return (
     <Sheet title={label} onClose={onClose}>
       {logs.length === 0 ? (
@@ -325,10 +326,11 @@ function DaySheet({
                     .join(" · ")
                 : "";
             return (
-              <Row
+              <button
                 key={l.id}
-                {...(readOnly ? {} : { type: "button" as const, onClick: () => onOpen(l) })}
-                className={`flex items-start gap-3 rounded-2xl border border-border bg-surface px-3.5 py-3 text-left ${readOnly ? "" : "active:bg-surface-2"}`}
+                type="button"
+                onClick={() => onOpen(l)}
+                className="flex items-start gap-3 rounded-2xl border border-border bg-surface px-3.5 py-3 text-left active:bg-surface-2"
               >
                 <span
                   className="mt-1 h-2.5 w-2.5 flex-shrink-0 rounded-full"
@@ -344,8 +346,8 @@ function DaySheet({
                     Extra
                   </span>
                 )}
-                {!readOnly && <IconChevronRight size={15} className="mt-0.5 flex-shrink-0 text-muted" />}
-              </Row>
+                <IconChevronRight size={15} className="mt-0.5 flex-shrink-0 text-muted" />
+              </button>
             );
           })}
         </div>
@@ -842,6 +844,9 @@ export default function CalendarScreen({
           weeks={(atCurrentMonth ? now.getDate() : new Date(view.y, view.m + 1, 0).getDate()) / 7}
           logs={logs}
           units={units}
+          colorOf={(l) => logColor(l, l.dayKey ? planSessions[l.dayKey] : undefined)}
+          timeOf={(l) => (l.dayKey ? planSessions[l.dayKey]?.time?.trim() : "") || l.period || ""}
+          onOpen={(log) => setOpenLog(log)}
           onClose={() => setStatsFor(null)}
         />
       )}

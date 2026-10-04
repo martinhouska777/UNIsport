@@ -18,8 +18,14 @@
   A KIND THAT HAS NO DISTANCE HAS NO DISTANCE TILE (owner, 2026-09-27: "for
   weights there obviously won't be a distance, so just do two tabs: sessions
   and time"). It used to show a dash there. Flex is the same kind of session.
+
+  AND THE SESSIONS THEMSELVES, under the numbers (owner, 2026-10-04: "když to
+  rozkliknu, udělej konzistentní UI"): the month's sessions of that kind,
+  newest first, in the very rows of a coach's Past workouts (LogRow) — the
+  name, what was done, the day on the right — and a tap opens the session.
 */
 import Sheet from "@/components/varsity/Sheet";
+import LogRow from "@/components/varsity/coach/athlete/LogRow";
 import { type LogEntry } from "@/lib/varsity/logStore";
 import { logCategoryLabel } from "@/lib/varsity/athleteProfile";
 import { formatDistance, formatDuration, type Units } from "@/lib/varsity/units";
@@ -39,6 +45,14 @@ function Tile({ value, label }: { value: string; label: string }) {
 /* The kinds of training that are never measured in metres. */
 const NO_DISTANCE = new Set(["weights", "flex"]);
 
+const WD = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const MO = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+/* "Thu 1 Oct" — the sheet's title already says the year. */
+const dayLabel = (iso: string) => {
+  const [y, m, d] = iso.split("-").map(Number);
+  return `${WD[new Date(y, m - 1, d).getDay()]} ${d} ${MO[m - 1]}`;
+};
+
 // 2 -> "2", 2.25 -> "2.3". No trailing ".0".
 const oneDecimal = (v: number) => {
   const r = Math.round(v * 10) / 10;
@@ -51,6 +65,9 @@ export default function CategoryStatsSheet({
   weeks,
   logs,
   units,
+  colorOf,
+  timeOf,
+  onOpen,
   onClose,
 }: {
   category: string;
@@ -61,9 +78,20 @@ export default function CategoryStatsSheet({
   weeks: number;
   logs: LogEntry[]; // the whole month; filtered here
   units: Units;
+  /** A session's colour, by the calendar's own rule. */
+  colorOf: (l: LogEntry) => string;
+  /** "7:00 AM", or AM / PM, under the day. */
+  timeOf: (l: LogEntry) => string;
+  /** Opens the session full screen. */
+  onOpen: (l: LogEntry) => void;
   onClose: () => void;
 }) {
   const mine = logs.filter((l) => (l.category ?? "other") === category);
+  /* Newest first, and inside a day the order they were logged in. */
+  const newest = mine
+    .map((l, i) => ({ l, i }))
+    .sort((a, b) => b.l.logDate.localeCompare(a.l.logDate) || a.i - b.i)
+    .map(({ l }) => l);
 
   const sessions = mine.length;
   const minutes = mine.reduce((sum, l) => sum + (l.minutes ?? 0), 0);
@@ -96,6 +124,21 @@ export default function CategoryStatsSheet({
             </>
           )}{" "}
           a week.
+        </div>
+      )}
+
+      {newest.length > 0 && (
+        <div className="mt-3 flex flex-col gap-2">
+          {newest.map((l) => (
+            <LogRow
+              key={l.id}
+              log={l}
+              day={dayLabel(l.logDate)}
+              time={timeOf(l)}
+              color={colorOf(l)}
+              onOpen={() => onOpen(l)}
+            />
+          ))}
         </div>
       )}
     </Sheet>
