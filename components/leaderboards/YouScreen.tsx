@@ -20,12 +20,15 @@
     "40 pts behind …" nudge and the "your house is 3rd of 5 · your class is
     2nd of 4" line under them were cut the same day.
 
-    WHERE THE POINTS CAME FROM — your sessions split the three ways the whole
-    scoring system is built on (alone, with a partner, with somebody new) and
-    what each pile is worth. A score nobody can check is a score nobody trusts.
+    YOUR POINTS — your sessions split the three ways the whole scoring system
+    is built on (alone, with a partner, with somebody new) and what each pile
+    is worth. A score nobody can check is a score nobody trusts.
 
-    YOUR FRIENDS — the campus board cut down to the people you follow, with
-    you in it; the top three wear a medal, like every other board.
+    FRIENDS — the campus board cut down to the people you follow, with you in
+    it; the top three wear a medal, like every other board.
+
+    Either block is simply absent when it would be empty — no grey sentence
+    standing in for it (owner, 2026-10-03).
 
   Nothing here is invented. Every number comes from the same two reads the
   boards behind this screen use (db/leaderboards.sql).
@@ -257,57 +260,52 @@ export default function YouScreen({
             />
           </div>
 
-          {/* ── WHERE THE POINTS CAME FROM ── */}
-          <SectionLabel className="mb-2 mt-5">Where your points came from</SectionLabel>
-          {hasPoints ? (
-            <div className="rounded-2xl border border-border bg-surface px-3.5 py-1.5">
-              <KindLine label="Trained alone" count={kinds.solo} each={sessionPoints.solo} />
-              <KindLine
-                label="With a partner"
-                count={kinds.partner}
-                each={sessionPoints.partner}
-              />
-              <KindLine
-                label="With someone new"
-                count={kinds.newPartner}
-                each={sessionPoints.newPartner}
-              />
-              <div className="flex items-center gap-2 border-t border-border py-2 text-[12px]">
-                <span className="min-w-0 flex-1 truncate font-medium text-text">
-                  {plural(standing.sessions, "session")}
-                </span>
-                <span className="w-14 flex-shrink-0 text-right text-[15px] font-semibold tabular-nums text-text">
-                  {standing.points.toLocaleString("en-US")}
-                </span>
+          {/* ── YOUR POINTS ── Nothing logged in the window = no section at all,
+              not a heading over a sentence explaining the gap (owner, 2026-10-03). */}
+          {hasPoints && (
+            <>
+              <SectionLabel className="mb-2 mt-5">Your points</SectionLabel>
+              <div className="rounded-2xl border border-border bg-surface px-3.5 py-1.5">
+                <KindLine label="Trained alone" count={kinds.solo} each={sessionPoints.solo} />
+                <KindLine
+                  label="With a partner"
+                  count={kinds.partner}
+                  each={sessionPoints.partner}
+                />
+                <KindLine
+                  label="With someone new"
+                  count={kinds.newPartner}
+                  each={sessionPoints.newPartner}
+                />
+                <div className="flex items-center gap-2 border-t border-border py-2 text-[12px]">
+                  <span className="min-w-0 flex-1 truncate font-medium text-text">
+                    {plural(standing.sessions, "session")}
+                  </span>
+                  <span className="w-14 flex-shrink-0 text-right text-[15px] font-semibold tabular-nums text-text">
+                    {standing.points.toLocaleString("en-US")}
+                  </span>
+                </div>
               </div>
-            </div>
-          ) : (
-            <div className="rounded-xl border border-dashed border-border bg-surface px-4 py-6 text-center text-[12px] text-muted">
-              Nothing logged {periodLabel.toLowerCase()}. One session puts you on the board.
-            </div>
+            </>
           )}
           {/* No "Trained with N different people — a session with somebody new
               is worth …" line under the card (owner, 2026-09-27: cut). */}
 
-          {/* ── YOUR FRIENDS ── */}
-          <SectionLabel className="mb-2 mt-5">Your friends</SectionLabel>
-          {friends === null ? (
-            <div className="px-4 py-8 text-center text-[12px] text-muted">Counting…</div>
-          ) : others.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-border bg-surface px-4 py-8 text-center text-[12px] leading-relaxed text-muted">
-              You&rsquo;re not following anyone yet. Follow people from the Match tab and
-              this becomes your own small leaderboard.
-            </div>
-          ) : (
-            <div className="flex flex-col gap-1.5">
-              {friends.map((f) => (
-                <FriendRow
-                  key={f.userId}
-                  row={f}
-                  onOpen={() => router.push(f.isMe ? "/profile" : `/people/${f.userId}`)}
-                />
-              ))}
-            </div>
+          {/* ── FRIENDS ── Same rule: following nobody (or still loading) = no
+              section, no "Counting…", no "follow people from Match" sentence. */}
+          {friends && others.length > 0 && (
+            <>
+              <SectionLabel className="mb-2 mt-5">Friends</SectionLabel>
+              <div className="flex flex-col gap-1.5">
+                {friends.map((f) => (
+                  <FriendRow
+                    key={f.userId}
+                    row={f}
+                    onOpen={() => router.push(f.isMe ? "/profile" : `/people/${f.userId}`)}
+                  />
+                ))}
+              </div>
+            </>
           )}
         </div>
       </div>
