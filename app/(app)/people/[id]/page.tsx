@@ -310,8 +310,11 @@ function PersonProfile() {
                   </div>
 
                   {/* Three equal columns, hairlines at a third and two thirds —
-                      the same row your own profile has. A dash until the
-                      numbers have landed, so the row never jumps. */}
+                      the same row your own profile has, in the same type:
+                      black 12px words under a bold number (owner, 2026-10-04:
+                      "udělej to stejně i na profilu ostatních"; they were 10px
+                      capitals, Following in thin school colour). A dash until
+                      the numbers have landed, so the row never jumps. */}
                   <div className="grid grid-cols-3">
                     {(
                       [
@@ -322,14 +325,10 @@ function PersonProfile() {
                     ).map((c, i) => {
                       const body = (
                         <>
-                          <div className="text-[17px] font-medium tabular-nums text-text">
+                          <div className="text-[18px] font-bold tabular-nums text-text">
                             {c.n ?? "—"}
                           </div>
-                          <div
-                            className={`mt-0.5 truncate text-[10px] uppercase tracking-[0.04em] ${
-                              c.open ? "text-primary" : "text-muted"
-                            }`}
-                          >
+                          <div className="mt-0.5 truncate text-[12px] font-medium text-text">
                             {c.label}
                           </div>
                         </>
