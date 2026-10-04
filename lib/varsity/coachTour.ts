@@ -33,9 +33,10 @@
   and no Done or Publish steps on the plan.
 
   AND THE WATER, TIMED FOR REAL (owner, 2026-10-04: "jak logovat ty workouts
-  na water, to je důležité"). The + is pressed, a session picked, Enter times
-  opened and a Start tapped, so the wheels are on screen; then the second
-  piece's Switch. It is a practice run: the race day it makes lives in
+  na water, to je důležité"). The + is pressed, a session picked and Enter
+  times opened; then the second piece's Switch. (A Start was tapped too, so
+  the wheels were on screen — cut the same day: "to your watch tam
+  nedávej".) It is a practice run: the race day it makes lives in
   TeamWorkouts' memory and its board writes nothing (RaceBoard `practice`).
 
   THE SAME DAY, LATER (owner: "koukni se na nějaký reálný piece, co jsme
@@ -222,8 +223,9 @@ const steps: TourStep[] = [
   },
   /*
     LOGGING THE WATER, by the finger (owner, 2026-10-04: "jak logovat ty
-    workouts na water, to je důležité"): the +, a session, Enter times, a
-    Start — the wheels — and the second piece's Switch. The session is the
+    workouts na water, to je důležité"): the +, a session, Enter times and
+    the second piece's Switch. The watch itself (a Start tapped, the wheels)
+    is NOT opened (owner: "to your watch tam nedávej"). The session is the
     newest with a published lineup, one of several pieces where there is one
     (TeamWorkouts, tourPick). A practice run: the race day lives only in
     TeamWorkouts while the walk is on, its board writes nothing, and Save
@@ -234,8 +236,8 @@ const steps: TourStep[] = [
     A RACE ALREADY TIMED IS SHOWN FIRST ("ukaž to v reálu"): where the squad
     has one — every crew of two pieces or more timed, the fewest crews of
     those, so it fits the phone (TeamWorkouts, tourShow) — the finger opens it
-    from the list (`coach-race-open`), and Enter times and the wheels show
-    its real readings. Only without one does `coach-race-open` sit on the +,
+    from the list (`coach-race-open`), and Enter times shows its real
+    readings. Only without one does `coach-race-open` sit on the +,
     and the walk makes a new one as above. For HUBC that is "2x2 miles at
     race pace": four eights, Dykema and Horler switched between the pieces.
   */
@@ -264,14 +266,7 @@ const steps: TourStep[] = [
     body: "Each crew gets a Start and a Finish off your watch. The time works itself out.",
   },
   {
-    press: "coach-race-start-first",
-    anchor: "coach-race-watch",
-    group: "race",
-    title: "Your watch",
-    body: "Spin the wheels, or type the digits left to right: 802115 is 8:02:11.5. Next goes on to the finish, then the next crew. Save times when the piece is in.",
-  },
-  {
-    press: ["coach-race-watch-close", "coach-race-editor-back", "coach-race-tab-2"],
+    press: ["coach-race-editor-back", "coach-race-tab-2"],
     anchor: "coach-race-switch",
     alsoAnchor: "coach-race-first-row",
     group: "race",
@@ -280,7 +275,7 @@ const steps: TourStep[] = [
   },
   {
     // Out of the timing sheet first — whatever of it is still open.
-    press: ["coach-race-watch-close", "coach-race-editor-back", "coach-race-back", "varsity-workouts-ranking"],
+    press: ["coach-race-editor-back", "coach-race-back", "varsity-workouts-ranking"],
     anchor: "varsity-workouts-switch",
     alsoAnchor: "coach-ranking-lists",
     title: "Ranking",
@@ -347,7 +342,6 @@ export const coachTour: Tour = {
   closeOnExit: [
     "coach-plan-editor-back",
     "coach-lineup-back",
-    "coach-race-watch-close",
     "coach-race-editor-back",
     "coach-race-back",
     "coach-race-picker-close",
