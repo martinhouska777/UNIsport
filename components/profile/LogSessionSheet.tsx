@@ -39,7 +39,7 @@ import { fileToDataUrl } from "@/lib/image";
 import { notifyPartnerTag } from "@/lib/push/client";
 import { confirmPlan } from "@/lib/supabase/sessionPlans";
 import { PARTNER_CONFIRM_HOURS, sessionPoints } from "@/lib/points";
-import { IconArrowLeft, IconCheck, IconChevronRight, IconPlus, IconTrash, IconX } from "@/components/icons";
+import { IconArrowLeft, IconCheck, IconChevronRight, IconPlus, IconSwap, IconTrash, IconX } from "@/components/icons";
 import Segmented from "@/components/ui/Segmented";
 import DetailRow, { detailRowInput as rowInput } from "@/components/ui/DetailRow";
 
@@ -107,7 +107,8 @@ export default function LogSessionSheet({
   const [cardioType, setCardioType] = useState(existing?.metrics.cardioType ?? "");
   const [distance, setDistance] = useState(existing?.metrics.distance ?? "");
   const [unit, setUnit] = useState<DistanceUnit>(existing?.metrics.unit ?? "km");
-  const [duration, setDuration] = useState(existing?.metrics.duration ?? "");
+  // Typed in minutes; saved as "45 min" (see save). An older "44:05" stays as it is.
+  const [duration, setDuration] = useState((existing?.metrics.duration ?? "").replace(/\s*min$/i, ""));
   const [note, setNote] = useState(existing?.note ?? "");
   const [photos, setPhotos] = useState<string[]>(existing?.photos ?? []);
   const [photoBusy, setPhotoBusy] = useState(false);
@@ -135,6 +136,10 @@ export default function LogSessionSheet({
   const usesExercises = !isRunning && !isCardio; // gym / other
   // Running uses km/mi; cardio also allows metres (rowing, swimming).
   const unitOptions: DistanceUnit[] = isCardio ? ["km", "mi", "m"] : ["km", "mi"];
+  /* ONE button that says the unit, not a switch (owner, 2026-10-04): a tap
+     moves it on to the next one. A cardio "m" carried over to a run is km. */
+  const shownUnit: DistanceUnit = unitOptions.includes(unit) ? unit : "km";
+  const nextUnit = () => setUnit(unitOptions[(unitOptions.indexOf(shownUnit) + 1) % unitOptions.length]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -240,7 +245,15 @@ export default function LogSessionSheet({
       ...(samePartner ? { partnerStatus: existing?.partnerStatus ?? "confirmed" } : {}),
       ...(plan && !existing ? { planId: plan.planId } : {}),
       exercises,
-      metrics: { cardioType, distance, unit, duration, weightUnit, muscles },
+      metrics: {
+        cardioType,
+        distance,
+        unit: shownUnit,
+        // A bare number is minutes — the field says so — and is kept that way.
+        duration: /^\d+(\.\d+)?$/.test(duration.trim()) ? `${duration.trim()} min` : duration,
+        weightUnit,
+        muscles,
+      },
       photos,
       note,
     };
@@ -547,20 +560,24 @@ export default function LogSessionSheet({
                   inputMode="decimal"
                   className={rowInput}
                 />
-                <Segmented
-                  ariaLabel="Distance unit"
-                  className="ml-2"
-                  options={unitOptions.map((u) => ({ key: u, label: u }))}
-                  value={unit}
-                  onChange={(u) => setUnit(u)}
-                />
+                <button
+                  type="button"
+                  onClick={nextUnit}
+                  aria-label={`Distance in ${shownUnit}. Change unit`}
+                  className="press-icon ml-2 flex h-8 flex-shrink-0 items-center gap-1 rounded-full border border-border bg-surface-2 px-3 text-[13px] font-semibold text-text"
+                >
+                  {shownUnit}
+                  <IconSwap size={12} className="text-muted" />
+                </button>
               </DetailRow>
               <DetailRow label="Duration">
                 <input
                   value={duration}
-                  onChange={(e) => setDuration(e.target.value)}
+                  onChange={(e) => setDuration(e.target.value.replace(/[^\d:.]/g, ""))}
+                  inputMode="numeric"
                   className={rowInput}
                 />
+                <span className="ml-1.5 flex-shrink-0 text-base text-muted">min</span>
               </DetailRow>
             </div>
           )}
