@@ -103,6 +103,19 @@ import { useTourRunning } from "@/lib/tour";
 import { coachTourExampleRace } from "@/lib/varsity/coachTourExample";
 
 /*
+  THE WORKED EXAMPLE BESIDE THE SQUAD'S OWN RESULTS, for the coaches' demo
+  (owner, 2026-10-04: "když to ukazuju coachům příští týden, chci, aby to bylo
+  plné, abych mohl ukázat vše"). The example's tests used to go the moment the
+  first real result came in — the squad's real 5k of 28 Sep — and the Erg list
+  shrank to one row. With this on, the example's past tests stay listed next
+  to the real ones, each still wearing its EXAMPLE tag, on boards of their own
+  (a real board is never compared with an invented one: the example's people
+  are roster seats, the sheet's are their own ids). Nothing is stored.
+  Set it to false after the demo and only real boards show once one exists.
+*/
+const EXAMPLE_BESIDE_REAL = true;
+
+/*
   WHAT A ROW WAS, AS A COLOUR AND A WORD (owner, 2026-09-21).
   ---------------------------------------------------------------------------
   Every row on this screen is a session the coach planned, so every row can
@@ -269,7 +282,7 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
       const rows = list.length ? await fetchResults(list.map((w) => w.dayKey)) : [];
       if (!active) return;
 
-      if (rows.length > 0) {
+      if (rows.length > 0 && !EXAMPLE_BESIDE_REAL) {
         // Somebody real has logged a board: the squad's own results, nothing else.
         setWorkouts(list);
         setResults(rows);
@@ -288,9 +301,12 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
         const demo = demoTeamPlan(new Date());
         const real = new Set(list.map((w) => w.dayKey));
         const examples = teamWorkouts(demo.sessions, cfg).filter((w) => !real.has(w.dayKey));
+        const exampleDays = new Set(examples.map((w) => w.dayKey));
         setWorkouts([...list, ...examples]);
-        setResults(demo.results.filter((r) => !real.has(r.dayKey)));
-        setExampleKeys(new Set(examples.map((w) => w.dayKey)));
+        // The squad's real results (none, or the boards they have logged) and
+        // the example's, each on its own boards.
+        setResults([...rows, ...demo.results.filter((r) => exampleDays.has(r.dayKey))]);
+        setExampleKeys(exampleDays);
       }
       setLoading(false);
     })();

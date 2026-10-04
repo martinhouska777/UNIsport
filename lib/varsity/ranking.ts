@@ -48,7 +48,7 @@ import { buildBoard, onTheWater, type TeamWorkout } from "./teamBoard";
 import type { TeamResult } from "./resultsStore";
 import { rosterById, type Boat } from "./coachLineup";
 import { parseSessionKey, type SessionMap } from "./coachPlan";
-import { crewPeople, personKey, pieceBoards, type RaceCrew, type RaceDay } from "./racePieces";
+import { crewPeople, personKey, pieceBoards, sheetPersonId, type RaceCrew, type RaceDay } from "./racePieces";
 import { seatRacesOf, type SeatRaceDay } from "./raceSwitch";
 import type { LogEntry } from "./logStore";
 
@@ -137,26 +137,47 @@ export function ergRanking(workouts: TeamWorkout[], results: TeamResult[], span:
     else byDay.set(r.dayKey, [r]);
   }
 
+  /*
+    ONE ROW PER ROWER, whoever wrote their result. The same person comes in
+    under different ids: their account, the fixed "ae6c0000-…" id of a result
+    typed off the squad's sheet before they had one, and the roster seat a
+    worked example uses ("Cleugh" on the roster, "Jonny Cleugh" on the sheet).
+    So a person is their roster seat when the name finds one (sheetPersonId,
+    the race boards' own matcher), and their id only when it does not.
+  */
   const people = new Map<string, ErgRankRow>();
+  const realName = new Set<string>();
   tests.forEach((test, i) => {
     const placed = buildBoard(byDay.get(test.dayKey) ?? [], "ranked", "split", null).rows.filter(
       (row) => row.rank != null,
     );
     const of = placed.length;
     for (const row of placed) {
-      const id = row.result.athleteId;
-      let person = people.get(id);
+      const key = sheetPersonId(row.result.athleteName ?? "") ?? row.result.athleteId;
+      const example = row.result.id.startsWith("demo-");
+      let person = people.get(key);
       if (!person) {
-        person = { athleteId: id, name: "", points: 0, places: Array(tests.length).fill(null), tests: 0, rank: 0 };
-        people.set(id, person);
+        person = {
+          athleteId: row.result.athleteId,
+          name: "",
+          points: 0,
+          places: Array(tests.length).fill(null),
+          tests: 0,
+          rank: 0,
+        };
+        people.set(key, person);
       }
+      // A real result's id is the one with a page behind it.
+      if (!example) person.athleteId = row.result.athleteId;
       const place = row.rank!;
       person.places[i] = { place, of };
       person.points += of - place + 1;
       person.tests += 1;
       /* The name as they last logged it — the tests run oldest first, so a
-         later one overwrites an older spelling. */
-      if (row.result.athleteName) person.name = row.result.athleteName;
+         later one overwrites an older spelling — and a real result's name
+         over a worked example's (the roster's "Cleugh" is "Jonny Cleugh"). */
+      if (row.result.athleteName && (!example || !realName.has(key))) person.name = row.result.athleteName;
+      if (!example && row.result.athleteName) realName.add(key);
     }
   });
 
