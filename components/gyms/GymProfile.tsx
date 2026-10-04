@@ -39,7 +39,7 @@ import { useProfileData } from "@/components/profile/useProfileData";
 import { dateLabel } from "@/lib/schedule";
 import { useSharedHooks } from "@/components/match/useSharedHooks";
 import HookChip from "@/components/match/HookChip";
-import { IconArrowLeft, IconHeart, IconMapPin } from "@/components/icons";
+import { IconArrowLeft, IconCheck, IconHeart, IconMapPin } from "@/components/icons";
 
 export default function GymProfile({ gym }: { gym: Gym }) {
   const { userId, universityKey } = useAppState();
@@ -170,17 +170,30 @@ export default function GymProfile({ gym }: { gym: Gym }) {
         open a search form — a question. This is an ANSWER: two taps and you
         are on the board, on this card, and findable by time. Seeing who else
         is going is the second action, because that is what it is.
+
+        SIDE BY SIDE, one height (owner, 2026-10-04: "hrozně neuhlazené …
+        udělej to líp a asi vedle sebe"). They were a 48px button over a 40px
+        one with two long sentences in them and the count in brackets. Now two
+        halves, the way the person profile's Follow | Message bar sits: the
+        alternative on the left, the main action on the right under the thumb.
+        Short words so both fit on a phone; the count is a small badge.
       */}
       <div
         data-tour="gym-partner"
-        className="sticky bottom-0 z-10 mt-auto flex flex-col gap-2 border-t border-border bg-surface px-3.5 pb-4 pt-3"
+        className="sticky bottom-0 z-10 mt-auto flex gap-2.5 border-t border-border bg-surface px-3.5 pb-4 pt-3"
       >
-        <Button size="lg" full onClick={() => setPosting(true)}>
-          {posted ? "Posted · post another time" : "Post that you’re going"}
-        </Button>
-        <ButtonLink href={boardHref(gym.name)} variant="secondary" size="md" full>
-          {going ? `See who else is going (${going.posts.length})` : "See who else is going"}
+        <ButtonLink href={boardHref(gym.name)} variant="secondary" size="lg" className="min-w-0 flex-1 gap-1.5 px-3">
+          Who’s going
+          {going && (
+            <span className="min-w-5 rounded-full bg-primary-tint px-1.5 py-0.5 text-[11px] tabular-nums leading-none text-primary">
+              {going.posts.length}
+            </span>
+          )}
         </ButtonLink>
+        <Button size="lg" onClick={() => setPosting(true)} className="min-w-0 flex-1 gap-1.5 px-3">
+          {posted && <IconCheck size={16} />}
+          {posted ? "Going" : "I’m going"}
+        </Button>
       </div>
 
       {posting && (
