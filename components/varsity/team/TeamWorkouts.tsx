@@ -93,7 +93,7 @@ import TeamRanking from "@/components/varsity/team/TeamRanking";
 import Sheet from "@/components/varsity/Sheet";
 import ExampleTag from "@/components/varsity/ExampleTag";
 import { fetchRaceDays, saveRaceDay } from "@/lib/varsity/raceStore";
-import { piecesFromSession, type RaceDay } from "@/lib/varsity/racePieces";
+import { pieceCountFromText, piecesFromSession, type RaceDay } from "@/lib/varsity/racePieces";
 import { fetchLineupsFor } from "@/lib/varsity/lineupStore";
 import type { Boat } from "@/lib/varsity/coachLineup";
 import type { SessionMap } from "@/lib/varsity/coachPlan";
@@ -389,6 +389,9 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
     () => (candidateBoats ? raceCandidates.filter((c) => (candidateBoats[c.dayKey] ?? 0) > 0) : []),
     [raceCandidates, candidateBoats],
   );
+  /* The one the console walk picks: the newest of more than one piece, so
+     the second piece has a Switch to show — else simply the newest. */
+  const tourPick = (timeable.find((c) => pieceCountFromText(c.session.description) > 1) ?? timeable[0])?.dayKey;
 
   /* A list per side, each newest first. A flagged workout goes to the side
      its session was rowed on — the water ones sit with the timing sheets. */
@@ -712,12 +715,12 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
             </p>
           ) : (
             <div className="flex flex-col gap-1.5">
-              {timeable.map((c, i) => (
+              {timeable.map((c) => (
                 <button
                   key={c.dayKey}
                   type="button"
                   onClick={() => startRace(c.dayKey)}
-                  data-tour={i === 0 ? "coach-race-pick-first" : undefined}
+                  data-tour={c.dayKey === tourPick ? "coach-race-pick-first" : undefined}
                   className="flex w-full items-center gap-3 rounded-2xl border border-border bg-surface px-3.5 py-3 text-left active:bg-surface-2"
                 >
                   <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ background: markColor(intensityOf(c.session)?.color) ?? "var(--faint)" }} />

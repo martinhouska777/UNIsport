@@ -201,11 +201,13 @@ const steps: TourStep[] = [
   /*
     LOGGING THE WATER, by the finger (owner, 2026-10-04: "jak logovat ty
     workouts na water, to je důležité"): the +, a session, Enter times, a
-    Start — the wheels — and the second piece's Switch. A practice run: the
-    race day lives only in TeamWorkouts while the walk is on, its board
-    writes nothing, and Save times is never pressed. With no session it could
-    time, the picker offers the example race. A day of one piece has no
-    Switch; the board says so and that step is passed.
+    Start — the wheels — and the second piece's Switch. The session is the
+    newest with a published lineup, one of several pieces where there is one
+    (TeamWorkouts, tourPick). A practice run: the race day lives only in
+    TeamWorkouts while the walk is on, its board writes nothing, and Save
+    times is never pressed. With no session it could time, the picker offers
+    the example race. A day of one piece has no Switch; the board says so and
+    that step is passed.
   */
   {
     press: "varsity-workouts-water",
