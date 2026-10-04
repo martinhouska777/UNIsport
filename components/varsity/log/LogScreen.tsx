@@ -31,7 +31,8 @@ import {
   type Session,
   type Period,
 } from "@/lib/varsity/coachPlan";
-import { estimateForSession, formatMetrics } from "@/lib/varsity/logParse";
+import { estimateForSession } from "@/lib/varsity/logParse";
+import { loggedLine } from "@/lib/varsity/loggedLine";
 import { scanErgPhoto, minutesToClock } from "@/lib/varsity/ergScan";
 import { deriveSplitSec, deriveTotalSec } from "@/lib/varsity/ergMath";
 import { fetchAthleteProfile, fetchCheckIns, saveCheckIn } from "@/lib/varsity/athleteProfile";
@@ -60,7 +61,6 @@ import {
   clearPendingDraft,
   LOG_DAYS_BACK,
   effortOptions,
-  effortLabel,
   type LogEntry,
   type LogDraft,
 } from "@/lib/varsity/logStore";
@@ -88,9 +88,8 @@ const extraCategories = ["erg", "water", "weights", "run", "bike", "other"] as c
    easy paddle on the machine, and leaving it out meant that session had to be
    filed as "Other" and lost its name in the calendar. */
 const flexCategories = ["run", "bike", "erg", "other"] as const;
-/* One line for a saved log: the figures, then how it felt — "75 min · 18,000 m · Hard". */
-const summaryOf = (l: LogEntry): string =>
-  [formatMetrics(l.minutes, l.metres, l.split), effortLabel(l.effort)].filter(Boolean).join(" · ");
+/* One line for a saved log: what was done, never how it felt (loggedLine.ts). */
+const summaryOf = loggedLine;
 
 function Dot({ color }: { color: string }) {
   return <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ background: markColor(color) }} />;
@@ -745,24 +744,28 @@ function PrescribedRow({
        "AM" top right as a small mono mark in a different face so it never
        competes, the coach's words low on the left, and the Log button in the
        bottom-right corner. Nothing else — no place, no coach note. After
-       logging, your result still shows. */
+       logging, your result still shows.
+
+       THEN SHORTER STILL (owner, 2026-10-04: "dej vedle toho workout 16k UT2,
+       ať to není tak tlusté na výšku, a udělej větší to AM a PM"): the kind's
+       tag rides on the workout's own line instead of a line above it, and
+       AM / PM is a readable word on the right, over the Log button or
+       "Logged". */
     <button
       type="button"
       onClick={onLog}
-      className={`relative flex w-full items-end gap-3 overflow-hidden rounded-2xl border pt-5 pr-3.5 pb-3 pl-5 text-left ${
+      className={`relative flex w-full items-center gap-3 overflow-hidden rounded-2xl border py-3 pr-3.5 pl-5 text-left ${
         log ? "border-success-line bg-success-tint" : "border-border bg-surface active:bg-surface-2"
       }`}
     >
       <span aria-hidden className="absolute inset-y-0 left-0 w-1.5" style={{ background: markColor(color) }} />
-      {/* AM / PM: the corner mark, small and mono (owner, 2026-09-17). */}
-      <span className="absolute top-1.5 right-4 font-mono text-[9px] font-medium tracking-[0.14em] text-muted">
-        {period}
-      </span>
       <div className="min-w-0 flex-1">
-        <div className="flex w-full flex-wrap items-center gap-x-2 gap-y-0.5">
-          {/* Only the little "Erg · Hard" tag wears the session's colour; the
-              card stays white (owner, 2026-09-17). It is Home's tag (KindTag,
-              2026-10-01), so a session is named the same way on both tabs. */}
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          {/* The workout itself, in the coach's words, and beside it the
+              little "Erg · Hard" tag — the only thing in the session's colour
+              (the card stays white). It is Home's tag (KindTag), so a session
+              is named the same way on both tabs. */}
+          <span className="text-[15px] font-semibold leading-snug text-text">{words || kind}</span>
           <KindTag label={kind} color={kindMark(color)} />
           {session.teamWorkout && (
             <span className="flex items-center gap-1 text-[10px] font-semibold text-accent">
@@ -770,23 +773,21 @@ function PrescribedRow({
             </span>
           )}
         </div>
-
-        {/* The workout itself, in the coach's words — and nothing under it.
-            It sits LOW in the card, under a gap, so the label above it reads
-            as the corner mark it is (owner, 2026-09-17). */}
-        <div className="mt-2.5 text-[15px] font-semibold leading-snug text-text">{words || kind}</div>
-        {log && <div className="mt-0.5 text-[12px] font-medium text-text-2">{summaryOf(log) || "Logged"}</div>}
+        {log && summaryOf(log) && <div className="mt-0.5 text-[12px] font-medium text-text-2">{summaryOf(log)}</div>}
       </div>
 
-      {log ? (
-        <span className="flex flex-shrink-0 items-center gap-1 text-[12px] font-semibold text-success">
-          <IconCheckCircle size={15} /> Logged
-        </span>
-      ) : (
-        <span className="flex-shrink-0 rounded-xl bg-primary-live px-4 py-2 text-[13px] font-semibold text-primary-contrast">
-          Log
-        </span>
-      )}
+      <div className="flex flex-shrink-0 flex-col items-end gap-1.5">
+        <span className="font-mono text-[12px] font-semibold tracking-[0.1em] text-muted">{period}</span>
+        {log ? (
+          <span className="flex items-center gap-1 text-[12px] font-semibold text-success">
+            <IconCheckCircle size={15} /> Logged
+          </span>
+        ) : (
+          <span className="rounded-xl bg-primary-live px-4 py-2 text-[13px] font-semibold text-primary-contrast">
+            Log
+          </span>
+        )}
+      </div>
     </button>
   );
 }
@@ -794,19 +795,17 @@ function PrescribedRow({
 /*
   A REST SLOT, said the way Home says it: the coach's words if they wrote any
   ("Labor Day"), otherwise "Off". The same card and stripe as a session above,
-  with the AM/PM corner mark — and nothing to press, because there is nothing
+  with AM / PM on the right — and nothing to press, because there is nothing
   to log.
 */
 function OffRow({ session, period, color }: { session: Session; period: string; color: string }) {
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-border bg-surface py-3 pr-3.5 pl-5">
+    <div className="relative flex items-center gap-3 overflow-hidden rounded-2xl border border-border bg-surface py-3 pr-3.5 pl-5">
       <span aria-hidden className="absolute inset-y-0 left-0 w-1.5" style={{ background: markColor(color) }} />
-      <span className="absolute top-1.5 right-4 font-mono text-[9px] font-medium tracking-[0.14em] text-muted">
-        {period}
-      </span>
-      <div className="text-[15px] font-semibold leading-snug text-text">
+      <div className="min-w-0 flex-1 text-[15px] font-semibold leading-snug text-text">
         {session.description.trim() || sessionLabel(session)}
       </div>
+      <span className="flex-shrink-0 font-mono text-[12px] font-semibold tracking-[0.1em] text-muted">{period}</span>
     </div>
   );
 }
@@ -820,12 +819,14 @@ function ExtraRow({ log, onEdit }: { log: LogEntry; onEdit: () => void }) {
     <button
       type="button"
       onClick={onEdit}
-      className="relative flex w-full items-end gap-3 overflow-hidden rounded-2xl border border-success-line bg-success-tint pt-5 pr-3.5 pb-3 pl-5 text-left"
+      className="relative flex w-full items-center gap-3 overflow-hidden rounded-2xl border border-success-line bg-success-tint py-3 pr-3.5 pl-5 text-left"
     >
       <span aria-hidden className="absolute inset-y-0 left-0 w-1.5" style={{ background: markColor(meta.color) }} />
       <div className="min-w-0 flex-1">
-        <KindTag label={meta.label} color={kindMark(meta.color)} />
-        <div className="mt-2.5 text-[15px] font-semibold leading-snug text-text">{log.title}</div>
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <span className="text-[15px] font-semibold leading-snug text-text">{log.title}</span>
+          <KindTag label={meta.label} color={kindMark(meta.color)} />
+        </div>
         {summaryOf(log) && <div className="mt-0.5 text-[12px] font-medium text-text-2">{summaryOf(log)}</div>}
       </div>
       <span className="flex flex-shrink-0 items-center gap-1 text-[12px] font-semibold text-success">

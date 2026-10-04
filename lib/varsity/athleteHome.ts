@@ -43,8 +43,8 @@ import type {
   Lineup,
 } from "./home";
 import type { Plan } from "./planStore";
-import { effortLabel, type LogEntry } from "./logStore";
-import { formatMetrics } from "./logParse";
+import type { LogEntry } from "./logStore";
+import { loggedLine } from "./loggedLine";
 
 // Plan category/intensity → the Home screen's color "kind". Exported because the
 // Calendar tab colours a LOGGED session by the plan session it came from, so
@@ -250,11 +250,8 @@ function statusOf(
   if (category === "off") return { status: "upcoming" };
   const entry = logsByKey[dayKey];
   if (entry) {
-    // The figures, then how it felt: "75 min · 18,000 m · Hard".
-    const summary = [formatMetrics(entry.minutes, entry.metres, entry.split), effortLabel(entry.effort)]
-      .filter(Boolean)
-      .join(" · ");
-    return { status: "done", log: { summary } };
+    // What was done, never how it felt: "72 min · 16,000 m" (loggedLine.ts).
+    return { status: "done", log: { summary: loggedLine(entry) } };
   }
   return { status: iso < todayIso ? "missed" : "upcoming" };
 }
