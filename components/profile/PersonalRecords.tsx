@@ -134,14 +134,18 @@ export default function PersonalRecords({
       ) : filled.length > 0 ? (
         <div className="flex flex-wrap gap-1.5">
           {filled.map((pr, i) => (
+            /* WHITE, like the Interests chips above (owner, 2026-10-04, style
+               A of mockups/profile-chips): it was a grey pill on the grey page
+               with a 10px uppercase name. Now the lift in 12px, the number in
+               bold 15px. */
             <span
               key={i}
-              className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-border bg-surface-2 py-1.5 pl-3 pr-2.5"
+              className="inline-flex max-w-full items-center gap-2 rounded-full border border-border bg-surface px-3.5 py-2 shadow-card"
             >
-              <span className="truncate text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">
+              <span className="truncate text-[12px] font-medium text-text">
                 {pr.lift || "Record"}
               </span>
-              <span className="shrink-0 text-[13px] font-semibold tabular-nums leading-none text-text">
+              <span className="shrink-0 text-[15px] font-bold tabular-nums leading-none text-text">
                 {pr.value || "—"}
               </span>
             </span>

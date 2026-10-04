@@ -747,7 +747,7 @@ export default function ProfilePage() {
               {user.interests.map((i) => (
                 <span
                   key={i}
-                  className="rounded-full border border-primary-line bg-primary-tint px-2.5 py-1 text-[11px] text-text"
+                  className="rounded-full border border-border bg-surface px-3 py-1.5 text-[13px] font-medium text-text shadow-card"
                 >
                   {i}
                 </span>
@@ -762,7 +762,7 @@ export default function ProfilePage() {
                 {user.languages.map((l) => (
                   <span
                     key={l}
-                    className="rounded-full border border-primary-line bg-primary-tint px-2.5 py-1 text-[11px] text-text"
+                    className="rounded-full border border-border bg-surface px-3 py-1.5 text-[13px] font-medium text-text shadow-card"
                   >
                     {l}
                   </span>
@@ -773,13 +773,16 @@ export default function ProfilePage() {
 
           {/* WHAT YOU STUDY — a chip, the same pill as Interests and Languages
               above it, rather than the label-and-value row it used to be.
-              Interests, Languages and Concentration all share the school-colour
-              tint with dark text (owner, 2026-09-16). */}
+              Interests, Languages and Concentration share one chip: WHITE with
+              a hairline and the card shadow, black 13px words (owner,
+              2026-10-04, style A of mockups/profile-chips — the see-through
+              school-colour tint read as a dark, muddy pink on the page, at
+              11px). */}
           {user.concentration && (
             <div className="mt-2.5">
               <div className="mb-1.5 text-[11px] text-muted">Concentration</div>
               <div className="flex flex-wrap gap-1.5">
-                <span className="rounded-full border border-primary-line bg-primary-tint px-2.5 py-1 text-[11px] text-text">
+                <span className="rounded-full border border-border bg-surface px-3 py-1.5 text-[13px] font-medium text-text shadow-card">
                   {user.concentration}
                 </span>
               </div>
