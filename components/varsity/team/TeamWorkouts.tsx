@@ -443,7 +443,7 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
 
   return (
     <div className="mt-4">
-      {/* No erg board to open: the console walk passes that step at once. */}
+      {/* No erg board to light: the console walk does not wait for one. */}
       {inConsole && ergRows.length === 0 && <span hidden data-tour-absent="coach-workouts-first" />}
       {/* ERG | WATER — the same full-width switch the Team tab uses above the
           roster: the two halves ARE the box, no inset pill, and overflow-hidden
@@ -531,8 +531,8 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
         )}
         {shownRows.map((row, i) => {
           // The first row is lit with the switch by Varsity Mode's tour. The
-          // console walk OPENS it, so there it is named on the Erg side only:
-          // a Water row may be a timing sheet, which is not the board it shows.
+          // console walk names it on the Erg side only: its caption is about
+          // the shared sessions, and a Water row may be a timing sheet.
           const tour =
             i !== 0 ? undefined : !inConsole ? "varsity-workouts-first" : side === "erg" ? "coach-workouts-first" : undefined;
           if (row.workout) {

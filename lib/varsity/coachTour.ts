@@ -25,8 +25,8 @@
   hard, a usual workout, the time, sharing the results, Every week. The
   editor is left with Back; Done is never pressed. Lineup followed
   (2026-10-04), then was cut back to three steps the same day: the day list,
-  Repeat, and the pool, which says how to fill a seat. Then Workouts: an erg
-  board opened, and the + that times race pieces.
+  Repeat, and the pool, which says how to fill a seat. Then Workouts: the
+  boards, and the + that times race pieces.
 
   ONLY THE HOW (owner, 2026-10-04: "nepotřebujeme vysvětlovat každý button,
   například publish nebo jaký je dnes workout, bylo jasné"). So no Today step,
@@ -41,8 +41,7 @@
                that still needs its boats, or today's morning), and the
                builder's athlete pool, there with or without a plan or a crew
     Workouts   the Erg | Water | Ranking switch, plus the first erg row if
-               any — its board is opened only when there is one — and the
-               Water side's +, there with or without a race
+               any, and the Water side's +, there with or without a race
     Ranking    the same switch, plus the list switch under it
     Team       the squad's week card (a dash when nobody logged), then the
                first rower
@@ -50,10 +49,9 @@
   IT CHANGES NOTHING. It opens the session editor and fills in its form, but
   leaves with Back, which keeps nothing; it never presses Done or Publish.
   The lineup builder saves by itself, so while a walk is on screen it writes
-  nothing at all. A workout board only reads, and the walk points at the
-  race +, never presses it.
-  Abandoned inside the editor, the builder or a board, the walk presses its
-  Back on the way out (closeOnExit).
+  nothing at all. The walk points at the race +, never presses it.
+  Abandoned inside the editor or the builder, the walk presses its Back on
+  the way out (closeOnExit).
 
   CAPTAINS DO NOT GET THIS. A captain's console is the squad screen and
   settings — most of these steps point at tabs they do not have. The gate in
@@ -179,11 +177,10 @@ const steps: TourStep[] = [
   /* ── Workouts ─────────────────────────────────────────────────────────── */
   /*
     READING THE RESULTS, and TIMING A RACE (owner, 2026-10-04: "udělej teď
-    workouts how-to … nepotřebujeme vysvětlovat každý button"). It opens the
-    newest erg board, leaves it with Back, and points at the Water side's +
-    without pressing it — picking a session there makes a race day, which the
-    walk must not. With no erg board the opening step is passed at once
-    (data-tour-absent in TeamWorkouts).
+    workouts how-to … nepotřebujeme vysvětlovat každý button"). The newest erg
+    board is pointed at, not opened ("ta 14 to nemusíš ukazovat uvnitř"), and
+    the Water side's + is pointed at without pressing it — picking a session
+    there makes a race day, which the walk must not.
   */
   {
     press: tab(WORKOUTS),
@@ -191,17 +188,10 @@ const steps: TourStep[] = [
     anchor: "varsity-workouts-switch",
     alsoAnchor: "coach-workouts-first",
     title: "Workouts",
-    body: "Every session you share the results of. Each rower logs their own result, and the board fills itself.",
+    body: "Every session you share the results of. Each rower logs their own result, and the board fills itself. Tap one to see everyone’s.",
   },
   {
-    press: "coach-workouts-first",
-    anchor: "coach-board-view",
-    alsoAnchor: "coach-board-first",
-    title: "Everyone’s result",
-    body: "Tap a name for their whole piece. All stats shows every number at once, like a spreadsheet.",
-  },
-  {
-    press: ["coach-board-back", "varsity-workouts-water"],
+    press: "varsity-workouts-water",
     anchor: "coach-workouts-add-race",
     title: "Race pieces",
     body: "Tap + to time a session’s pieces: each crew’s start and finish, and the board works out the rest. From the second piece on, Switch swaps two rowers for a seat race.",
@@ -243,5 +233,5 @@ const steps: TourStep[] = [
 export const coachTour: Tour = {
   id: "coach",
   steps,
-  closeOnExit: ["coach-plan-editor-back", "coach-lineup-back", "coach-board-back"],
+  closeOnExit: ["coach-plan-editor-back", "coach-lineup-back"],
 };
