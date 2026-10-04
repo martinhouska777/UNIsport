@@ -1,0 +1,162 @@
+<title>Profile Chip Styles</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: phone-width slices of the Profile tab's "More about you", today's look first, then A-E; wraps to one column on a phone.
+   The slices use the app's real Harvard light colours. Single light look on purpose: it shows the app's light mode, the default. */
+:root {
+  color-scheme: light;
+  --page: #f6f7f9;
+  --ink: #141618;
+  --app-bg: #ebf0f6;
+  --surface: #fafcfe;
+  --surface-2: #dee3e9;
+  --border: rgba(203, 207, 213, 0.55);
+  --frame: #d9dee5;
+  --faint: #676d76;
+  --primary: #a51c30;
+  --on-primary: #ffffff;
+  --success: #166534;
+  --shadow: 0 1px 2px rgba(20, 22, 24, 0.05), 0 4px 14px rgba(20, 22, 24, 0.04);
+  --tint: color-mix(in oklab, var(--primary) 14%, transparent);
+  --line: color-mix(in oklab, var(--primary) 38%, transparent);
+  --wash: color-mix(in oklab, var(--primary) 7%, var(--surface));
+  --success-tint: color-mix(in oklab, var(--success) 13%, transparent);
+  --success-line: color-mix(in oklab, var(--success) 36%, transparent);
+  --font: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); color: var(--ink); font-family: var(--font); -webkit-font-smoothing: antialiased; }
+.wrap { max-width: 1240px; margin: 0 auto; padding-inline: 16px; padding-block: 28px 48px; }
+h1 { margin: 0; font-size: clamp(22px, 3.2vw, 30px); font-weight: 700; letter-spacing: -0.02em; text-wrap: balance; }
+.lede { margin: 8px 0 0; font-size: 14px; line-height: 1.5; max-width: 62ch; }
+.grid { margin-top: 24px; display: grid; gap: 28px 20px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 330px), 1fr)); align-items: start; }
+.board { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.board-head { display: flex; align-items: center; gap: 10px; }
+.letter { display: inline-flex; align-items: center; justify-content: center; min-width: 30px; height: 30px; padding: 0 8px; border-radius: 9px; background: var(--ink); color: var(--page); font-size: 14px; font-weight: 700; }
+.board.today .letter { background: transparent; color: var(--ink); border: 1.5px dashed var(--faint); font-size: 12px; }
+.board-head h2 { margin: 0; font-size: 16px; font-weight: 700; letter-spacing: -0.01em; }
+.note { margin: 0; font-size: 13px; line-height: 1.5; max-width: 46ch; }
+
+/* ---------- the phone slice (shared chrome, as the app draws it today) ---------- */
+.phone { width: 100%; max-width: 375px; background: var(--app-bg); border: 1px solid var(--frame); border-radius: 22px; overflow: hidden; padding-bottom: 6px; }
+.caps { font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; }
+.fold { display: flex; align-items: center; justify-content: space-between; padding: 14px 14px 4px; }
+.block { padding: 6px 14px 12px; border-bottom: 1px solid var(--border); }
+.block:last-child { border-bottom: 0; }
+.row-label { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; font-size: 11px; }
+.sub-label { margin: 10px 0 6px; font-size: 11px; }
+.edit { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 500; color: var(--primary); }
+.rec-head { display: flex; align-items: center; justify-content: space-between; margin: 6px 0 8px; }
+.tools { display: inline-flex; align-items: center; gap: 10px; }
+.eye { display: inline-flex; width: 28px; height: 28px; align-items: center; justify-content: center; border-radius: 50%; background: var(--success-tint); border: 1px solid var(--success-line); color: var(--success); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { border-radius: 999px; white-space: nowrap; }
+.recs.pills { display: flex; flex-wrap: wrap; gap: 6px; }
+.recs.pills .rec { display: inline-flex; align-items: center; gap: 7px; border-radius: 999px; }
+.recs.tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.recs.tiles .rec { display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; border-radius: 14px; background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow); min-width: 0; }
+.recs.tiles .lift { font-size: 12px; font-weight: 500; }
+.recs.tiles .val { font-size: 21px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; }
+.recs.tiles small { font-size: 12px; font-weight: 600; margin-left: 3px; letter-spacing: 0; }
+.val { font-variant-numeric: tabular-nums; }
+
+/* ---------- Today: exactly what the app draws now ---------- */
+.s-today .chip { border: 1px solid var(--line); background: var(--tint); padding: 4px 10px; font-size: 11px; }
+.s-today .rec { border: 1px solid var(--border); background: var(--surface-2); padding: 6px 10px 6px 12px; }
+.s-today .lift { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+.s-today .val { font-size: 13px; font-weight: 600; }
+
+/* ---------- A · White ---------- */
+.s-a .chip { background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow); padding: 7px 13px; font-size: 13px; font-weight: 500; }
+.s-a .rec { background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow); padding: 8px 14px; }
+.s-a .lift { font-size: 12px; font-weight: 500; }
+.s-a .val { font-size: 15px; font-weight: 700; }
+
+/* ---------- B · White, crimson words ---------- */
+.s-b .chip { background: var(--surface); border: 1px solid var(--line); padding: 7px 13px; font-size: 13px; font-weight: 600; color: var(--primary); }
+.s-b .rec { background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow); padding: 8px 14px; }
+.s-b .lift { font-size: 12px; font-weight: 500; }
+.s-b .val { font-size: 15px; font-weight: 700; color: var(--primary); }
+
+/* ---------- C · Pale crimson ---------- */
+.s-c .chip { background: var(--wash); padding: 7px 13px; font-size: 13px; font-weight: 600; color: var(--primary); }
+
+/* ---------- D · White cards ---------- */
+.carded { padding: 0 0 12px; }
+.carded .block { margin: 8px 12px 0; padding: 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow); }
+.carded .block:last-child { border-bottom: 1px solid var(--border); }
+.carded .rec-head { margin-top: 0; }
+.s-d .chip { background: var(--app-bg); padding: 7px 13px; font-size: 13px; font-weight: 500; }
+.s-d .recs.rows { display: flex; flex-direction: column; }
+.s-d .recs.rows .rec { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-top: 1px solid var(--border); }
+.s-d .recs.rows .rec:first-child { border-top: 0; padding-top: 4px; }
+.s-d .lift { font-size: 14px; }
+.s-d .val { font-size: 14px; font-weight: 700; }
+
+/* ---------- E · Solid crimson ---------- */
+.s-e .chip { background: var(--primary); color: var(--on-primary); padding: 7px 13px; font-size: 13px; font-weight: 600; }
+.s-e .recs.tiles .val { color: var(--primary); }
+</style>
+
+<div class="wrap">
+  <h1>Interests and records, five ways</h1>
+  <p class="lede">The “More about you” part of your Profile tab, in Harvard’s real colours. Today’s look comes first so you can compare. Every option uses 13px words instead of 11px, and nothing sits grey on grey.</p>
+  <div class="grid">
+    <section class="board today" aria-labelledby="t-today">
+      <div class="board-head"><span class="letter">Now</span><h2 id="t-today">Today</h2></div>
+      <div class="phone s-today">
+        <div class="fold"><span class="caps">More about you</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></div>
+        <div class="block"><div class="row-label"><span>Interests</span><span class="edit"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4z"/></svg>Edit</span></div><div class="chips"><span class="chip">Startups</span><span class="chip">Running</span><span class="chip">Coffee</span><span class="chip">Hiking</span><span class="chip">Music</span><span class="chip">Travel</span></div><div class="sub-label">Languages</div><div class="chips"><span class="chip">English</span><span class="chip">Czech</span></div></div>
+        <div class="block"><div class="rec-head"><span class="caps">Personal records</span><span class="tools"><span class="eye"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></span><span class="edit"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4z"/></svg>Edit</span></span></div><div class="recs pills"><span class="rec"><span class="lift">Bench</span><span class="val">100 kg</span></span><span class="rec"><span class="lift">Squat</span><span class="val">140 kg</span></span><span class="rec"><span class="lift">Deadlift</span><span class="val">180 kg</span></span></div></div>
+      </div>
+      <p class="note">11px words on a see-through crimson tint, which turns a muddy pink on the blue-grey page. Records are a grey pill on a grey page.</p>
+    </section>
+    <section class="board" aria-labelledby="t-a">
+      <div class="board-head"><span class="letter">A</span><h2 id="t-a">White</h2></div>
+      <div class="phone s-a">
+        <div class="fold"><span class="caps">More about you</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></div>
+        <div class="block"><div class="row-label"><span>Interests</span><span class="edit"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4z"/></svg>Edit</span></div><div class="chips"><span class="chip">Startups</span><span class="chip">Running</span><span class="chip">Coffee</span><span class="chip">Hiking</span><span class="chip">Music</span><span class="chip">Travel</span></div><div class="sub-label">Languages</div><div class="chips"><span class="chip">English</span><span class="chip">Czech</span></div></div>
+        <div class="block"><div class="rec-head"><span class="caps">Personal records</span><span class="tools"><span class="eye"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></span><span class="edit"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4z"/></svg>Edit</span></span></div><div class="recs pills"><span class="rec"><span class="lift">Bench</span><span class="val">100 kg</span></span><span class="rec"><span class="lift">Squat</span><span class="val">140 kg</span></span><span class="rec"><span class="lift">Deadlift</span><span class="val">180 kg</span></span></div></div>
+      </div>
+      <p class="note">White chips with a hairline and a soft shadow, black words at 13px. Records are white pills with the number in bold.</p>
+    </section>
+    <section class="board" aria-labelledby="t-b">
+      <div class="board-head"><span class="letter">B</span><h2 id="t-b">White, crimson words</h2></div>
+      <div class="phone s-b">
+        <div class="fold"><span class="caps">More about you</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></div>
+        <div class="block"><div class="row-label"><span>Interests</span><span class="edit"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4z"/></svg>Edit</span></div><div class="chips"><span class="chip">Startups</span><span class="chip">Running</span><span class="chip">Coffee</span><span class="chip">Hiking</span><span class="chip">Music</span><span class="chip">Travel</span></div><div class="sub-label">Languages</div><div class="chips"><span class="chip">English</span><span class="chip">Czech</span></div></div>
+        <div class="block"><div class="rec-head"><span class="caps">Personal records</span><span class="tools"><span class="eye"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></span><span class="edit"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4z"/></svg>Edit</span></span></div><div class="recs pills"><span class="rec"><span class="lift">Bench</span><span class="val">100 kg</span></span><span class="rec"><span class="lift">Squat</span><span class="val">140 kg</span></span><span class="rec"><span class="lift">Deadlift</span><span class="val">180 kg</span></span></div></div>
+      </div>
+      <p class="note">The same white chips, with the words and the hairline in Harvard crimson. Record numbers in crimson.</p>
+    </section>
+    <section class="board" aria-labelledby="t-c">
+      <div class="board-head"><span class="letter">C</span><h2 id="t-c">Pale crimson</h2></div>
+      <div class="phone s-c">
+        <div class="fold"><span class="caps">More about you</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></div>
+        <div class="block"><div class="row-label"><span>Interests</span><span class="edit"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4z"/></svg>Edit</span></div><div class="chips"><span class="chip">Startups</span><span class="chip">Running</span><span class="chip">Coffee</span><span class="chip">Hiking</span><span class="chip">Music</span><span class="chip">Travel</span></div><div class="sub-label">Languages</div><div class="chips"><span class="chip">English</span><span class="chip">Czech</span></div></div>
+        <div class="block"><div class="rec-head"><span class="caps">Personal records</span><span class="tools"><span class="eye"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></span><span class="edit"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4z"/></svg>Edit</span></span></div><div class="recs tiles"><span class="rec"><span class="lift">Bench</span><span class="val">100<small>kg</small></span></span><span class="rec"><span class="lift">Squat</span><span class="val">140<small>kg</small></span></span><span class="rec"><span class="lift">Deadlift</span><span class="val">180<small>kg</small></span></span></div></div>
+      </div>
+      <p class="note">A very light, solid crimson wash with crimson words and no border. Records become three white tiles with a big number.</p>
+    </section>
+    <section class="board" aria-labelledby="t-d">
+      <div class="board-head"><span class="letter">D</span><h2 id="t-d">White cards</h2></div>
+      <div class="phone s-d carded">
+        <div class="fold"><span class="caps">More about you</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></div>
+        <div class="block"><div class="row-label"><span>Interests</span><span class="edit"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4z"/></svg>Edit</span></div><div class="chips"><span class="chip">Startups</span><span class="chip">Running</span><span class="chip">Coffee</span><span class="chip">Hiking</span><span class="chip">Music</span><span class="chip">Travel</span></div><div class="sub-label">Languages</div><div class="chips"><span class="chip">English</span><span class="chip">Czech</span></div></div>
+        <div class="block"><div class="rec-head"><span class="caps">Personal records</span><span class="tools"><span class="eye"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></span><span class="edit"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4z"/></svg>Edit</span></span></div><div class="recs rows"><span class="rec"><span class="lift">Bench</span><span class="val">100 kg</span></span><span class="rec"><span class="lift">Squat</span><span class="val">140 kg</span></span><span class="rec"><span class="lift">Deadlift</span><span class="val">180 kg</span></span></div></div>
+      </div>
+      <p class="note">Each part sits in a white card, like the gym page and someone else’s profile. Chips are pale blue-grey inside the card; records are a list.</p>
+    </section>
+    <section class="board" aria-labelledby="t-e">
+      <div class="board-head"><span class="letter">E</span><h2 id="t-e">Solid crimson</h2></div>
+      <div class="phone s-e">
+        <div class="fold"><span class="caps">More about you</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></div>
+        <div class="block"><div class="row-label"><span>Interests</span><span class="edit"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4z"/></svg>Edit</span></div><div class="chips"><span class="chip">Startups</span><span class="chip">Running</span><span class="chip">Coffee</span><span class="chip">Hiking</span><span class="chip">Music</span><span class="chip">Travel</span></div><div class="sub-label">Languages</div><div class="chips"><span class="chip">English</span><span class="chip">Czech</span></div></div>
+        <div class="block"><div class="rec-head"><span class="caps">Personal records</span><span class="tools"><span class="eye"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></span><span class="edit"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4z"/></svg>Edit</span></span></div><div class="recs tiles"><span class="rec"><span class="lift">Bench</span><span class="val">100<small>kg</small></span></span><span class="rec"><span class="lift">Squat</span><span class="val">140<small>kg</small></span></span><span class="rec"><span class="lift">Deadlift</span><span class="val">180<small>kg</small></span></span></div></div>
+      </div>
+      <p class="note">The loud one: solid crimson chips with white words, like the shared-hours chips on someone’s profile. Record tiles with crimson numbers.</p>
+    </section>
+  </div>
+</div>
