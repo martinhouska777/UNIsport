@@ -508,21 +508,18 @@ export default function ProfilePage() {
 
           {/* Three EQUAL columns, so the two hairlines land at exactly a third
               and two thirds. They show a dash until the numbers have landed, so
-              the row never jumps. The labels are 10px here because a third of
-              the space next to a photo is narrower than a third of the screen
-              was. */}
+              the row never jumps. The labels are BLACK 12px words, the number
+              bold (owner, 2026-10-04: "make it so the text is more visible") —
+              they were 10px capitals, Partners and Followers in thin school
+              colour. Black on all three: the tap still opens the lists. */}
           <div className="grid grid-cols-3">
             {stats.map((s, i) => {
               const body = (
                 <>
-                  <div className="text-[17px] font-medium tabular-nums text-text">
+                  <div className="text-[18px] font-bold tabular-nums text-text">
                     {statsReady ? s.value : "—"}
                   </div>
-                  <div
-                    className={`mt-0.5 truncate text-[10px] uppercase tracking-[0.04em] ${
-                      s.onClick ? "text-primary" : "text-muted"
-                    }`}
-                  >
+                  <div className="mt-0.5 truncate text-[12px] font-medium text-text">
                     {s.label}
                   </div>
                 </>

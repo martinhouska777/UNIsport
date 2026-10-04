@@ -280,7 +280,11 @@ export default function TrainingCalendar({
         </button>
       </div>
 
-      {/* The grid. Swiping it left/right is the same as the arrows. */}
+      {/* The grid. Swiping it left/right is the same as the arrows.
+          Every day is WHITE (owner, 2026-10-04: "make it white"): a trained
+          day was a see-through school-colour tint that read as a muddy pink
+          on the page. It is told apart by its school-colour hairline and the
+          "Gym" / "Chest" tag inside it; today by its solid ring. */}
       <div onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
         {mode === "week" ? (
           <div className="grid grid-cols-7 gap-1">
@@ -299,7 +303,7 @@ export default function TrainingCalendar({
                   aria-label={has ? `${dayWords(chips, planned)} on ${d.name}` : d.name}
                   className={`flex min-h-[64px] flex-col items-stretch overflow-hidden rounded-md p-1 text-left ${
                     chips.length > 0
-                      ? "border border-primary-line bg-primary-tint"
+                      ? "border border-primary-line bg-surface"
                       : has
                         ? "border border-dashed border-primary-line bg-surface"
                         : isToday
@@ -360,11 +364,11 @@ export default function TrainingCalendar({
                           aria-label={has ? `${dayWords(chips, planned)} on day ${n}` : `Day ${n}`}
                           className={`flex aspect-square flex-col items-stretch overflow-hidden rounded-md p-1 ${
                             chips.length > 0
-                              ? "border border-primary-line bg-primary-tint"
+                              ? "border border-primary-line bg-surface"
                               : has
                                 ? "border border-dashed border-primary-line bg-surface"
                                 : isToday
-                                  ? "border border-primary bg-primary-tint"
+                                  ? "border border-primary bg-surface"
                                   : "border border-border bg-surface"
                           } ${isToday ? "ring-1 ring-primary" : ""} disabled:cursor-default`}
                         >
