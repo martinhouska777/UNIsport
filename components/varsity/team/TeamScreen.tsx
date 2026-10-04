@@ -364,7 +364,8 @@ export default function TeamScreen({
   /* A button in each roster row, between the name and the side — the coach's
      technical note (owner, 2026-09-13: it used to be one big "Write a
      technical note" button on top of the list). Athletes get no button. */
-  rowAction?: (a: Athlete) => React.ReactNode;
+  /** `tour`: this is the row the console walk lights (see shownRowers). */
+  rowAction?: (a: Athlete, tour: boolean) => React.ReactNode;
   /* The Coach Console — see WorkoutBoard's `inConsole`. */
   inConsole?: boolean;
   /* Where the back arrow goes, when this screen was opened from somewhere
@@ -466,6 +467,10 @@ export default function TeamScreen({
   };
   const shownRowers = rowers.filter(matches).sort(byWeek);
   const shownCoxes = coxes.filter(matches).sort(byWeek);
+  /* The row the console walk lights, and whose pencil it presses: the first
+     rower who has joined (a profile to open, a phone a note can reach) —
+     else simply the first. */
+  const tourRowId = (shownRowers.find((a) => athleteHref?.(a)) ?? shownRowers[0])?.id;
   const shownCount = shownRowers.length + shownCoxes.length;
 
   return (
@@ -548,14 +553,14 @@ export default function TeamScreen({
           </div>
 
           <div className="mt-3 flex flex-col gap-1.5">
-            {shownRowers.map((a, i) => (
+            {shownRowers.map((a) => (
               <RosterRow
                 key={a.id}
                 a={a}
-                tour={i === 0 ? "coach-team-first-rower" : undefined}
+                tour={a.id === tourRowId ? "coach-team-first-rower" : undefined}
                 onOpen={() => setOpen(a.id)}
                 href={athleteHref?.(a) ?? undefined}
-                action={rowAction?.(a)}
+                action={rowAction?.(a, a.id === tourRowId)}
               />
             ))}
             {/* Coxswains, under their own heading — only when there are any to show. */}
@@ -570,7 +575,7 @@ export default function TeamScreen({
                 a={a}
                 onOpen={() => setOpen(a.id)}
                 href={athleteHref?.(a) ?? undefined}
-                action={rowAction?.(a)}
+                action={rowAction?.(a, false)}
               />
             ))}
             {shownCount === 0 && (

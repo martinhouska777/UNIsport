@@ -93,7 +93,7 @@ import TeamRanking from "@/components/varsity/team/TeamRanking";
 import Sheet from "@/components/varsity/Sheet";
 import ExampleTag from "@/components/varsity/ExampleTag";
 import { fetchRaceDays, saveRaceDay } from "@/lib/varsity/raceStore";
-import { pieceCountFromText, piecesFromSession, type RaceDay } from "@/lib/varsity/racePieces";
+import { crewTime, pieceCountFromText, piecesFromSession, type RaceDay } from "@/lib/varsity/racePieces";
 import { fetchLineupsFor } from "@/lib/varsity/lineupStore";
 import type { Boat } from "@/lib/varsity/coachLineup";
 import type { SessionMap } from "@/lib/varsity/coachPlan";
@@ -199,6 +199,7 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
     small boats") and so the coach's picker can offer the water sessions.
   */
   const [races, setRaces] = useState<RaceDay[]>([]);
+  const [racesLoaded, setRacesLoaded] = useState(false);
   const [raceBoats, setRaceBoats] = useState<Record<string, Boat[]>>({});
   const [planSessions, setPlanSessions] = useState<SessionMap>({});
   const [openRace, setOpenRace] = useState<string | null>(null);
@@ -215,6 +216,13 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
     nothing (RaceBoard `practice`). It is shown only while the walk is, so the
     walk ending takes it with it. A squad with no session to time gets the
     example race instead (coachTourExample.ts).
+
+    BUT A RACE THE SQUAD HAS ALREADY TIMED COMES FIRST (owner, 2026-10-04:
+    "koukni se na nějaký reálný piece, co jsme měli, třeba 2x2 miles, a ukaž
+    to v reálu"). The walk opens it from the list instead — real crews, real
+    times, a real switch — and its board is just as `practice` while the walk
+    is on (`tourShow` below). The + and a new session are only the way in
+    for a squad that has nothing timed yet.
   */
   const touring = useTourRunning();
   type TourRace = { day: RaceDay; title: string; time?: string; boats: Boat[]; example: boolean };
@@ -296,6 +304,7 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
     fetchRaceDays().then(async (days) => {
       if (!active) return;
       setRaces(days);
+      setRacesLoaded(true);
       // The crews' boats, so the coach can add one to a piece later.
       const boats = await fetchLineupsFor(days.map((d) => d.dayKey));
       if (active) setRaceBoats(boats);
@@ -336,6 +345,25 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
     openRaceBoard(dayKey);
     await saveRaceDay(day);
   };
+
+  /*
+    THE RACE THE WALK OPENS: one of two pieces or more with every crew timed,
+    and of those the one with the fewest crews in a piece, so the board fits
+    a phone — the newest on a tie. The squad's "2x2 miles at race pace" (four
+    eights, a switch between the pieces) is that one. Null: nothing timed,
+    and the walk goes in by the + (see the + below).
+  */
+  const tourShow = useMemo(() => {
+    if (!touring) return null;
+    const crewsIn = (r: RaceDay) => Math.max(...r.pieces.map((p) => p.crews.length));
+    const when = (r: RaceDay) => parseSessionKey(r.dayKey)?.date.getTime() ?? 0;
+    const timed = races.filter(
+      (r) =>
+        r.pieces.length >= 2 &&
+        r.pieces.every((p) => p.crews.length > 0 && p.crews.every((c) => crewTime(c) != null)),
+    );
+    return [...timed].sort((a, b) => crewsIn(a) - crewsIn(b) || when(b) - when(a))[0]?.dayKey ?? null;
+  }, [touring, races]);
 
   /* Water sessions of the last three weeks, today included, that have no
      race pieces yet — what the picker offers. Newest first. */
@@ -524,7 +552,9 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
             <button
               type="button"
               onClick={() => setPickingRace(true)}
-              data-tour="coach-workouts-add-race"
+              data-tour={
+                touring && racesLoaded && !tourShow ? "coach-workouts-add-race coach-race-open" : "coach-workouts-add-race"
+              }
               aria-label="Time race pieces"
               className="tap44 press-icon flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary text-primary-contrast"
             >
@@ -600,7 +630,7 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
                 key={row.key}
                 type="button"
                 onClick={() => openRaceBoard(r.dayKey)}
-                data-tour={tour}
+                data-tour={r.dayKey === tourShow ? "coach-race-open" : tour}
                 className={ROW}
               >
                 <span
@@ -654,7 +684,11 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
             inConsole={inConsole}
             openOnSwitches={!!raceFrom}
             focus={raceFrom?.focus}
-            onChange={(next) => setRaces((rs) => rs.map((r) => (r.dayKey === next.dayKey ? next : r)))}
+            /* Opened by the walk: shown as it is, and nothing typed is kept. */
+            practice={touring}
+            onChange={(next) => {
+              if (!touring) setRaces((rs) => rs.map((r) => (r.dayKey === next.dayKey ? next : r)));
+            }}
             onDeleted={() => {
               setRaces((rs) => rs.filter((r) => r.dayKey !== openRace));
               setOpenRace(null);

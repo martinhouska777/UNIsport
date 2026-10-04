@@ -23,6 +23,7 @@ import { saveNote, type TeamMember } from "@/lib/varsity/notesStore";
 import { fetchProfileFullName } from "@/lib/varsity/planStore";
 import { notifySquad } from "@/lib/push/client";
 import { IconArrowLeft, IconCheck } from "@/components/icons";
+import { useTourRunning } from "@/lib/tour";
 
 const initialsOf = (name: string) =>
   name
@@ -48,6 +49,9 @@ export default function NoteEditor({
   const [text, setText] = useState(initialNote);
   const [busy, setBusy] = useState(false);
   const dirty = text.trim() !== initialNote.trim();
+  /* Opened by the console walk to show how a note is written: it never
+     sends one (lib/varsity/coachTour.ts). */
+  const touring = useTourRunning();
 
   /* WHO IS SIGNING IT. Read while the coach types rather than at the moment
      they hit Send, so a slow profile lookup can never be the reason a note
@@ -62,6 +66,7 @@ export default function NoteEditor({
   }, [userId]);
 
   const save = async () => {
+    if (touring) return;
     setBusy(true);
     const { error } = await saveNote(member.id, text, { id: userId, name: myName });
     setBusy(false);
@@ -86,7 +91,7 @@ export default function NoteEditor({
   const overlay = (
     <div className="fixed inset-0 z-[60] flex h-dvh flex-col bg-background">
       <div className="flex flex-shrink-0 items-center gap-2 border-b border-border px-4 py-3">
-        <button type="button" onClick={onBack} className="flex items-center gap-1 text-[13px] text-muted">
+        <button type="button" onClick={onBack} data-tour="coach-note-back" className="flex items-center gap-1 text-[13px] text-muted">
           <IconArrowLeft size={18} /> Back
         </button>
       </div>
@@ -112,6 +117,7 @@ export default function NoteEditor({
           </p>
 
           <textarea
+            data-tour="coach-note-text"
             autoFocus
             value={text}
             onChange={(e) => setText(e.target.value)}

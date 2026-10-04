@@ -123,9 +123,13 @@ function same(a: Box | null, b: Box | null) {
   lg:flex`), and both carry the same anchor names — so exactly one copy of any
   anchor has a real size. Picking the measurable one is how this supports both
   layouts without asking how wide the window is.
+
+  A control may wear TWO names, space-separated, when two steps reach it by
+  different roles — the Water side's + is "the + to light" and, on a squad
+  with no timed race to open, also "the way into a race board".
 */
 function visibleAnchor(anchor: string): HTMLElement | null {
-  const all = Array.from(document.querySelectorAll<HTMLElement>(`[data-tour="${anchor}"]`));
+  const all = Array.from(document.querySelectorAll<HTMLElement>(`[data-tour~="${anchor}"]`));
   return (
     all.find((el) => {
       const r = el.getBoundingClientRect();

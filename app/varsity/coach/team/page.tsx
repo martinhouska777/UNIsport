@@ -52,6 +52,7 @@ export default function CoachTeamPage() {
   const [accounts, setAccounts] = useState<Record<string, string>>({});
   // Who can get a note, and the notes they already have (account id → note).
   const [members, setMembers] = useState<TeamMember[]>([]);
+  const [membersRead, setMembersRead] = useState(false);
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [writing, setWriting] = useState<TeamMember | null>(null);
   const [notJoined, setNotJoined] = useState<string | null>(null);
@@ -81,6 +82,7 @@ export default function CoachTeamPage() {
       if (!active) return;
       setMembers(r);
       setNotes(n);
+      setMembersRead(true);
     });
     return () => {
       active = false;
@@ -117,31 +119,38 @@ export default function CoachTeamPage() {
         /* A coach (not a captain) gets the note button in each row. */
         rowAction={
           writesNotes
-            ? (a) => {
+            ? (a, tour) => {
                 const member = memberByRosterId[a.id];
                 const hasNote = !!(member && notes[member.id]?.trim());
                 return (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      member ? setWriting(member) : setNotJoined(a.name)
-                    }
-                    aria-label={`${hasNote ? "Edit the" : "Write a"} technical note for ${a.name}`}
-                    /* THE PENCIL IS THE SCHOOL'S COLOUR — crimson at Harvard,
-                     navy at Yale — and never a fixed red (owner, 2026-09-17:
-                     "I want it in red, so it's working… the colour would be
-                     according to the school"). It used to be grey until a
-                     note existed, which read as switched off. It is live in
-                     every row now, and a row that already HAS a note is the
-                     filled one. */
-                    className={`tap44 press-icon flex h-8 w-8 items-center justify-center rounded-lg border text-primary ${
-                      hasNote
-                        ? "border-primary-line bg-primary-tint"
-                        : "border-border bg-surface-2"
-                    }`}
-                  >
-                    <IconPencil size={14} />
-                  </button>
+                  <>
+                    {/* The console walk presses the lit row's pencil to show how
+                        a note is written (lib/varsity/coachTour.ts); with nobody
+                        there to send it to, it says so and moves on. */}
+                    {tour && membersRead && !member && <span hidden data-tour-absent="coach-team-note" />}
+                    <button
+                      type="button"
+                      onClick={() =>
+                        member ? setWriting(member) : setNotJoined(a.name)
+                      }
+                      data-tour={tour && member ? "coach-team-note" : undefined}
+                      aria-label={`${hasNote ? "Edit the" : "Write a"} technical note for ${a.name}`}
+                      /* THE PENCIL IS THE SCHOOL'S COLOUR — crimson at Harvard,
+                       navy at Yale — and never a fixed red (owner, 2026-09-17:
+                       "I want it in red, so it's working… the colour would be
+                       according to the school"). It used to be grey until a
+                       note existed, which read as switched off. It is live in
+                       every row now, and a row that already HAS a note is the
+                       filled one. */
+                      className={`tap44 press-icon flex h-8 w-8 items-center justify-center rounded-lg border text-primary ${
+                        hasNote
+                          ? "border-primary-line bg-primary-tint"
+                          : "border-border bg-surface-2"
+                      }`}
+                    >
+                      <IconPencil size={14} />
+                    </button>
+                  </>
                 );
               }
             : undefined

@@ -338,7 +338,12 @@ export default function RaceBoard({
           the buttons' 44px touch area poked 2px out of the bottom of the row,
           which let it be nudged up and down, so the row is 2px taller (pb-1.5)
           and its vertical overflow is shut. */}
-      <div ref={tabRow} data-tour="coach-race-tabs" className="chip-row mt-3 flex items-center gap-1.5 overflow-x-auto overflow-y-hidden pb-1.5">
+      <div
+        ref={tabRow}
+        data-tour="coach-race-tabs"
+        data-tour-state={piece?.crews.some((c) => crewTime(c) != null) ? "timed" : "new"}
+        className="chip-row mt-3 flex items-center gap-1.5 overflow-x-auto overflow-y-hidden pb-1.5"
+      >
         {day.pieces.map((p, k) => (
           <TabButton key={p.id} on={tab === p.id} onClick={() => setTab(p.id)} tour={k === 1 ? "coach-race-tab-2" : undefined}>
             {p.name}
@@ -416,9 +421,12 @@ export default function RaceBoard({
             cb.rows.length + cb.pending.length === 1 ? (
               /* The only boat in its class: the crew and its time, with no
                  place and no gap to a winner (see ONE BOAT above). */
-              <div key={cb.badge} data-tour={bi === 0 ? "coach-race-first-class" : undefined} className="mb-4">
+              <div key={cb.badge} className="mb-4">
                 <ClassTitle title={cb.title} withButton={inConsole && bi === 0} />
-                <div className={`flex items-center gap-3 rounded-2xl border border-border bg-surface px-3 py-3 shadow-card`}>
+                <div
+                  data-tour={bi === 0 ? "coach-race-first-row" : undefined}
+                  className={`flex items-center gap-3 rounded-2xl border border-border bg-surface px-3 py-3 shadow-card`}
+                >
                   <div className="min-w-0 flex-1">
                     <CrewBoat crew={cb.rows[0]?.crew ?? cb.pending[0]} dim={!cb.rows[0]} red={red} covered={covered} />
                   </div>
@@ -432,7 +440,7 @@ export default function RaceBoard({
                 </div>
               </div>
             ) : (
-            <div key={cb.badge} data-tour={bi === 0 ? "coach-race-first-class" : undefined} className="mb-4">
+            <div key={cb.badge} className="mb-4">
               <ClassTitle title={cb.title} withButton={inConsole && bi === 0} />
               <div className={`overflow-hidden rounded-2xl border border-border bg-surface shadow-card`}>
                 <div className={`grid grid-cols-[1.25rem_minmax(0,1fr)_4.4rem_3.9rem] gap-1.5 border-b border-border px-2.5 py-2 ${TH}`}>
@@ -444,6 +452,9 @@ export default function RaceBoard({
                 {cb.rows.map((r, i) => (
                   <div
                     key={r.crew.boatId}
+                    /* The console walk lights the tabs down to the first crew
+                       of the first class — the winner, once there are times. */
+                    data-tour={bi === 0 && i === 0 ? "coach-race-first-row" : undefined}
                     className={`grid grid-cols-[1.25rem_minmax(0,1fr)_4.4rem_3.9rem] items-center gap-1.5 px-2.5 py-2.5 ${
                       i > 0 ? "border-t border-border" : ""
                     } ${r.rank === 1 ? "bg-surface-2" : ""}`}
@@ -457,6 +468,7 @@ export default function RaceBoard({
                 {cb.pending.map((c, i) => (
                   <div
                     key={c.boatId}
+                    data-tour={bi === 0 && i === 0 && cb.rows.length === 0 ? "coach-race-first-row" : undefined}
                     className={`grid grid-cols-[1.25rem_minmax(0,1fr)_auto] items-center gap-1.5 px-2.5 py-2.5 ${
                       i > 0 || cb.rows.length > 0 ? "border-t border-border" : ""
                     }`}

@@ -38,6 +38,15 @@
   piece's Switch. It is a practice run: the race day it makes lives in
   TeamWorkouts' memory and its board writes nothing (RaceBoard `practice`).
 
+  THE SAME DAY, LATER (owner: "koukni se na nějaký reálný piece, co jsme
+  měli, třeba 2x2 miles, a ukaž to v reálu … u lineups add boat jen rychle
+  … dej jen person by person, jak daleko byli od plánu, jinak je to bonus
+  info … a u toho člověka ukaž, jak udělat tu note"). So: a race the squad
+  has timed is opened from the list, real times and all, before a new one is
+  ever made; the lineup adds a boat in passing; of Team statistics only
+  Person by person is shown; and the lit rower's pencil opens a note, which
+  is never sent.
+
   IT MUST SURVIVE AN EMPTY CONSOLE — no block, no lineups, maybe no athletes.
     Plan       the block's card and its week tabs. With no block of its own
                the screen draws an EXAMPLE week while the walk is on
@@ -52,16 +61,18 @@
                lineup — or, with none, an EXAMPLE race of two fours
                (coachTourExample.ts)
     Ranking    the same switch, plus the list switch under it
-    Team       the squad's week card (a dash when nobody logged), then the
-               first rower
+    Team       the squad's week card (a dash when nobody logged), Person by
+               person (passed when nobody trained in the window), then the
+               first rower who has joined, and their pencil — passed when
+               nobody has
 
   IT CHANGES NOTHING. It opens the session editor and fills in its form, but
   leaves with Back, which keeps nothing; it never presses Done or Publish.
   The lineup builder saves by itself, so while a walk is on screen it writes
   nothing at all, and neither does a race board the walk opened (see the
-  water above); it never presses Save times. Abandoned inside the editor, the
-  builder or the timing sheet, the walk presses its Back on the way out
-  (closeOnExit).
+  water above); it never presses Save times. The note it opens is never
+  sent (NoteEditor). Abandoned inside the editor, the builder, the timing
+  sheet or the note, the walk presses its Back on the way out (closeOnExit).
 
   CAPTAINS DO NOT GET THIS. A captain's console is the squad screen and
   settings — most of these steps point at tabs they do not have. The gate in
@@ -178,6 +189,17 @@ const steps: TourStep[] = [
     body: "Starts from the last lineup you published. Then change only what’s different.",
   },
   {
+    // ADD A BOAT, QUICKLY (owner, 2026-10-04: "add boat jen rychle"): the
+    // types are shown, and the next step's finger taps the first, so the
+    // pool is read with an empty boat on the screen. (The practice is opened
+    // here too when Repeat was passed before it could open it.)
+    press: ["coach-lineup-open-practice", "coach-lineup-add-boat"],
+    anchor: "coach-lineup-kinds",
+    title: "Add a boat",
+    body: "Pick the type of boat. It comes in empty, ready to fill.",
+  },
+  {
+    press: "coach-lineup-kind-first",
     anchor: "coach-lineup-count",
     alsoAnchor: "coach-lineup-filters",
     title: "Athlete pool",
@@ -208,20 +230,31 @@ const steps: TourStep[] = [
     times is never pressed. With no session it could time, the picker offers
     the example race. A day of one piece has no Switch; the board says so and
     that step is passed.
+
+    A RACE ALREADY TIMED IS SHOWN FIRST ("ukaž to v reálu"): where the squad
+    has one — every crew of two pieces or more timed, the fewest crews of
+    those, so it fits the phone (TeamWorkouts, tourShow) — the finger opens it
+    from the list (`coach-race-open`), and Enter times and the wheels show
+    its real readings. Only without one does `coach-race-open` sit on the +,
+    and the walk makes a new one as above. For HUBC that is "2x2 miles at
+    race pace": four eights, Dykema and Horler switched between the pieces.
   */
   {
     press: "varsity-workouts-water",
     anchor: "coach-workouts-add-race",
     title: "Race pieces",
-    body: "Your timing sheet. Tap + and pick the session you timed.",
+    body: "Every session you timed is here. To time a new one, tap + and pick the session.",
   },
   {
-    press: ["coach-workouts-add-race", "coach-race-pick-first"],
+    press: ["coach-race-open", "coach-race-pick-first"],
     anchor: "coach-race-tabs",
-    alsoAnchor: "coach-race-first-class",
+    alsoAnchor: "coach-race-first-row",
     group: "race",
     title: "Pieces",
     body: "A tab for every piece of the workout, with the crews from the lineup.",
+    bodyWhen: {
+      timed: "A tab for every piece: each crew’s time and how far behind the winner. Combined adds the pieces up.",
+    },
   },
   {
     press: "coach-race-enter-times",
@@ -240,9 +273,10 @@ const steps: TourStep[] = [
   {
     press: ["coach-race-watch-close", "coach-race-editor-back", "coach-race-tab-2"],
     anchor: "coach-race-switch",
+    alsoAnchor: "coach-race-first-row",
     group: "race",
     title: "Seat racing",
-    body: "From the second piece on, Switch swaps two rowers between boats. The board works out who was faster.",
+    body: "From the second piece on, Switch swaps two rowers between boats. Whoever moved is in red, and the board works out who was faster.",
   },
   {
     // Out of the timing sheet first — whatever of it is still open.
@@ -262,46 +296,39 @@ const steps: TourStep[] = [
     body: "The squad’s average week: how far each rower went and how long they trained.",
   },
   /*
-    TEAM STATISTICS, part by part (owner, 2026-10-04: "ty team statistics
-    ukaž, jaké části"). Full statistics is opened and each part lit as it is
-    scrolled to; nothing is pressed inside it. Still adding up, the screen says
-    so (data-tour-pending); nobody trained in the window, it says the parts are
-    not coming, and the rest of the group is passed at once.
+    TEAM STATISTICS: PERSON BY PERSON ONLY (owner, 2026-10-04: "dej jen person
+    by person, jak daleko byli od plánu, jinak je to bonus info"). It was
+    shown part by part earlier the same day; the graph, Week by week and the
+    Training mix are still there, just not walked. Still adding up, the screen
+    says so (data-tour-pending); nobody trained in the window, it says the
+    table is not coming, and the step is passed.
   */
   {
     press: "coach-team-full-stats",
-    anchor: "coach-stats-choices",
-    alsoAnchor: "coach-stats-graph",
-    group: "stats",
-    title: "Team statistics",
-    body: "Pick what to measure, over how long, as columns or a line. Tap a column to read it, drag across columns to zoom in.",
-  },
-  {
     anchor: "coach-stats-people",
-    group: "stats",
     title: "Person by person",
-    body: "Everyone’s kilometres, hours and sessions done out of planned, against the team average. Tap a heading to sort.",
+    body: "How far each rower is from the plan: sessions done out of planned, and their kilometres and hours against the team average. Tap a heading to sort.",
   },
   {
-    anchor: "coach-stats-weeks",
-    group: "stats",
-    title: "Week by week",
-    body: "Each week under the one before, so you see the training build up or taper.",
-  },
-  {
-    anchor: "coach-stats-mix",
-    group: "stats",
-    title: "Training mix",
-    body: "What all that training was: each kind’s share of it.",
-  },
-  {
+    // The first rower who has joined (TeamScreen) — the one whose pencil the
+    // next step presses.
     press: "coach-stats-close",
     anchor: "coach-team-first-rower",
     title: "Profiles",
-    body: "Tap anyone to see their profile. The pencil writes them a note.",
+    body: "Tap anyone to see their profile.",
+  },
+  {
+    // HOW A NOTE IS WRITTEN ("u toho člověka ukaž, jak udělat tu note"): the
+    // finger presses that rower's pencil; Send is never pressed (NoteEditor
+    // sends nothing while a walk is on). Nobody has joined: passed.
+    press: "coach-team-note",
+    anchor: "coach-note-text",
+    title: "A note",
+    body: "The pencil writes them a note: what to work on. Send puts it on their Home, and it comes to their phone.",
   },
 
   {
+    press: "coach-note-back",
     anchor: null,
     title: "That’s it",
     body: "See it again anytime: Settings → Take the console tour.",
@@ -311,8 +338,8 @@ const steps: TourStep[] = [
 /*
   The id stays "coach" — it is what the seen flag is keyed on, so changing it
   would re-offer the walk to every coach who has already had it. Walked out of
-  inside the session editor, the lineup builder, a race board or Team
-  statistics, it leaves with their Back (the innermost first).
+  inside the session editor, the lineup builder, a race board, Team
+  statistics or a note, it leaves with their Back (the innermost first).
 */
 export const coachTour: Tour = {
   id: "coach",
@@ -325,5 +352,6 @@ export const coachTour: Tour = {
     "coach-race-back",
     "coach-race-picker-close",
     "coach-stats-close",
+    "coach-note-back",
   ],
 };
