@@ -568,7 +568,7 @@ export default function LogSessionSheet({
                   type="button"
                   onClick={nextUnit}
                   aria-label={`Distance in ${shownUnit}. Change unit`}
-                  className={`press-icon justify-between rounded-full border border-border bg-surface-2 pl-3 pr-2.5 text-text ${unitSlot}`}
+                  className={`press-icon justify-between rounded-full border border-border bg-surface pl-3 pr-2.5 text-text ${unitSlot}`}
                 >
                   {shownUnit}
                   <IconSwap size={12} className="text-muted" />
