@@ -84,13 +84,17 @@ export default function PublishBar({
   // The one button there is: Publish for a draft or an edited live one,
   // Unpublish for a live one nobody has touched.
   const publish = !live || edited;
+  // Which of the three it is, for the console walk's caption (lib/tour.ts
+  // `bodyWhen`) — the walk lights this bar and must not say Publish over an
+  // Unpublish button.
+  const tourState = tourId ? (!live ? "draft" : edited ? "edited" : "live") : undefined;
 
   if (stack) {
     return (
       /* Below sm the column dissolves (`contents`), so its buttons share the
          row they are placed in with whatever sits beside them — the Plan
          card's Edit — at equal widths. */
-      <div data-tour={tourId} className="flex w-full flex-col gap-2 max-sm:contents">
+      <div data-tour={tourId} data-tour-state={tourState} className="flex w-full flex-col gap-2 max-sm:contents">
         {publish ? (
           <Button size="md" full onClick={live ? onNotify : onPublish} disabled={busy}>
             <IconSend size={13} /> Publish
@@ -107,6 +111,7 @@ export default function PublishBar({
   return (
     <div
       data-tour={tourId}
+      data-tour-state={tourState}
       className={bare ? "" : "rounded-xl border border-border bg-surface px-3.5 py-3"}
     >
       {!bare && (

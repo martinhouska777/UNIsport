@@ -54,6 +54,11 @@ export type TourStep = {
   anchor: string | null;
   title: string;
   body: string;
+  /** The caption for each state the lit control can be in, read from its
+      `data-tour-state` — the plan's publish button is Publish on a draft and
+      Unpublish on a live plan, and one sentence can't describe both. `body`
+      is the fallback. */
+  bodyWhen?: Record<string, string>;
   /*
     Something the overlay ACTS OUT once the step is lit, for the parts a tap on
     a real control can't show without changing anything:

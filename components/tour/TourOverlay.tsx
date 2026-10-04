@@ -45,6 +45,8 @@ const PAD = 8; // breathing room around the lit element
 const EDGE = 6; // never let the hole run off the side of the screen
 const GAP = 14; // between the hole and the caption
 const CAPTION_W = 340; // caption width when it sits beside the hole (laptop)
+const CAPTION_MAX = 560; // …and the widest it gets above or below one
+const WIDE = 640; // narrower than this, a caption above or below is the full width
 const BEAT = 150; // ms between "is it here yet?" checks
 const PATIENCE = 30; // that many beats — about 4.5s — then move on
 const TAP_LEAD = 560; // let the finger glide in and land before the control is pressed
@@ -156,6 +158,73 @@ function declaredPending(anchor: string) {
 }
 
 /*
+  WHERE A TARGET CAN ACTUALLY BE SEEN. Inside the window is not enough: the
+  plan's session editor scrolls its form above a Done bar that stays put, so
+  a section that was "on screen" by the window sat half under that bar — lit,
+  cut off, with Done lit inside it (2026-10-03, the coach walk's "Share
+  results"). So: the window, cut down by every box around the target that
+  scrolls. A fixed element ends the climb — what is around it does not move it.
+*/
+const scrolls = (p: HTMLElement, css: CSSStyleDeclaration) =>
+  p.scrollHeight > p.clientHeight + 1 && /auto|scroll/.test(css.overflowY);
+
+function seenArea(el: HTMLElement): { top: number; bottom: number } {
+  let top = 0;
+  let bottom = window.innerHeight;
+  for (let p: HTMLElement | null = el; p; p = p.parentElement) {
+    const css = window.getComputedStyle(p);
+    if (p !== el && scrolls(p, css)) {
+      const r = p.getBoundingClientRect();
+      top = Math.max(top, r.top);
+      bottom = Math.min(bottom, r.bottom);
+    }
+    if (css.position === "fixed") break;
+  }
+  return { top, bottom };
+}
+
+/* The box that scrolls it: the nearest one around it that can — never one
+   outside a fixed panel (a sheet), which would move the page behind it. */
+function scrollBoxOf(el: HTMLElement): HTMLElement | null {
+  if (window.getComputedStyle(el).position === "fixed") return null;
+  for (let p = el.parentElement; p; p = p.parentElement) {
+    const css = window.getComputedStyle(p);
+    if (scrolls(p, css)) return p;
+    if (css.position === "fixed") return null;
+  }
+  return null;
+}
+
+/*
+  Bring a target — and its partner, when a step lights two — into that area,
+  centred in it (or its top in view, if the pair is taller than the area).
+  "instant" on purpose: a smooth scroll would still be moving when this
+  measures, and the hole would land where the target used to be. Whatever
+  that cannot reach is left to the browser's own scrollIntoView, which is
+  all this used to do.
+*/
+function bringIntoView(el: HTMLElement, also: HTMLElement | null = null) {
+  const span = () => {
+    const r = el.getBoundingClientRect();
+    const a = also?.getBoundingClientRect();
+    return { top: Math.min(r.top, a?.top ?? r.top), bottom: Math.max(r.bottom, a?.bottom ?? r.bottom) };
+  };
+  let { top, bottom } = span();
+  const seen = seenArea(el);
+  if (top >= seen.top && bottom <= seen.bottom) return;
+  const box = scrollBoxOf(el);
+  if (box) {
+    const fits = bottom - top <= seen.bottom - seen.top - 2 * PAD;
+    const by = fits ? (top + bottom) / 2 - (seen.top + seen.bottom) / 2 : top - seen.top - PAD;
+    if (Math.abs(by) >= 1) box.scrollBy({ top: by, behavior: "instant" as ScrollBehavior });
+    ({ top, bottom } = span());
+    const now = seenArea(el);
+    if (top >= now.top - 1 && (!fits || bottom <= now.bottom + 1)) return;
+  }
+  el.scrollIntoView({ block: "center", behavior: "instant" as ScrollBehavior });
+}
+
+/*
   The lit box around an element (and its partner, when a step lights two):
   padded, clamped to the screen, with corners that fit what is inside.
 */
@@ -236,6 +305,10 @@ export default function TourOverlay({
      waiting, say). The counter leaves them out, so a walk without them counts
      on from where it was instead of jumping from 6 to 11. */
   const [skipped, setSkipped] = useState(0);
+  /* The lit control's `data-tour-state` — "draft" or "live" on the plan's
+     publish button — for a step whose caption depends on it (`bodyWhen`). */
+  const [litState, setLitState] = useState<string | null>(null);
+  const litStateRef = useRef<string | null>(null);
   const captionRef = useRef<HTMLDivElement | null>(null);
   const nextRef = useRef<HTMLButtonElement | null>(null);
   const titleId = useId();
@@ -251,6 +324,7 @@ export default function TourOverlay({
   const step = steps[i];
   const armed = armedFor === i;
   const last = i >= steps.length - 1;
+  const body = (litState !== null && step.bodyWhen?.[litState]) || step.body;
 
   /*
     Ending the tour, however it ends. It shuts anything it opened on your
@@ -426,11 +500,9 @@ export default function TourOverlay({
       // 2. Press the control that leads here — visibly, each its own tap.
       const control = nextControl();
       if (control) {
-        let r = control.getBoundingClientRect();
-        if (r.top < 0 || r.bottom > window.innerHeight) {
-          control.scrollIntoView({ block: "center", behavior: "instant" as ScrollBehavior });
-          r = control.getBoundingClientRect();
-        }
+        // Where it can be seen — the finger must never land on a bar over it.
+        bringIntoView(control);
+        const r = control.getBoundingClientRect();
         setTapAt({ x: r.left + r.width / 2, y: r.top + r.height / 2 });
         /* …and LIGHT it while the finger is on it (owner, 2026-10-03: "what
            are you tapping"). The finger used to press things sitting in the
@@ -509,26 +581,32 @@ export default function TourOverlay({
     return () => cancelAnimationFrame(raf);
   }, [armed, dropStaleLight]);
 
+  // Which state the lit control is in, for a step with a caption per state.
+  const noteState = useCallback((state: string | null) => {
+    if (litStateRef.current === state) return;
+    litStateRef.current = state;
+    setLitState(state);
+  }, []);
+
   const measure = useCallback(() => {
     if (!step.anchor) {
+      noteState(null);
       light(null, null);
       return;
     }
     const el = visibleAnchor(step.anchor);
     if (!el) return; // gone for a frame — keep the last good position
     /*
-      Bring it into view first. Some targets sit down the page — the rate/crowd
-      block on a gym, the photo grid in the Log Session editor — and the overlay
-      eats taps, so nobody can scroll to them. "instant" on purpose: a smooth
-      scroll would still be moving when this measures, and the hole would land
-      where the target used to be.
+      Bring it into view first — with its partner, so a pair is never lit
+      half under a bar. Some targets sit down the page — the photo grid in the
+      Log Session editor, the Repeat buttons in the plan's — and the overlay
+      eats taps, so nobody can scroll to them.
     */
-    const r = el.getBoundingClientRect();
-    if (r.top < 0 || r.bottom > window.innerHeight) {
-      el.scrollIntoView({ block: "center", behavior: "instant" as ScrollBehavior });
-    }
-    light(el, boxAround(el, step.alsoAnchor ? visibleAnchor(step.alsoAnchor) : null));
-  }, [step, light]);
+    const also = step.alsoAnchor ? visibleAnchor(step.alsoAnchor) : null;
+    bringIntoView(el, also);
+    noteState(el.getAttribute("data-tour-state"));
+    light(el, boxAround(el, also));
+  }, [step, light, noteState]);
 
   /*
     Re-measure on every step, and whenever the page moves under it.
@@ -696,9 +774,23 @@ export default function TourOverlay({
   /*
     Where the caption goes. If there's room beside the hole it sits there —
     that's the laptop sidebar case. Otherwise it takes the taller free side,
-    above or below, full width. On a phone the nav spans the screen, so there
-    is never room beside it and the caption always lands above it.
+    above or below. On a phone the nav spans the screen, so there is never
+    room beside it and the caption always lands above it.
+
+    Above or below, it is the FULL WIDTH only on a phone, where that is the
+    light's own width anyway. On a laptop the full width was a thin bar from
+    edge to edge — Skip at one end, Next at the other, and nowhere near the
+    light (2026-10-03, the coach walk). There it takes the light's width, no
+    narrower than a caption and no wider than a comfortable line, centred on
+    the light.
   */
+  const across = (b: Box): React.CSSProperties => {
+    const vw = window.innerWidth;
+    if (vw < WIDE) return { left: 16, right: 16 };
+    const width = Math.min(Math.max(b.width, CAPTION_W), CAPTION_MAX, vw - 32);
+    const left = Math.min(Math.max(b.left + b.width / 2 - width / 2, 16), vw - 16 - width);
+    return { left, width };
+  };
   let caption: React.CSSProperties;
   if (!box) {
     caption = { left: "50%", top: "50%", transform: "translate(-50%, -50%)", width: "min(340px, calc(100vw - 32px))" };
@@ -706,7 +798,9 @@ export default function TourOverlay({
     const centre = Math.min(Math.max(box.top + box.height / 2, 170), window.innerHeight - 170);
     caption = { left: box.left + box.width + GAP, top: centre, transform: "translateY(-50%)", width: CAPTION_W };
   } else if (typeof window !== "undefined" && box.top > window.innerHeight / 2) {
-    caption = { left: 16, right: 16, bottom: window.innerHeight - box.top + GAP };
+    caption = { ...across(box), bottom: window.innerHeight - box.top + GAP };
+  } else if (typeof window !== "undefined") {
+    caption = { ...across(box), top: box.top + box.height + GAP };
   } else {
     caption = { left: 16, right: 16, top: box.top + box.height + GAP };
   }
@@ -725,7 +819,7 @@ export default function TourOverlay({
       role="dialog"
       aria-modal="true"
       aria-labelledby={titleId}
-      aria-describedby={step.body ? bodyId : undefined}
+      aria-describedby={body ? bodyId : undefined}
     >
       {/*
         The dim. With an anchor it's the hole's shadow; without one (the opening
@@ -821,9 +915,9 @@ export default function TourOverlay({
             {step.title}
           </h2>
           {/* A step may be its title alone. */}
-          {step.body && (
+          {body && (
             <p id={bodyId} className="mt-1.5 text-[13px] leading-relaxed text-text-2">
-              {step.body}
+              {body}
             </p>
           )}
 

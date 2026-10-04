@@ -75,6 +75,9 @@ import {
   IconPencil,
 } from "@/components/icons";
 import { markColor } from "@/lib/colorMarks";
+import { useTourRunning } from "@/lib/tour";
+import { coachTourExample } from "@/lib/varsity/coachTourExample";
+import ExampleTag from "@/components/varsity/ExampleTag";
 
 /*
   THE TAB OPENS ON THE WEEK (owner, 2026-09-17: "I don't want to see the
@@ -167,8 +170,11 @@ export default function TrainingPlanScreen({
     exactly what the builder shipped with.
   */
   const [cfg, setCfg] = useState<TrainingConfig>(defaultConfig);
-  const [blocks, setBlocks] = useState<Block[]>([]);
-  const [sessions, setSessions] = useState<SessionMap>({});
+  /* The plan as the database has it. Everything that SAVES reads these; the
+     screen draws `blocks` / `sessions` below, which are these — except while
+     the console walk shows its example week. */
+  const [realBlocks, setRealBlocks] = useState<Block[]>([]);
+  const [realSessions, setRealSessions] = useState<SessionMap>({});
   // null = wherever the tab lands (see homeBlock); set once the coach moves.
   const [picked, setView] = useState<View | null>(null);
   const [loading, setLoading] = useState(true);
@@ -194,6 +200,32 @@ export default function TrainingPlanScreen({
   const [loadFailed, setLoadFailed] = useState(false);
 
   /*
+    THE EXAMPLE WEEK (lib/varsity/coachTourExample.ts). The console walk goes
+    through how a session is written — and a new coach has no block to write
+    one in. While a walk is on screen and the plan really is empty, the screen
+    draws the example instead, with an Example tag on its card. It is never
+    put into the real plan and never saved (edits do nothing and persist
+    refuses while it shows), so when the walk ends the empty console is
+    simply back.
+  */
+  const touring = useTourRunning();
+  const [example] = useState(coachTourExample);
+  const showExample = touring && !loading && !loadFailed && realBlocks.length === 0;
+  const blocks = showExample ? example.blocks : realBlocks;
+  const sessions = showExample ? example.sessions : realSessions;
+  /* Every edit goes through these two, and while the example is on screen
+     they do nothing. The handlers build the next plan from what is SHOWN, so
+     one keypress reaching a button under the walk (Tab to Publish, Enter)
+     would otherwise copy the example into the real plan — and the autosave
+     would write it the moment the walk ended. The load uses the real ones. */
+  const setBlocks: typeof setRealBlocks = (next) => {
+    if (!showExample) setRealBlocks(next);
+  };
+  const setSessions: typeof setRealSessions = (next) => {
+    if (!showExample) setRealSessions(next);
+  };
+
+  /*
     Load the shared plan from the database (or localStorage fallback). Its own
     callback rather than only an effect, so the "couldn't load" screen has
     something to put behind Try again.
@@ -206,8 +238,8 @@ export default function TrainingPlanScreen({
       const plan = await fetchPlan();
       if (!active) return;
       setLoadFailed(!!plan.failed);
-      setBlocks(plan.blocks);
-      setSessions(plan.sessions);
+      setRealBlocks(plan.blocks);
+      setRealSessions(plan.sessions);
       // What the database holds right now — the baseline every later edit is
       // compared against. Set BEFORE loading flips, so the autosave below can
       // never fire on the plan it just read back.
@@ -240,10 +272,11 @@ export default function TrainingPlanScreen({
       next?: { blocks?: Block[]; sessions?: SessionMap },
       opts?: { allowEmpty?: boolean },
     ) => {
-      // Never write on top of a plan we failed to read — see loadFailed above.
-      if (loadFailed) return false;
-      const b = next?.blocks ?? blocks;
-      const s = next?.sessions ?? sessions;
+      // Never write on top of a plan we failed to read — see loadFailed above —
+      // and never the walk's example week.
+      if (loadFailed || showExample) return false;
+      const b = next?.blocks ?? realBlocks;
+      const s = next?.sessions ?? realSessions;
       const snap = snapshot(b, s);
       setWriting(true);
       const { error, failure } = await savePlan({ blocks: b, sessions: s }, opts);
@@ -258,13 +291,13 @@ export default function TrainingPlanScreen({
       setFailed(false);
       return true;
     },
-    [blocks, sessions, loadFailed],
+    [realBlocks, realSessions, loadFailed, showExample],
   );
 
   /* Is there anything the database hasn't got yet? */
   const dirty = useMemo(
-    () => lastSaved !== null && lastSaved !== snapshot(blocks, sessions),
-    [lastSaved, blocks, sessions],
+    () => lastSaved !== null && lastSaved !== snapshot(realBlocks, realSessions),
+    [lastSaved, realBlocks, realSessions],
   );
 
   /*
@@ -289,8 +322,8 @@ export default function TrainingPlanScreen({
   });
   const pendingBlocked = useRef(false);
   useEffect(() => {
-    pending.current = { dirty, plan: { blocks, sessions } };
-  }, [dirty, blocks, sessions]);
+    pending.current = { dirty, plan: { blocks: realBlocks, sessions: realSessions } };
+  }, [dirty, realBlocks, realSessions]);
   useEffect(() => {
     pendingBlocked.current = loadFailed;
   }, [loadFailed]);
@@ -847,6 +880,19 @@ export default function TrainingPlanScreen({
     const live = block.status === "published";
     const others = blocks.filter((b) => b.id !== block.id);
     const race = daysToRace(block);
+    /* The slot the console walk opens to show how a session is written: the
+       first EMPTY one from today on, so it writes into a gap the coach could
+       really fill rather than last Monday's — failing that the first gap this
+       week, or the first slot when the week is full. Its day is what the walk
+       lights first ("Every day has two sessions"). */
+    const slots = week.days.flatMap((d) =>
+      periods.map((p) => ({ key: sessionKey(d.date, p), ahead: toISO(d.date) >= todayISO })),
+    );
+    const tourSlot = (
+      slots.find((s) => s.ahead && !sessions[s.key]) ??
+      slots.find((s) => !sessions[s.key]) ??
+      slots[0]
+    ).key;
     return (
       <div className="mx-auto w-full max-w-screen-sm px-4 pb-8 pt-4">
         {/*
@@ -908,6 +954,7 @@ export default function TrainingPlanScreen({
               <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
                 <span className="min-w-0 break-words text-[17px] font-semibold leading-snug text-text">{block.name}</span>
                 <StatusChip live={live} />
+                {showExample && <ExampleTag />}
               </div>
               <div className="mt-1 text-[11px] text-muted">{week.rangeLabel}</div>
               {/* The race in a pill of its own, down at the foot of the left
@@ -930,6 +977,7 @@ export default function TrainingPlanScreen({
               <PublishBar
                 bare
                 full
+                tourId="coach-plan-publish"
                 live={live}
                 changed={blockChanged(block)}
                 busy={writing}
@@ -994,13 +1042,14 @@ export default function TrainingPlanScreen({
         </div>
 
         {/* day cards */}
-        {/* data-tour: the tour lights the FIRST day card — seven of them are
-            taller than the screen, and a ring that size lights nothing. */}
+        {/* data-tour: the tour lights ONE day card — the one holding the slot
+            it is about to open (tourSlot above). Seven of them are taller than
+            the screen, and a ring that size lights nothing. */}
         <div className="mt-3 flex flex-col gap-2">
-          {week.days.map((d, di) => (
+          {week.days.map((d) => (
             <div
               key={d.date.toISOString()}
-              data-tour={di === 0 ? "coach-plan-first-day" : undefined}
+              data-tour={periods.some((p) => sessionKey(d.date, p) === tourSlot) ? "coach-plan-open-day" : undefined}
               /* A DAY STANDS OFF THE PAGE (owner, 2026-09-27: "make a better
                  distinction from the background … so it pops more"). The card
                  carries the app's card shadow, its heading is in ink rather
@@ -1023,11 +1072,12 @@ export default function TrainingPlanScreen({
                 <span className="text-sm font-bold">{d.dayNum}</span>
               </div>
               <div className="flex flex-col gap-1.5 p-2">
-                {periods.map((p, pi) => {
+                {periods.map((p) => {
                   const s = sessions[sessionKey(d.date, p)];
-                  // The tour presses this to open the workout editor. Named on
-                  // BOTH shapes, because the first slot may be empty or filled.
-                  const tour = di === 0 && pi === 0 ? "coach-plan-first-slot" : undefined;
+                  // The tour presses this to open the workout editor (see
+                  // tourSlot above). Named on BOTH shapes, because it is a
+                  // filled slot when the week has no gap.
+                  const tour = sessionKey(d.date, p) === tourSlot ? "coach-plan-open-slot" : undefined;
                   if (!s) {
                     return (
                       <button
@@ -1370,7 +1420,7 @@ export default function TrainingPlanScreen({
               </button>
 
               {form.teamWorkout && (
-                <div className="mt-1.5 grid grid-cols-2 gap-1.5">
+                <div data-tour="coach-plan-boards" className="mt-1.5 grid grid-cols-2 gap-1.5">
                   {boardOptions.map((o) => {
                     const active = form.board === o.key;
                     return (
@@ -1398,7 +1448,10 @@ export default function TrainingPlanScreen({
           {cat && (
             <>
               <div className={labelCls}>Repeat</div>
-              <div data-tour="coach-plan-repeat" className="grid grid-cols-2 gap-1.5">
+              {/* data-tour: the walk presses Every week and lights the two
+                  buttons with the line under them. */}
+              <div data-tour="coach-plan-repeat">
+              <div className="grid grid-cols-2 gap-1.5">
                 {(
                   [
                     ["once", "Just this day"],
@@ -1410,6 +1463,7 @@ export default function TrainingPlanScreen({
                     <button
                       key={key}
                       type="button"
+                      data-tour={key === "weekly" ? "coach-plan-repeat-weekly" : undefined}
                       onClick={() => setForm((f) => ({ ...f, repeat: key }))}
                       className={`flex items-center justify-center gap-1.5 rounded-xl border py-2.5 text-[12px] font-semibold ${
                         active ? "border-primary bg-primary-tint text-text" : "border-border bg-surface text-muted"
@@ -1442,6 +1496,7 @@ export default function TrainingPlanScreen({
                     </p>
                   );
                 })()}
+              </div>
             </>
           )}
         </div>

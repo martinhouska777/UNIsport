@@ -17,19 +17,30 @@
   person's profile, and the Settings step is gone ("it's useless" — the gear
   is still named in the closing card, which is where the replay lives).
 
+  AND THEN THE OTHER WAY (owner, 2026-10-03): "think what a 60-year-old coach
+  who sees the app for the first time would need — he knows how to enter a
+  date or a name, but not repeat every week, or how to choose the intensity,
+  or how to make lineups". So the walk SHOWS HOW again, where the how is not
+  obvious. Plan opens a session and the finger writes one: the type, how
+  hard, a usual workout, the time, sharing the results, Every week — then
+  says what Done and Publish do. The editor is left with Back; Done is never
+  pressed. (Lineups and Workouts get the same treatment next.)
+
   IT MUST SURVIVE AN EMPTY CONSOLE — no block, no lineups, maybe no athletes.
     Today      the Today section, which is there with or without a plan
-    Plan       the block's card (Publish lives on it) and the first day — or,
-               with no block yet, the "No training blocks yet" card, which
-               wears the same anchor
+    Plan       the block's card and its week tabs. With no block of its own
+               the screen draws an EXAMPLE week while the walk is on
+               (lib/varsity/coachTourExample.ts), so the session editor can be
+               shown to the coach who needs it most
     Lineup     the first day of the week, always there
     Workouts   the Erg | Water | Ranking switch, plus the first row if any
     Ranking    the same switch, plus the list switch under it
     Team       the squad's week card (a dash when nobody logged), then the
                first rower
 
-  IT CHANGES NOTHING AND OPENS NOTHING — it only moves between the tabs and
-  presses the Ranking switch, so there is nothing to close on the way out.
+  IT CHANGES NOTHING. It opens the session editor and fills in its form, but
+  leaves with Back, which keeps nothing; it never presses Done or Publish.
+  Abandoned inside the editor, it presses Back on the way out (closeOnExit).
 
   CAPTAINS DO NOT GET THIS. A captain's console is the squad screen and
   settings — most of these steps point at tabs they do not have. The gate in
@@ -51,7 +62,7 @@ const steps: TourStep[] = [
     route: TODAY,
     anchor: null,
     title: "Take a quick tour?",
-    body: "The Coach Console in thirty seconds.",
+    body: "How to plan the training, seat the boats and read the results.",
     next: "Show me",
   },
 
@@ -67,9 +78,88 @@ const steps: TourStep[] = [
     press: tab(PLAN),
     route: PLAN,
     anchor: "coach-plan-status",
-    alsoAnchor: "coach-plan-first-day",
+    alsoAnchor: "coach-plan-weeks",
     title: "Plan",
-    body: "Write the training once and it’s on every athlete’s Home and calendar. Nobody sees it until you publish.",
+    body: "A training block is the weeks up to a race. Each week has its own tab.",
+  },
+  {
+    // The day holding the gap the next step opens — from today on, so the
+    // walk never writes into last Monday.
+    anchor: "coach-plan-open-day",
+    title: "Morning and afternoon",
+    body: "Every day has two sessions. Tap one to write it.",
+  },
+  /*
+    WRITING A SESSION, by the finger. It opens the first gap in the week from
+    today on (coach-plan-open-slot), and each step presses the choice the last one
+    pointed at — the first type that has an intensity, the first intensity,
+    the first usual workout — so the form fills in front of the coach. The
+    choices are the squad's own, from Training settings, so the steps name
+    none of them.
+  */
+  {
+    press: "coach-plan-open-slot",
+    anchor: "coach-plan-type",
+    group: "editor",
+    title: "Type",
+    body: "First, what kind of session it is.",
+  },
+  {
+    press: "coach-plan-cat-first",
+    anchor: "coach-plan-intensity",
+    group: "editor",
+    title: "Intensity",
+    body: "Then how hard. Its colour marks the session on everyone’s calendar.",
+  },
+  {
+    press: "coach-plan-int-first",
+    // The box is always there; the usual workouts only once a squad has some.
+    anchor: "coach-plan-desc",
+    alsoAnchor: "coach-plan-options",
+    group: "editor",
+    title: "The workout",
+    body: "Tap one of your usual workouts, or write your own in the box.",
+  },
+  {
+    press: "coach-plan-opt-first",
+    anchor: "coach-plan-time",
+    group: "editor",
+    title: "Time",
+    body: "Filled in for you. Tap it to change it.",
+  },
+  {
+    press: "coach-plan-team",
+    anchor: "coach-plan-team",
+    alsoAnchor: "coach-plan-boards",
+    group: "editor",
+    title: "Share results",
+    body: "Everyone logs their result, and it goes on one board under Workouts.",
+  },
+  {
+    press: "coach-plan-repeat-weekly",
+    anchor: "coach-plan-repeat",
+    group: "editor",
+    title: "Every week",
+    body: "Write your regular week once. Every week fills in the rest of the block.",
+  },
+  {
+    anchor: "coach-plan-confirm",
+    group: "editor",
+    title: "Done",
+    body: "Puts it on the plan. Tap a session again to change it or remove it.",
+  },
+  {
+    // Out with Back — nothing written in the walk is kept.
+    press: "coach-plan-editor-back",
+    anchor: "coach-plan-publish",
+    title: "Publish",
+    body: "The squad sees nothing until you publish. After that, every change reaches them as you make it, and Publish sends them a notification.",
+    // A plan that is already out wears Unpublish here, or Publish again once
+    // it has changed since the squad was told (PublishBar's data-tour-state).
+    bodyWhen: {
+      live: "It’s published, so every change reaches the squad as you make it. Change something and Publish comes back, to send them a notification. Unpublish hides the plan again.",
+      edited: "It’s published, so your changes are already on the squad’s phones. Publish sends them a notification.",
+    },
   },
 
   /* ── Lineup ───────────────────────────────────────────────────────────── */
@@ -121,11 +211,11 @@ const steps: TourStep[] = [
 
 /*
   The id stays "coach" — it is what the seen flag is keyed on, so changing it
-  would re-offer the walk to every coach who has already had it. The walk
-  opens nothing it would have to shut, so `closeOnExit` is empty.
+  would re-offer the walk to every coach who has already had it. Walked out of
+  inside the session editor, it leaves with Back.
 */
 export const coachTour: Tour = {
   id: "coach",
   steps,
-  closeOnExit: [],
+  closeOnExit: ["coach-plan-editor-back"],
 };
