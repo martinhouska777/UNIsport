@@ -826,12 +826,14 @@ export default function TourOverlay({
       /*
         Above EVERYTHING. The app's sheets sit at z-50 and won on DOM order,
         but the plan's workout editor is z-[60] AND portalled to <body>, so a
-        z-50 overlay was drawn behind the very screen it was explaining. 70 is
-        clear of every sheet in the app; the wrapper this lives in is `relative`
-        with no z-index, so it creates no stacking context and this really does
-        compete at the root.
+        z-50 overlay was drawn behind the very screen it was explaining. 70
+        was clear of every sheet — until the walk opened the timing sheet's
+        wheels (TimeSheet), which are z-[70] themselves and portalled after
+        this, so they won on DOM order and covered the walk. 80 is clear of
+        both. The wrapper this lives in is `relative` with no z-index, so it
+        creates no stacking context and this really does compete at the root.
       */
-      className="fixed inset-0 z-[70]"
+      className="fixed inset-0 z-[80]"
       role="dialog"
       aria-modal="true"
       aria-labelledby={titleId}

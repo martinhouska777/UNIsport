@@ -47,6 +47,11 @@
   pieces come from the + at the end of the tabs, and start with the crews that
   rowed the last one. A rower sees the board, never the fields.
 
+  THE CONSOLE WALK TIMES ONE FOR PRACTICE (lib/varsity/coachTour.ts). Its
+  board is `practice`: everything works on screen — the tabs, Enter times,
+  the wheels, Switch — and nothing is written, so the walk can open a real
+  session's pieces and leave no race day behind (TeamWorkouts keeps it).
+
   Times are typed at 16px (the phone-zoom rule). All colours are theme
   tokens, except the cox's yellow, which is the same per-role identity colour
   the lineup card uses (COX_COLOR, from data — the documented rule-1
@@ -93,6 +98,7 @@ import { saveFailureDetail, type SaveFailure } from "@/lib/saveFailure";
 import SaveState from "@/components/varsity/coach/SaveState";
 import RankBadge from "@/components/varsity/team/RankBadge";
 import TimeSheet from "@/components/varsity/team/TimeSheet";
+import ExampleTag from "@/components/varsity/ExampleTag";
 
 const COMBINED = "combined";
 const SWITCHES = "switches";
@@ -161,6 +167,8 @@ export default function RaceBoard({
   inConsole = false,
   openOnSwitches = false,
   focus,
+  practice = false,
+  example = false,
   onChange,
   onDeleted,
   onClose,
@@ -182,6 +190,10 @@ export default function RaceBoard({
   /** The seat race that was tapped there, by its place in switchesOf: it is
       outlined on the Switches tab. */
   focus?: number;
+  /** The console walk's run: on screen only, never saved (see the note up top). */
+  practice?: boolean;
+  /** The walk's made-up race, for a squad with nothing to time: it says so. */
+  example?: boolean;
   /** The day as saved, so the list behind stays current. */
   onChange: (day: RaceDay) => void;
   onDeleted: () => void;
@@ -218,6 +230,7 @@ export default function RaceBoard({
 
   const write = async (next: RaceDay) => {
     onChange(next); // on screen at once — the coach is typing at the dock
+    if (practice) return; // the walk's board keeps nothing
     const mine = ++writes.current;
     const why = await writeRaceDay(next);
     if (mine !== writes.current) return; // a newer write has the last word
@@ -304,12 +317,17 @@ export default function RaceBoard({
   const combinedMin = `${1.25 + 9 + n * 3.6 + 3.9 + (n + 2) * 0.375 + 1.25}rem`;
 
   return (
-    <Sheet title="" onClose={close} full>
+    <Sheet title="" onClose={close} full backTour="coach-race-back">
+      {/* The walk points at Switch, which only a second piece has. */}
+      {practice && day.pieces.length < 2 && <span hidden data-tour-absent="coach-race-switch" />}
       {/* THE SESSION — a black band: the date over the plan's words (see THE
           BOARD IN INK). The piece count that used to sit under it is gone;
           the tabs already say it. */}
       <div className="rounded-2xl bg-text px-4 py-3.5 text-background shadow-card">
-        <div className="text-[11px] font-semibold uppercase tracking-[0.12em] opacity-70">{dateLabel}</div>
+        <div className="flex items-center justify-between gap-2">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.12em] opacity-70">{dateLabel}</div>
+          {example && <ExampleTag />}
+        </div>
         <div className="mt-0.5 text-[16px] font-semibold leading-snug">{title || "Race pieces"}</div>
       </div>
 
@@ -320,9 +338,9 @@ export default function RaceBoard({
           the buttons' 44px touch area poked 2px out of the bottom of the row,
           which let it be nudged up and down, so the row is 2px taller (pb-1.5)
           and its vertical overflow is shut. */}
-      <div ref={tabRow} className="chip-row mt-3 flex items-center gap-1.5 overflow-x-auto overflow-y-hidden pb-1.5">
-        {day.pieces.map((p) => (
-          <TabButton key={p.id} on={tab === p.id} onClick={() => setTab(p.id)}>
+      <div ref={tabRow} data-tour="coach-race-tabs" className="chip-row mt-3 flex items-center gap-1.5 overflow-x-auto overflow-y-hidden pb-1.5">
+        {day.pieces.map((p, k) => (
+          <TabButton key={p.id} on={tab === p.id} onClick={() => setTab(p.id)} tour={k === 1 ? "coach-race-tab-2" : undefined}>
             {p.name}
           </TabButton>
         ))}
@@ -378,6 +396,7 @@ export default function RaceBoard({
                 <button
                   type="button"
                   onClick={() => setSwitching(piece.id)}
+                  data-tour="coach-race-switch"
                   className="tap44 flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-[12px] font-medium text-text"
                 >
                   <IconSwap size={13} /> Switch
@@ -386,6 +405,7 @@ export default function RaceBoard({
               <button
                 type="button"
                 onClick={() => setEditing(piece.id)}
+                data-tour="coach-race-enter-times"
                 className="tap44 flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-[12px] font-medium text-text"
               >
                 <IconPencil size={13} /> Enter times
@@ -396,7 +416,7 @@ export default function RaceBoard({
             cb.rows.length + cb.pending.length === 1 ? (
               /* The only boat in its class: the crew and its time, with no
                  place and no gap to a winner (see ONE BOAT above). */
-              <div key={cb.badge} className="mb-4">
+              <div key={cb.badge} data-tour={bi === 0 ? "coach-race-first-class" : undefined} className="mb-4">
                 <ClassTitle title={cb.title} withButton={inConsole && bi === 0} />
                 <div className={`flex items-center gap-3 rounded-2xl border border-border bg-surface px-3 py-3 shadow-card`}>
                   <div className="min-w-0 flex-1">
@@ -412,7 +432,7 @@ export default function RaceBoard({
                 </div>
               </div>
             ) : (
-            <div key={cb.badge} className="mb-4">
+            <div key={cb.badge} data-tour={bi === 0 ? "coach-race-first-class" : undefined} className="mb-4">
               <ClassTitle title={cb.title} withButton={inConsole && bi === 0} />
               <div className={`overflow-hidden rounded-2xl border border-border bg-surface shadow-card`}>
                 <div className={`grid grid-cols-[1.25rem_minmax(0,1fr)_4.4rem_3.9rem] gap-1.5 border-b border-border px-2.5 py-2 ${TH}`}>
@@ -515,8 +535,8 @@ export default function RaceBoard({
       {/* SWITCHES: who beat whom, from the times. The coach's alone. */}
       {tab === SWITCHES && showSwitches && <SwitchResults switches={switches} pieces={day.pieces} focus={focus} />}
 
-      {/* THE COACH'S WAY OUT OF A WRONG DAY. */}
-      {inConsole && (
+      {/* THE COACH'S WAY OUT OF A WRONG DAY. (The walk's has nothing to delete.) */}
+      {inConsole && !practice && (
         <div className="mt-6 flex justify-center">
           {confirmDelete ? (
             <div className="flex flex-wrap items-center justify-center gap-2 text-[12px]">
@@ -595,11 +615,22 @@ export default function RaceBoard({
   );
 }
 
-function TabButton({ on, onClick, children }: { on: boolean; onClick: () => void; children: React.ReactNode }) {
+function TabButton({
+  on,
+  onClick,
+  tour,
+  children,
+}: {
+  on: boolean;
+  onClick: () => void;
+  tour?: string;
+  children: React.ReactNode;
+}) {
   return (
     <button
       type="button"
       onClick={onClick}
+      data-tour={tour}
       aria-pressed={on}
       className={`flex-shrink-0 rounded-full border px-3.5 py-1.5 text-[12px] font-semibold transition-colors ${
         on ? "border-text bg-text text-background" : "border-border bg-surface text-muted"
@@ -647,6 +678,7 @@ function TimeTile({
   on = false,
   result = false,
   wrong = false,
+  tour,
   onTap,
 }: {
   word: string;
@@ -654,6 +686,7 @@ function TimeTile({
   on?: boolean;
   result?: boolean;
   wrong?: boolean;
+  tour?: string;
   onTap?: () => void;
 }) {
   const look = result
@@ -671,7 +704,7 @@ function TimeTile({
     <div className="min-w-0">
       <div className={`pl-0.5 ${TH}`}>{word}</div>
       {onTap ? (
-        <button type="button" onClick={onTap} aria-label={`${word}: ${value == null ? "empty" : shown}`} className={cls}>
+        <button type="button" onClick={onTap} data-tour={tour} aria-label={`${word}: ${value == null ? "empty" : shown}`} className={cls}>
           {shown}
         </button>
       ) : (
@@ -752,7 +785,7 @@ function PieceEditor({
   const isOn = (c: RaceCrew, field: WatchField) => picking?.boatId === c.boatId && picking.field === field;
 
   return (
-    <Sheet title="" onClose={onClose} full>
+    <Sheet title="" onClose={onClose} full backTour="coach-race-editor-back">
       {/* The piece's name IS the heading, typed into where it stands. */}
       <label className="flex items-center gap-2">
         <input
@@ -766,14 +799,20 @@ function PieceEditor({
         </span>
       </label>
 
-      {groups.map((g) => (
+      {groups.map((g, gi) => (
         <div key={g.badge} className="mt-4">
           <ClassTitle title={classTitle(g.badge)} />
           <div className="flex flex-col gap-2">
-            {g.crews.map((c) => {
+            {g.crews.map((c, ci) => {
               const watched = c.start != null && c.finish != null;
+              // The console walk lights the first crew and presses its Start.
+              const first = gi === 0 && ci === 0;
               return (
-                <div key={c.boatId} className="rounded-2xl border border-border bg-surface p-3 shadow-card">
+                <div
+                  key={c.boatId}
+                  data-tour={first ? "coach-race-first-crew" : undefined}
+                  className="rounded-2xl border border-border bg-surface p-3 shadow-card"
+                >
                   <div className="flex items-start gap-2">
                     <div className="min-w-0 flex-1">
                       {/* The note is typed below, so it is not drawn here too. */}
@@ -793,6 +832,7 @@ function PieceEditor({
                       word="Start"
                       value={c.start}
                       on={isOn(c, "start")}
+                      tour={first ? "coach-race-start-first" : undefined}
                       onTap={() => setPicking({ boatId: c.boatId, field: "start" })}
                     />
                     <TimeTile

@@ -27,7 +27,7 @@ export default function Sheet({
      (owner, 2026-09-16: a team workout "goes all the way", not three
      quarters). It still slides up and closes the same way. */
   full?: boolean;
-  /** data-tour on a full page's Back, so a walk can leave it (lib/varsity/coachTour.ts). */
+  /** data-tour on a full page's Back — or a sheet's X — so a walk can leave it (lib/varsity/coachTour.ts). */
   backTour?: string;
 }) {
   const vTheme = useVarsityTheme();
@@ -82,6 +82,7 @@ export default function Sheet({
               type="button"
               onClick={onClose}
               aria-label="Close"
+              data-tour={backTour}
               className="tap44 press-icon flex h-7 w-7 items-center justify-center rounded-full bg-surface-2 text-muted"
             >
               <IconX size={14} />

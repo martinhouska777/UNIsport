@@ -31,6 +31,7 @@ import {
   type Session,
   type SessionMap,
 } from "@/lib/varsity/coachPlan";
+import { DEFAULT_DOCK, makeSeats, type Boat } from "@/lib/varsity/coachLineup";
 
 export const TOUR_EXAMPLE_BLOCK_ID = "tour-example-block";
 
@@ -86,5 +87,48 @@ export function coachTourExample(today = new Date()): CoachTourExample {
       },
     ],
     sessions,
+  };
+}
+
+/*
+  THE EXAMPLE RACE — the session the walk times on the Water side when the
+  squad has none it could (owner, 2026-10-04: "jak logovat ty workouts na
+  water, to je důležité").
+
+  A piece is timed crew by crew, so only a water session with a published
+  lineup can be timed, and a new coach has none. While the walk is on, the
+  picker offers this one instead, wearing an Example tag: two coxed fours on
+  this morning's "3×5' at 24" — three pieces, so the second has a Switch to
+  point at. It is never saved (TeamWorkouts keeps the walk's race day apart
+  from the real ones), and it is gone when the walk ends.
+
+  The crews are the squad's own roster names, as every worked example is.
+*/
+export type CoachTourExampleRace = { dayKey: string; session: Session; boats: Boat[] };
+
+function exampleFour(id: string, name: string, cox: string, rowers: string[]): Boat {
+  const seats = makeSeats(4);
+  rowers.forEach((r, i) => (seats[i].athleteId = r));
+  return { id, badge: "4+", name, dock: DEFAULT_DOCK, note: "", seats, hasCox: true, coxId: cox };
+}
+
+export function coachTourExampleRace(today = new Date()): CoachTourExampleRace {
+  return {
+    dayKey: sessionKey(today, "AM"),
+    session: { category: "water", intensity: "UT1", description: "3×5' at 24", time: presetTime.AM },
+    boats: [
+      exampleFour("tour-example-four-1", "Example four 1", "micah-john", [
+        "asante-kiio",
+        "luca-vicino",
+        "marcus-chung",
+        "mason-cruz-abrams",
+      ]),
+      exampleFour("tour-example-four-2", "Example four 2", "iris-hennin", [
+        "o-cruz-abrams",
+        "jack-dorney",
+        "alexander-grundy",
+        "george-farkas",
+      ]),
+    ],
   };
 }

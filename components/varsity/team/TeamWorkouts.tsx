@@ -99,6 +99,8 @@ import type { Boat } from "@/lib/varsity/coachLineup";
 import type { SessionMap } from "@/lib/varsity/coachPlan";
 import { IconChevronRight, IconPlus, IconSearch } from "@/components/icons";
 import { markColor } from "@/lib/colorMarks";
+import { useTourRunning } from "@/lib/tour";
+import { coachTourExampleRace } from "@/lib/varsity/coachTourExample";
 
 /*
   WHAT A ROW WAS, AS A COLOUR AND A WORD (owner, 2026-09-21).
@@ -204,7 +206,23 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
      with the race that was tapped outlined (focus); one opened from the
      Water list starts on its first piece. */
   const [raceFrom, setRaceFrom] = useState<{ focus?: number } | null>(null);
+  /*
+    THE CONSOLE WALK TIMES A SESSION FOR PRACTICE (lib/varsity/coachTour.ts —
+    owner, 2026-10-04: "jak logovat ty workouts na water, to je důležité").
+    The finger picks a session, opens Enter times and a Start, the way a coach
+    would; while a walk is on screen the race day that makes is kept HERE, in
+    memory, and never saved — not added to the list, and its board writes
+    nothing (RaceBoard `practice`). It is shown only while the walk is, so the
+    walk ending takes it with it. A squad with no session to time gets the
+    example race instead (coachTourExample.ts).
+  */
+  const touring = useTourRunning();
+  type TourRace = { day: RaceDay; title: string; time?: string; boats: Boat[]; example: boolean };
+  const [tourRaceHeld, setTourRace] = useState<TourRace | null>(null);
+  const tourRace = touring ? tourRaceHeld : null;
+  const exampleRace = useMemo(() => (touring ? coachTourExampleRace() : null), [touring]);
   const openRaceBoard = (dayKey: string, from: { focus?: number } | null = null) => {
+    setTourRace(null); // a board opened from the list is the real one
     setRaceFrom(from);
     setOpenRace(dayKey);
   };
@@ -305,6 +323,13 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
       dayKey,
       pieces: piecesFromSession(planSessions[dayKey]?.description, boats),
     };
+    if (touring) {
+      // The walk's practice run: on screen, never saved (see THE CONSOLE WALK).
+      setPickingRace(false);
+      openRaceBoard(dayKey);
+      setTourRace({ day, title: raceTitle(dayKey), time: planSessions[dayKey]?.time, boats, example: false });
+      return;
+    }
     setRaceBoats((b) => ({ ...b, [dayKey]: boats }));
     setRaces((r) => [day, ...r.filter((d) => d.dayKey !== dayKey)]);
     setPickingRace(false);
@@ -595,7 +620,24 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
         })}
       </div>
 
-      {openRace && (() => {
+      {openRace && tourRace?.day.dayKey === openRace && (
+        // The walk's practice board (see THE CONSOLE WALK): it writes nothing.
+        <RaceBoard
+          key={`${openRace}|tour`}
+          day={tourRace.day}
+          dateLabel={outingDateLabel(openRace)}
+          title={tourRace.title}
+          sessionTime={tourRace.time}
+          boats={tourRace.boats}
+          inConsole={inConsole}
+          practice
+          example={tourRace.example}
+          onChange={(next) => setTourRace((t) => (t ? { ...t, day: next } : t))}
+          onDeleted={() => setOpenRace(null)}
+          onClose={() => setOpenRace(null)}
+        />
+      )}
+      {openRace && tourRace?.day.dayKey !== openRace && (() => {
         const day = races.find((r) => r.dayKey === openRace);
         if (!day) return null;
         return (
@@ -620,9 +662,41 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
       })()}
 
       {pickingRace && (
-        <Sheet title="Which session?" onClose={() => setPickingRace(false)}>
+        <Sheet title="Which session?" onClose={() => setPickingRace(false)} backTour="coach-race-picker-close">
           {candidateBoats === null && raceCandidates.length > 0 ? (
             <p className="py-6 text-center text-[13px] text-muted">Finding the sessions…</p>
+          ) : timeable.length === 0 && exampleRace ? (
+            /* Nothing the squad could time, and the walk is on: the example
+               race stands in, so the walk can still show how it is done. */
+            <button
+              type="button"
+              data-tour="coach-race-pick-first"
+              onClick={() => {
+                const { dayKey, session, boats } = exampleRace;
+                setPickingRace(false);
+                openRaceBoard(dayKey);
+                setTourRace({
+                  day: { dayKey, pieces: piecesFromSession(session.description, boats) },
+                  title: session.description,
+                  time: session.time,
+                  boats,
+                  example: true,
+                });
+              }}
+              className="flex w-full items-center gap-3 rounded-2xl border border-border bg-surface px-3.5 py-3 text-left active:bg-surface-2"
+            >
+              <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ background: markColor(intensityOf(exampleRace.session)?.color) ?? "var(--faint)" }} />
+              <div className="min-w-0 flex-1">
+                <span className="flex items-center gap-2">
+                  <span className="truncate text-[13px] font-semibold text-text">{exampleRace.session.description}</span>
+                  <ExampleTag />
+                </span>
+                <span className="mt-0.5 block text-[11px] text-muted">{outingDateLabel(exampleRace.dayKey)}</span>
+              </div>
+              <span className="text-muted">
+                <IconChevronRight size={15} />
+              </span>
+            </button>
           ) : timeable.length === 0 ? (
             /*
               The reason is in the EMPTY state only, never as a caption over a
@@ -638,11 +712,12 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
             </p>
           ) : (
             <div className="flex flex-col gap-1.5">
-              {timeable.map((c) => (
+              {timeable.map((c, i) => (
                 <button
                   key={c.dayKey}
                   type="button"
                   onClick={() => startRace(c.dayKey)}
+                  data-tour={i === 0 ? "coach-race-pick-first" : undefined}
                   className="flex w-full items-center gap-3 rounded-2xl border border-border bg-surface px-3.5 py-3 text-left active:bg-surface-2"
                 >
                   <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ background: markColor(intensityOf(c.session)?.color) ?? "var(--faint)" }} />

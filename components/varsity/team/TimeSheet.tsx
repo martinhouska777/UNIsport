@@ -37,6 +37,7 @@ import ThemeProvider from "@/components/ThemeProvider";
 import { useVarsityTheme } from "@/components/varsity/useVarsityTheme";
 import { IconArrowRight, IconX } from "@/components/icons";
 import { classTitle, formatWatch, watchFromSlots, watchSlots } from "@/lib/varsity/racePieces";
+import { useTourRunning } from "@/lib/tour";
 
 /* One row of a wheel, in px — five of them show, the middle one is the value. */
 const ROW = 36;
@@ -218,14 +219,20 @@ export default function TimeSheet({
     if (window.matchMedia("(pointer: fine)").matches) input.current?.focus();
   }, []);
 
-  /* Escape closes THIS, and only this (see the note up top). */
+  /* Escape closes THIS, and only this (see the note up top) — except while
+     the console walk is on, where Escape ends the walk, and the walk shuts
+     everything it opened (lib/varsity/coachTour.ts, closeOnExit). Caught
+     here, it would close this alone and leave the walk lighting nothing. */
+  const touring = useTourRunning();
   const close = useRef(onClose);
+  const touringNow = useRef(touring);
   useEffect(() => {
     close.current = onClose;
+    touringNow.current = touring;
   });
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key !== "Escape") return;
+      if (e.key !== "Escape" || touringNow.current) return;
       e.stopPropagation();
       close.current();
     };
@@ -278,6 +285,7 @@ export default function TimeSheet({
         <div
           role="dialog"
           aria-label={`${what}, ${who}`}
+          data-tour="coach-race-watch"
           className="relative rounded-t-3xl border-t border-border bg-surface px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-2.5 [animation:sheet-up_0.28s_cubic-bezier(0.2,0.8,0.2,1)]"
         >
           <div className="mx-auto mb-2.5 h-1 w-9 rounded-full bg-border" />
@@ -295,6 +303,7 @@ export default function TimeSheet({
                 type="button"
                 onClick={onClose}
                 aria-label="Close"
+                data-tour="coach-race-watch-close"
                 className="tap44 press-icon flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-surface-2 text-muted"
               >
                 <IconX size={14} />

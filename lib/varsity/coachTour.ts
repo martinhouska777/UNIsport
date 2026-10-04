@@ -32,6 +32,12 @@
   například publish nebo jaký je dnes workout, bylo jasné"). So no Today step,
   and no Done or Publish steps on the plan.
 
+  AND THE WATER, TIMED FOR REAL (owner, 2026-10-04: "jak logovat ty workouts
+  na water, to je důležité"). The + is pressed, a session picked, Enter times
+  opened and a Start tapped, so the wheels are on screen; then the second
+  piece's Switch. It is a practice run: the race day it makes lives in
+  TeamWorkouts' memory and its board writes nothing (RaceBoard `practice`).
+
   IT MUST SURVIVE AN EMPTY CONSOLE — no block, no lineups, maybe no athletes.
     Plan       the block's card and its week tabs. With no block of its own
                the screen draws an EXAMPLE week while the walk is on
@@ -41,7 +47,10 @@
                that still needs its boats, or today's morning), and the
                builder's athlete pool, there with or without a plan or a crew
     Workouts   the Erg | Water | Ranking switch, plus the first erg row if
-               any, and the Water side's +, there with or without a race
+               any, and the Water side's +, there with or without a race.
+               Behind the +, the newest water session with a published
+               lineup — or, with none, an EXAMPLE race of two fours
+               (coachTourExample.ts)
     Ranking    the same switch, plus the list switch under it
     Team       the squad's week card (a dash when nobody logged), then the
                first rower
@@ -49,9 +58,10 @@
   IT CHANGES NOTHING. It opens the session editor and fills in its form, but
   leaves with Back, which keeps nothing; it never presses Done or Publish.
   The lineup builder saves by itself, so while a walk is on screen it writes
-  nothing at all. The walk points at the race +, never presses it.
-  Abandoned inside the editor or the builder, the walk presses its Back on
-  the way out (closeOnExit).
+  nothing at all, and neither does a race board the walk opened (see the
+  water above); it never presses Save times. Abandoned inside the editor, the
+  builder or the timing sheet, the walk presses its Back on the way out
+  (closeOnExit).
 
   CAPTAINS DO NOT GET THIS. A captain's console is the squad screen and
   settings — most of these steps point at tabs they do not have. The gate in
@@ -178,9 +188,7 @@ const steps: TourStep[] = [
   /*
     READING THE RESULTS, and TIMING A RACE (owner, 2026-10-04: "udělej teď
     workouts how-to … nepotřebujeme vysvětlovat každý button"). The newest erg
-    board is pointed at, not opened ("ta 14 to nemusíš ukazovat uvnitř"), and
-    the Water side's + is pointed at without pressing it — picking a session
-    there makes a race day, which the walk must not.
+    board is pointed at, not opened ("ta 14 to nemusíš ukazovat uvnitř").
   */
   {
     press: tab(WORKOUTS),
@@ -190,14 +198,53 @@ const steps: TourStep[] = [
     title: "Workouts",
     body: "Every session you share the results of. Each rower logs their own result, and the board fills itself. Tap one to see everyone’s.",
   },
+  /*
+    LOGGING THE WATER, by the finger (owner, 2026-10-04: "jak logovat ty
+    workouts na water, to je důležité"): the +, a session, Enter times, a
+    Start — the wheels — and the second piece's Switch. A practice run: the
+    race day lives only in TeamWorkouts while the walk is on, its board
+    writes nothing, and Save times is never pressed. With no session it could
+    time, the picker offers the example race. A day of one piece has no
+    Switch; the board says so and that step is passed.
+  */
   {
     press: "varsity-workouts-water",
     anchor: "coach-workouts-add-race",
     title: "Race pieces",
-    body: "Tap + to time a session’s pieces: each crew’s start and finish, and the board works out the rest. From the second piece on, Switch swaps two rowers for a seat race.",
+    body: "Your timing sheet. Tap + and pick the session you timed.",
   },
   {
-    press: "varsity-workouts-ranking",
+    press: ["coach-workouts-add-race", "coach-race-pick-first"],
+    anchor: "coach-race-tabs",
+    alsoAnchor: "coach-race-first-class",
+    group: "race",
+    title: "Pieces",
+    body: "A tab for every piece of the workout, with the crews from the lineup.",
+  },
+  {
+    press: "coach-race-enter-times",
+    anchor: "coach-race-first-crew",
+    group: "race",
+    title: "Enter times",
+    body: "Each crew gets a Start and a Finish off your watch. The time works itself out.",
+  },
+  {
+    press: "coach-race-start-first",
+    anchor: "coach-race-watch",
+    group: "race",
+    title: "Your watch",
+    body: "Spin the wheels, or type the digits left to right: 802115 is 8:02:11.5. Next goes on to the finish, then the next crew. Save times when the piece is in.",
+  },
+  {
+    press: ["coach-race-watch-close", "coach-race-editor-back", "coach-race-tab-2"],
+    anchor: "coach-race-switch",
+    group: "race",
+    title: "Seat racing",
+    body: "From the second piece on, Switch swaps two rowers between boats. The board works out who was faster.",
+  },
+  {
+    // Out of the timing sheet first — whatever of it is still open.
+    press: ["coach-race-watch-close", "coach-race-editor-back", "coach-race-back", "varsity-workouts-ranking"],
     anchor: "varsity-workouts-switch",
     alsoAnchor: "coach-ranking-lists",
     title: "Ranking",
@@ -262,10 +309,19 @@ const steps: TourStep[] = [
 /*
   The id stays "coach" — it is what the seen flag is keyed on, so changing it
   would re-offer the walk to every coach who has already had it. Walked out of
-  inside the session editor or the lineup builder, it leaves with their Back.
+  inside the session editor, the lineup builder, a race board or Team
+  statistics, it leaves with their Back (the innermost first).
 */
 export const coachTour: Tour = {
   id: "coach",
   steps,
-  closeOnExit: ["coach-plan-editor-back", "coach-lineup-back", "coach-stats-close"],
+  closeOnExit: [
+    "coach-plan-editor-back",
+    "coach-lineup-back",
+    "coach-race-watch-close",
+    "coach-race-editor-back",
+    "coach-race-back",
+    "coach-race-picker-close",
+    "coach-stats-close",
+  ],
 };
