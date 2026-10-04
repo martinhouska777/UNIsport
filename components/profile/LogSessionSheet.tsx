@@ -278,7 +278,7 @@ export default function LogSessionSheet({
   return (
     <div className="fixed inset-0 z-50 flex h-dvh flex-col bg-background">
       {/* Header — the round back button every full screen in the app has. */}
-      <div className="flex flex-shrink-0 items-center gap-2.5 border-b border-border bg-surface px-3.5 py-3">
+      <div className="column-pad flex flex-shrink-0 items-center gap-2.5 border-b border-border bg-surface px-3.5 py-3">
         {/* data-tour: the tour presses this to close the editor again when it
             has finished explaining it (lib/tour.ts). */}
         <button

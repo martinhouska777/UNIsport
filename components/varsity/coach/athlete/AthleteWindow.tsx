@@ -49,7 +49,7 @@ export default function AthleteWindow({
   return createPortal(
     <ThemeProvider tokens={vTheme.dark} light={vTheme.light}>
       <div className="fixed inset-0 z-[60] flex flex-col bg-background [animation:backdrop-in_0.18s_ease-out]">
-        <div className="flex flex-shrink-0 items-center gap-3 border-b border-border px-3 pb-2.5 pt-[max(0.625rem,env(safe-area-inset-top))]">
+        <div className="column-pad flex flex-shrink-0 items-center gap-3 [--column-inset:1rem] border-b border-border px-3 pb-2.5 pt-[max(0.625rem,env(safe-area-inset-top))]">
           <button
             type="button"
             onClick={onClose}

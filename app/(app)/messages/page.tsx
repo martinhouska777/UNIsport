@@ -79,7 +79,13 @@ function Messages() {
   };
 
   return (
-    <div className="mx-auto flex h-full w-full max-w-screen-sm flex-1 flex-col">
+    /*
+      Phone: the list (or the chat) IS the screen, edge to edge. Laptop: the
+      same column as a card, a little off the top and bottom with a border all
+      round — full height and flush, it read as a white strip painted down the
+      middle of a grey page (owner, 2026-10-04).
+    */
+    <div className="mx-auto flex h-full w-full max-w-screen-sm flex-1 flex-col lg:my-4 lg:h-auto lg:min-h-0 lg:overflow-hidden lg:rounded-2xl lg:border lg:border-border lg:bg-surface lg:shadow-card">
       {open?.type === "dm" && !exampleGone ? (
         <DmThread
           conversationId={open.id}

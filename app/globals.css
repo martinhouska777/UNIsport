@@ -1901,6 +1901,26 @@ body {
   .sheet-panel { animation: none; }
 }
 
+/*
+  .column-pad — A FULL-WIDTH STRIP THAT LINES UP WITH THE COLUMN, ON A LAPTOP
+  (owner, 2026-10-04: "something isn't centred"). Log session, a workout, the
+  statistics, a month of the plan… each opens over the whole screen with its
+  content in the middle 640px column, but its top bar kept the phone's
+  padding, so on a 1440px laptop Back sat at the far left edge, a long way from
+  the page it belongs to. From lg up the strip's padding grows to the column's
+  margin, so what is in it lines up with the column underneath, while the
+  strip itself (its line, its fill) still runs the full width. Used on those
+  bars, and on the odd full-screen body that had no column of its own. The
+  overlay is the strip's containing block, so 100% is the screen.
+  `--column-inset` is for a column with padding of its own inside the 640.
+*/
+@media (min-width: 1024px) {
+  .column-pad {
+    padding-left: calc((100% - 640px) / 2 + var(--column-inset, 0px));
+    padding-right: calc((100% - 640px) / 2 + var(--column-inset, 0px));
+  }
+}
+
 /* THE LEAGUE'S COMPETITION SWITCH (components/leaderboards/CompetitionSwitcher.tsx):
    the new competition's name slides in from the side it came from — next from
    the right, previous from the left (owner, 2026-09-15). */

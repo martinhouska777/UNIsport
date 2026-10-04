@@ -467,7 +467,7 @@ function LogEditor({
     <div className="fixed inset-0 z-[60] flex h-dvh flex-col bg-background">
       {/* Header — the white bar and round back button of the student Log
           session (and every full screen there). */}
-      <div className="flex flex-shrink-0 items-center gap-2.5 border-b border-border bg-surface px-3.5 py-3">
+      <div className="column-pad flex flex-shrink-0 items-center gap-2.5 border-b border-border bg-surface px-3.5 py-3">
         <button
           type="button"
           onClick={close}

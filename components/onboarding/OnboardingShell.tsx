@@ -71,8 +71,12 @@ export default function OnboardingShell({
 }) {
   return (
     /* One column, the width of a phone, however wide the screen: stretched
-       across a laptop the house dropdown and the Continue bar ran ~1,400px. */
-    <div className="mx-auto flex h-dvh w-full max-w-lg flex-col bg-background px-5 pb-6 pt-4 text-text">
+       across a laptop the house dropdown and the Continue bar ran ~1,400px.
+       And on a laptop no TALLER than a phone either, in the middle of the
+       screen (owner, 2026-10-04): full height, Continue sat on the bottom edge
+       of a 900px screen with half of it empty above. The body keeps its
+       flex-1, so a dropdown still has the room below it that it has now. */
+    <div className="mx-auto flex h-dvh w-full max-w-lg flex-col bg-background px-5 pb-6 pt-4 text-text lg:mt-[max(0px,calc((100dvh-46rem)/2))] lg:h-[min(100dvh,46rem)]">
       {/* Top row */}
       <div className="flex min-h-6 items-center justify-between">
         {showBack ? (

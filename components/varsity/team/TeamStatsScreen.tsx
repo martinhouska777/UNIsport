@@ -359,7 +359,7 @@ export default function TeamStatsScreen({ onClose }: { onClose: () => void }) {
     <ThemeProvider tokens={vTheme.dark} light={vTheme.light}>
       <div className="fixed inset-0 z-[60] flex flex-col bg-background [animation:backdrop-in_0.18s_ease-out]">
         {/* ── The bar. What you are looking at, and the way out. ── */}
-        <div className="flex-shrink-0 border-b border-border px-3 pb-2.5 pt-[max(0.625rem,env(safe-area-inset-top))]">
+        <div className="column-pad flex-shrink-0 [--column-inset:0.875rem] border-b border-border px-3 pb-2.5 pt-[max(0.625rem,env(safe-area-inset-top))]">
           <div className="flex items-center gap-3">
             <button
               type="button"

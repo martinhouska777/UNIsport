@@ -62,7 +62,7 @@ export default function WorkoutDetail({
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-background [animation:backdrop-in_0.2s_ease-out]">
       {/* Header */}
-      <div className="flex items-center gap-2 border-b border-border bg-surface px-3.5 py-3">
+      <div className="column-pad flex items-center gap-2 border-b border-border bg-surface px-3.5 py-3">
         <button
           type="button"
           onClick={onBack}
@@ -77,8 +77,8 @@ export default function WorkoutDetail({
         </div>
       </div>
 
-      {/* Body */}
-      <div className="flex-1 overflow-y-auto px-3.5 py-4">
+      {/* Body — no column of its own, so on a laptop it borrows one. */}
+      <div className="column-pad flex-1 overflow-y-auto px-3.5 py-4">
         {/* Body parts */}
         {muscles.length > 0 && (
           <div className="mb-4 flex flex-wrap gap-1.5">

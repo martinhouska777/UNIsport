@@ -259,7 +259,7 @@ export default function StatsFullScreen({
           goes top right on its own, and the line it frees says what you are
           actually looking at — 8 – 21 September, day by day.
         */}
-        <div className="flex-shrink-0 border-b border-border px-3.5 pb-2.5 pt-[max(0.5rem,env(safe-area-inset-top))]">
+        <div className="column-pad flex-shrink-0 [--column-inset:0.875rem] border-b border-border px-3.5 pb-2.5 pt-[max(0.5rem,env(safe-area-inset-top))]">
           <div className="flex items-center justify-end gap-2">
             {zoomed && (
               <button

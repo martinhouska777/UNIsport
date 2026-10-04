@@ -48,7 +48,7 @@ export default function Sheet({
     return createPortal(
       <ThemeProvider tokens={vTheme.dark} light={vTheme.light}>
         <div className="fixed inset-0 z-[60] flex h-dvh flex-col bg-background pt-[env(safe-area-inset-top)] [animation:backdrop-in_0.18s_ease-out]">
-          <div className="flex flex-shrink-0 items-center gap-2 border-b border-border px-4 py-3">
+          <div className="column-pad flex flex-shrink-0 items-center gap-2 border-b border-border px-4 py-3">
             <button type="button" onClick={onClose} data-tour={backTour} className="tap44 flex items-center gap-1 text-[13px] text-muted">
               <IconArrowLeft size={18} /> Back
             </button>

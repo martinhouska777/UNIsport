@@ -268,8 +268,10 @@ export default function VarsitySetupPage() {
         </div>
 
         {/* The one action, always reachable - it never scrolls away. */}
-        <div className="border-t border-border bg-background px-3.5 pb-[max(0.875rem,env(safe-area-inset-bottom))] pt-3">
-          <div className="mx-auto w-full max-w-screen-sm">
+        <div className="border-t border-border bg-background pb-[max(0.875rem,env(safe-area-inset-bottom))] pt-3">
+          {/* The side padding INSIDE the column, as on the page above, so the
+              button's edges are the cards' edges on a laptop too. */}
+          <div className="mx-auto w-full max-w-screen-sm px-3.5">
             {failure && !saving && (
               <p role="alert" className="mb-2 text-center text-[13px] font-semibold text-danger">
                 {saveFailureDetail(failure) ? `Not saved · ${saveFailureDetail(failure)}` : "Not saved"}

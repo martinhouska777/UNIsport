@@ -306,7 +306,7 @@ function MonthOverlay({
             (2026-09-14). Both arrows used to sit together on the left, so
             stepping back a month and stepping forward were the same gesture in
             the same corner. The close X keeps the right-hand end. */}
-        <div className="flex flex-shrink-0 items-center gap-2 border-b border-border px-3 py-3">
+        <div className="column-pad flex flex-shrink-0 items-center gap-2 [--column-inset:0.375rem] border-b border-border px-3 py-3">
           <button
             onClick={() => goMonth(-1)}
             disabled={atStart}
@@ -344,7 +344,7 @@ function MonthOverlay({
         </div>
 
         {/* Weekday header */}
-        <div className="grid flex-shrink-0 grid-cols-7 gap-1 border-b border-border px-1.5 py-1">
+        <div className="column-pad grid flex-shrink-0 grid-cols-7 gap-1 [--column-inset:0.375rem] border-b border-border px-1.5 py-1">
           {DAY_LETTERS.map((d, i) => (
             <div key={i} className="text-center text-[11px] font-semibold tracking-[0.12em] text-muted">
               {d}
@@ -354,7 +354,7 @@ function MonthOverlay({
 
         {/* Days — the rows share whatever height is left, so the month always
             fills the screen and the cells are big enough to read. */}
-        <div className="grid min-h-0 flex-1 auto-rows-fr grid-cols-7 gap-1 overflow-y-auto p-1.5">
+        <div className="column-pad grid min-h-0 flex-1 auto-rows-fr grid-cols-7 gap-1 [--column-inset:0.375rem] overflow-y-auto p-1.5">
           {Array.from({ length: leadingEmpty }).map((_, i) => (
             <div key={`e${i}`} />
           ))}
@@ -447,7 +447,7 @@ function MonthOverlay({
 
         {/* Tapped day: the full workout, over the calendar. */}
         {selected && (
-          <div className="absolute inset-x-0 bottom-0 max-h-[60%] overflow-y-auto border-t border-border bg-background px-3 pb-4 [animation:sheet-up_0.24s_cubic-bezier(0.2,0.8,0.2,1)]">
+          <div className="column-pad absolute inset-x-0 bottom-0 max-h-[60%] overflow-y-auto [--column-inset:0.375rem] border-t border-border bg-background px-3 pb-4 [animation:sheet-up_0.24s_cubic-bezier(0.2,0.8,0.2,1)]">
             <DayDetail d={selected} onClose={onClearDay} />
           </div>
         )}

@@ -205,7 +205,7 @@ export default function YouScreen({
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-background [animation:backdrop-in_0.2s_ease-out]">
-      <div className="flex items-center gap-2.5 border-b border-border bg-surface px-3.5 py-3">
+      <div className="column-pad flex items-center gap-2.5 border-b border-border bg-surface px-3.5 py-3">
         <button
           type="button"
           onClick={onBack}

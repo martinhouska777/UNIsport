@@ -52,7 +52,7 @@ export default function ExercisePicker({
   return (
     <div className="fixed inset-0 z-[60] flex h-dvh flex-col bg-background">
       {/* Header — the round back button, as on the Log editor under it. */}
-      <div className="flex flex-shrink-0 items-center gap-2.5 bg-surface px-3.5 py-3">
+      <div className="column-pad flex flex-shrink-0 items-center gap-2.5 bg-surface px-3.5 py-3">
         <button
           type="button"
           onClick={onClose}
@@ -65,7 +65,7 @@ export default function ExercisePicker({
       </div>
 
       {/* Search + muscle filter */}
-      <div className="flex-shrink-0 border-b border-border bg-surface px-4 pb-2.5">
+      <div className="column-pad flex-shrink-0 border-b border-border bg-surface px-4 pb-2.5">
         <div className="flex items-center gap-2 rounded-xl border border-transparent bg-surface-2 px-3 focus-within:border-primary">
           <IconSearch size={15} className="text-muted" />
           <input

@@ -1209,7 +1209,7 @@ export default function TrainingPlanScreen({
     const overlay = (
       <div className="fixed inset-0 z-[60] flex h-dvh flex-col bg-background">
         {/* header with back */}
-        <div className="flex flex-shrink-0 items-center gap-2 border-b border-border px-4 py-3">
+        <div className="column-pad flex flex-shrink-0 items-center gap-2 [--column-inset:1.25rem] border-b border-border px-4 py-3">
           {/* data-tour: the tour presses this to leave the editor again —
               and closeOnExit presses it if the walk is abandoned inside. */}
           <button

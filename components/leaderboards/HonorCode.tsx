@@ -101,9 +101,14 @@ export default function HonorCode({
       The card is the whole screen, not a box floating in the middle of it: it
       reaches the bottom, and the signature sits down there where a signature
       goes — under the text, at the foot of the page.
+
+      On a laptop the page stops at the height of a phone's and sits in the
+      middle (owner, 2026-10-04): stretched down a 900px screen the space
+      between the code and the signature was taller than the code itself. The
+      signature still sits at its foot.
     */
-    <div className="mx-auto flex min-h-full w-full max-w-screen-sm flex-col px-3.5 py-8">
-      <div className="flex flex-1 flex-col rounded-2xl border border-border bg-surface px-4 py-6">
+    <div className="mx-auto flex min-h-full w-full max-w-screen-sm flex-col px-3.5 py-8 lg:justify-center">
+      <div className="flex flex-1 flex-col rounded-2xl border border-border bg-surface px-4 py-6 lg:max-h-[40rem]">
         <h1 className="text-center text-[17px] font-semibold leading-snug text-text">
           {code.title}
         </h1>
