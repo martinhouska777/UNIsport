@@ -140,6 +140,7 @@ import {
 import { slotKey, useNameDrag, type Slot } from "./useNameDrag";
 import { markColor } from "@/lib/colorMarks";
 import KindTag from "@/components/varsity/KindTag";
+import { useTourRunning } from "@/lib/tour";
 
 /*
   What the training plan prescribes for one AM or PM slot, reduced to the few
@@ -454,17 +455,18 @@ function PracticeButton({
 
 function DayCard({
   day,
-  first,
+  open,
   onPick,
 }: {
   day: PickDay;
-  /** The tour presses the first day's AM to get into a builder. */
-  first?: boolean;
+  /** The practice the console walk opens on this day, if it is this one
+      (LineupBuilderScreen's tourPick) — the card is lit, the practice pressed. */
+  open?: Period;
   onPick: (day: PickDay, p: Practice) => void;
 }) {
   return (
     <div
-      data-tour={first ? "coach-lineup-first-day" : undefined}
+      data-tour={open ? "coach-lineup-open-day" : undefined}
       className={`overflow-hidden rounded-2xl border bg-surface ${
         day.today ? "border-primary-line bg-gradient-to-br from-primary/10 to-surface" : "border-border"
       }`}
@@ -486,29 +488,52 @@ function DayCard({
       <div className="flex items-stretch border-t-2 border-background">
         <PracticeButton
           practice={day.am}
-          tour={first ? "coach-lineup-first-practice" : undefined}
+          tour={open === "AM" ? "coach-lineup-open-practice" : undefined}
           onPick={() => onPick(day, day.am)}
         />
-        <PracticeButton practice={day.pm} onPick={() => onPick(day, day.pm)} />
+        <PracticeButton
+          practice={day.pm}
+          tour={open === "PM" ? "coach-lineup-open-practice" : undefined}
+          onPick={() => onPick(day, day.pm)}
+        />
       </div>
     </div>
   );
 }
 
-function DayPicker({ days, onPick }: { days: PickDay[]; onPick: (day: PickDay, p: Practice) => void }) {
+function DayPicker({
+  days,
+  onPick,
+  tourPick,
+  loaded,
+}: {
+  days: PickDay[];
+  onPick: (day: PickDay, p: Practice) => void;
+  /** The practice the console walk opens: "<day id>|AM" / "|PM". */
+  tourPick: string | null;
+  /** The plan and the lineups' states are in — until then the walk's pick
+      may still move, so the walk is told to wait (data-tour-pending). */
+  loaded: boolean;
+}) {
   return (
     <div className="mx-auto w-full max-w-screen-sm px-4 pb-8 pt-4">
       {/* Straight into the days — no "Lineups" title either; the tab bar
           already says it, and seven dated cards explain themselves. */}
       <h1 className="sr-only">Lineups</h1>
+      {!loaded && <span hidden data-tour-pending="coach-lineup-open-day" />}
 
       <div>
-        {/* data-tour: the tour lights the FIRST card (coach-lineup-first-day,
-            on DayCard) rather than the list — seven cards are taller than the
+        {/* data-tour: the tour lights ONE card (coach-lineup-open-day, on
+            DayCard) rather than the list — seven cards are taller than the
             screen, and a hole that size lights nothing. */}
         <div className="flex flex-col gap-2.5">
-          {days.map((d, i) => (
-            <DayCard key={d.id} day={d} first={i === 0} onPick={onPick} />
+          {days.map((d) => (
+            <DayCard
+              key={d.id}
+              day={d}
+              open={tourPick?.startsWith(`${d.id}|`) ? (tourPick.slice(-2) as Period) : undefined}
+              onPick={onPick}
+            />
           ))}
         </div>
       </div>
@@ -550,6 +575,7 @@ function Seat({
   onAssign,
   onClear,
   onCancelType,
+  tour,
 }: {
   /** The seat's number — "1" up to "8" — or the cox's "C". */
   label: string;
@@ -572,6 +598,9 @@ function Seat({
   onClear: () => void;
   /** Stop typing into this seat, leaving whoever is in it alone. */
   onCancelType: () => void;
+  /** data-tour, on whichever shape the seat has — the console walk taps the
+      new boat's first two seats (lib/varsity/coachTour.ts). */
+  tour?: string;
 }) {
 
   /*
@@ -598,7 +627,7 @@ function Seat({
 
   if (typing) {
     return (
-      <div className="relative">
+      <div data-tour={tour} className="relative">
         <div
           className="flex h-10 items-center gap-2 rounded-[10px] border bg-surface-2 pl-[7px] pr-2.5"
           style={coxEdge ?? { borderColor: "var(--primary)" }}
@@ -632,6 +661,7 @@ function Seat({
         <div
           role="button"
           tabIndex={0}
+          data-tour={tour}
           onClick={onStartType}
           onKeyDown={(e) => {
             if (e.key === "Enter" || e.key === " ") {
@@ -710,6 +740,7 @@ function Seat({
   return (
     <button
       type="button"
+      data-tour={tour}
       onClick={onStartType}
       className={`flex h-10 w-full select-none items-center gap-2 rounded-[10px] border border-dashed pl-[7px] pr-[6px] text-left ${
         dropActive ? "border-primary bg-primary-tint" : "border-border"
@@ -813,7 +844,9 @@ function SeatPool({
   );
 
   return (
-    <div className="select-none rounded-[14px] border border-primary-line bg-background p-2">
+    /* data-tour: the console walk lights this list with its seat, and taps
+       its first name. */
+    <div data-tour="coach-lineup-seat-pool" className="select-none rounded-[14px] border border-primary-line bg-background p-2">
       {/* The pool's own search, where its heading and its head-count used to
           be. A panel that opens under a seat is obviously the pool, and the
           number was a figure nobody was reading (owner, 2026-09-21). */}
@@ -870,10 +903,11 @@ function SeatPool({
            taller and the seat being filled is pushed off the screen. */
         <div className="max-h-[196px] overflow-y-auto">
           <div className="flex flex-col gap-1">
-            {shown.map((m) => (
+            {shown.map((m, mi) => (
               <button
                 key={m.a.id}
                 type="button"
+                data-tour={mi === 0 ? "coach-lineup-match-first" : undefined}
                 onClick={() => onAssign(m.a.id)}
                 className="flex h-[36px] w-full items-center gap-2 rounded-[10px] border border-border bg-surface px-2.5 text-left active:border-primary-line active:bg-primary-tint"
               >
@@ -1093,6 +1127,20 @@ function Builder({
     The flush on the way out reads this instead, so both writes agree.
   */
   const intended = useRef<LineupStatus>("draft");
+  /*
+    THE CONSOLE WALK WRITES NOTHING HERE (lib/varsity/coachTour.ts). It adds a
+    boat, seats a rower and moves them, on a real practice — and this screen
+    saves every change by itself (a saved boat even reaches the rowers' logs).
+    So while a walk is on screen nothing is written: no autosave, no flush on
+    the way out, no Publish (persist refuses), no bringing anyone back. The
+    screen opens fresh when the walk is over (LineupBuilderScreen keys it on
+    the walk), so whatever the walk did is simply gone.
+  */
+  const touring = useTourRunning();
+  const touringRef = useRef(touring);
+  useEffect(() => {
+    touringRef.current = touring;
+  }, [touring]);
   const [loading, setLoading] = useState(true);
   const [writing, setWriting] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -1496,7 +1544,10 @@ function Builder({
       if (moving && assign(slot, moving)) return;
     }
     setTyping(slot);
-    setKeyboard(here === null);
+    // The walk opens an empty seat WITHOUT its text field: a field that takes
+    // focus brings a phone's keyboard up over the boat being explained. The
+    // list under the seat has its own search box instead.
+    setKeyboard(here === null && !touring);
     setQuery("");
   };
 
@@ -1526,7 +1577,7 @@ function Builder({
   /* Back in the pool. One tap on the name, no sheet: the coach is not deciding
      anything about the athlete, only undoing an absence that is over. */
   const bringBackIn = async (a: Athlete) => {
-    if (outBusy) return;
+    if (outBusy || touring) return;
     // The coach's own record: closed in the database, as it always was.
     if (coachOut[a.id]) {
       setOutBusy(true);
@@ -1593,6 +1644,7 @@ function Builder({
      (publishing) can hold its notification back. */
   const persist = useCallback(
     async (newStatus?: LineupStatus, announcedNow?: string | null) => {
+      if (touring) return false; // the walk's boats are never written (above)
       const s = newStatus ?? status;
       const snap = JSON.stringify(boats);
       intended.current = s;
@@ -1612,7 +1664,7 @@ function Builder({
       setFailed(false);
       return true;
     },
-    [boats, dayKey, status],
+    [boats, dayKey, status, touring],
   );
 
   /*
@@ -1621,10 +1673,10 @@ function Builder({
     already has — a draft stays a draft, a live lineup stays live.
   */
   useEffect(() => {
-    if (loading || !dirty || writing) return;
+    if (loading || !dirty || writing || touring) return;
     const t = window.setTimeout(() => void persist(), 700);
     return () => window.clearTimeout(t);
-  }, [loading, dirty, writing, persist]);
+  }, [loading, dirty, writing, touring, persist]);
 
   /* Leaving inside that pause — an arrow, the Days list, another tab — must not
      outrun it, so the last crew is flushed on the way out. */
@@ -1637,7 +1689,8 @@ function Builder({
       const p = pending.current;
       // `intended`, not the rendered status: a Publish still in the air is
       // what this practice is about to be, and the flush must agree with it.
-      if (p.dirty) void saveLineup(dayKey, p.boats, intended.current);
+      // Never the walk's boats (see `touring`).
+      if (p.dirty && !touringRef.current) void saveLineup(dayKey, p.boats, intended.current);
     },
     [dayKey],
   );
@@ -1696,9 +1749,18 @@ function Builder({
   const planSaysTwice =
     !!planContext && planContext.title.trim().toLowerCase() === planContext.sub.trim().toLowerCase();
 
+  /* The console walk fills the NEWEST boat — the one it has just added — so
+     its first two seats carry the walk's names (lib/varsity/coachTour.ts). */
+  const newestId = boats[boats.length - 1]?.id;
   const renderSeat = (slot: Slot, label: string, athleteId: string | null, cox = false) => {
     const key = slotKey(slot);
     const active = !!typing && slotKey(typing) === key;
+    const tour =
+      slot.kind === "seat" && slot.boatId === newestId && slot.idx < 2
+        ? slot.idx === 0
+          ? "coach-lineup-seat-first"
+          : "coach-lineup-seat-second"
+        : undefined;
     return (
       /* The seat and, when it is the one in play, the pool under it. Wrapped so
          the two travel together inside the hull's column of seats. `data-slot`
@@ -1724,6 +1786,7 @@ function Builder({
             putDown();
           }}
           onCancelType={putDown}
+          tour={tour}
         />
         </div>
         {active && (
@@ -1753,10 +1816,12 @@ function Builder({
     take them, and afterwards "↻ From Tue AM" with an × that starts empty.
     The Add Boat button underneath is then the only full-width thing up there.
   */
-  const repeatChip = loading || !outReady ? null : carried && !carriedFrom && boats.length === 0 ? (
+  const offersRepeat = !loading && outReady && !!carried && !carriedFrom && boats.length === 0;
+  const repeatChip = loading || !outReady ? null : offersRepeat && carried ? (
     <button
       type="button"
       onClick={useCarried}
+      data-tour="coach-lineup-repeat"
       className="flex h-7 flex-shrink-0 items-center gap-1 rounded-full border border-border bg-surface-2 px-2.5 text-[11px] font-semibold text-text active:bg-surface"
     >
       <IconRepeat size={12} /> Repeat {nav.label(carried.from)}
@@ -1835,7 +1900,17 @@ function Builder({
           and an end of the plan leaves the arrow in place but dead, so the row
           never reflows under a thumb that is already reaching for it.
         */}
-        <div className="mt-1 flex items-center gap-2">
+        {/* What the console walk tells it: there is no earlier crew to
+            repeat here, or (no boats, no lineup) nothing to publish yet — so
+            those steps are passed at once instead of waited out. */}
+        {touring && !loading && outReady && !offersRepeat && (
+          <span hidden data-tour-absent="coach-lineup-repeat" />
+        )}
+        {touring && !loading && !hasRow && boats.length === 0 && (
+          <span hidden data-tour-absent="coach-lineup-publish" />
+        )}
+        {/* data-tour: the walk lights the practice's own heading and its ‹ ›. */}
+        <div data-tour="coach-lineup-head" className="mt-1 flex items-center gap-2">
           <StepArrow dir="prev" to={nav.prev} label={nav.label} onGo={step} busy={writing} />
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
@@ -2324,11 +2399,13 @@ function Builder({
                 No boats set up. Add the ones your squad rows in Settings → Boats.
               </p>
             ) : (
-              <div className="mt-3 grid grid-cols-4 gap-2">
-                {boatKinds.map((b) => (
+              /* data-tour: the walk lights the riggings and taps the first. */
+              <div data-tour="coach-lineup-kinds" className="mt-3 grid grid-cols-4 gap-2">
+                {boatKinds.map((b, bi) => (
                   <button
                     key={b.key}
                     type="button"
+                    data-tour={bi === 0 ? "coach-lineup-kind-first" : undefined}
                     onClick={() => addBoat(b)}
                     title={b.name}
                     className="tap44 rounded-2xl border border-border bg-surface py-3.5 text-xl font-semibold text-text active:border-primary active:bg-primary-tint"
@@ -2546,12 +2623,36 @@ export default function LineupBuilderScreen({
     return { prev, next };
   }, [practice, waterStops]);
 
+  /*
+    THE PRACTICE THE CONSOLE WALK OPENS to show how a crew is seated: the
+    first one these seven days that takes boats and has no lineup yet —
+    failing that the first that takes boats, or today's morning (a squad with
+    no plan). "<day id>|AM".
+  */
+  const tourPick = useMemo(() => {
+    const all = days.flatMap((d) => [d.am, d.pm].map((p) => ({ id: `${d.id}|${p.period}`, p })));
+    const pick =
+      all.find((x) => x.p.plan?.water && x.p.status === "none") ?? all.find((x) => x.p.plan?.water) ?? all[0];
+    return pick?.id ?? null;
+  }, [days]);
+  /* The builder is keyed on the walk too: one opened by the walk is thrown
+     away when the walk ends, so the boat it added is never there afterwards
+     (it was never saved — see `touring` in Builder). */
+  const touring = useTourRunning();
+
   if (!practice)
-    return <DayPicker days={days} onPick={(day, p) => open(sessionKey(day.date, p.period))} />;
+    return (
+      <DayPicker
+        days={days}
+        onPick={(day, p) => open(sessionKey(day.date, p.period))}
+        tourPick={tourPick}
+        loaded={plan !== null}
+      />
+    );
 
   return (
     <Builder
-      key={practice.key}
+      key={`${practice.key}${touring ? "|tour" : ""}`}
       dayKey={practice.dayKey}
       context={practice.context}
       planContext={practice.planContext}
