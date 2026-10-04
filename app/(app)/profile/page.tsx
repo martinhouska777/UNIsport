@@ -931,6 +931,7 @@ export default function ProfilePage() {
           initialPartner={logPrefill?.partner}
           plan={logPrefill?.plan}
           distanceUnit={data?.runningUnit === "mi" ? "mi" : "km"}
+          weightUnit={data?.weightUnit === "lb" ? "lb" : "kg"}
           onClose={() => {
             setLogging(false);
             setLogPrefill(null);

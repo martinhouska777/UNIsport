@@ -65,6 +65,7 @@ export default function LogSessionSheet({
   initialPartner,
   plan,
   distanceUnit,
+  weightUnit: weightUnitSetting,
   onClose,
   onSaved,
 }: {
@@ -88,6 +89,8 @@ export default function LogSessionSheet({
   plan?: { planId: string; conversationId: string; scheduledAt: string };
   /** Kilometres or miles — chosen in Settings → Training, never here. */
   distanceUnit?: DistanceUnit;
+  /** Kilograms or pounds — Settings → Training too. */
+  weightUnit?: WeightUnit;
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -104,8 +107,9 @@ export default function LogSessionSheet({
   // QUICK LOG — the body parts trained, for a session logged without writing
   // the exercises out. On its own it is a complete gym session.
   const [muscles, setMuscles] = useState<string[]>(existing?.metrics.muscles ?? []);
-  // Weight unit for the gym sets (kg / lb), per workout.
-  const [weightUnit, setWeightUnit] = useState<WeightUnit>(existing?.metrics.weightUnit ?? "kg");
+  // Weight unit for the gym sets: the one a saved session was logged in,
+  // otherwise the Settings one. No switch here (owner, 2026-10-04).
+  const weightUnit: WeightUnit = existing?.metrics.weightUnit ?? weightUnitSetting ?? "kg";
   // Running / cardio metrics.
   const [cardioType, setCardioType] = useState(existing?.metrics.cardioType ?? "");
   const [distance, setDistance] = useState(existing?.metrics.distance ?? "");
@@ -392,16 +396,9 @@ export default function LogSessionSheet({
               date"): both are the answer to "what did you do". */}
           {usesExercises && (
             <>
-              <div className="mb-2 mt-6 flex items-center justify-between">
-                <span className={labelCls.replace("mb-2", "mb-0")}>Exercises</span>
-                {/* kg / lb toggle for this workout */}
-                <Segmented
-                  ariaLabel="Weight unit"
-                  options={(["kg", "lb"] as WeightUnit[]).map((u) => ({ key: u, label: u }))}
-                  value={weightUnit}
-                  onChange={(u) => setWeightUnit(u)}
-                />
-              </div>
+              {/* The unit is in each exercise's column header; it is set in
+                  Settings → Training. */}
+              <div className={`${labelCls} mt-6`}>Exercises</div>
 
               <div className="flex flex-col gap-3">
                 {exercises.map((ex, i) => {

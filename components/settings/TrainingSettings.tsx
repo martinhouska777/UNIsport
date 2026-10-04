@@ -39,6 +39,7 @@ import {
   gymStyles,
   cardioTypes,
   runningUnits,
+  liftingUnits,
   runningExperiences,
   verifiedGyms,
   MAX_TOP_GYMS,
@@ -445,6 +446,22 @@ export default function TrainingSettings({
           </div>
         </Group>
       )}
+
+      {/* ── Kilograms or pounds for the sets in Log session, which has no
+             switch of its own (owner, 2026-10-04). Everyone: anybody can log
+             a gym session. ── */}
+      <Group title="Weights">
+        <div className="flex flex-wrap gap-1.5">
+          {liftingUnits.map((u) => (
+            <Pill
+              key={u.key}
+              label={u.label}
+              selected={(answers.weightUnit ?? "kg") === u.key}
+              onClick={() => onSave({ weightUnit: u.key })}
+            />
+          ))}
+        </div>
+      </Group>
 
       {/* ── Your gyms, in order — the order is what matching reads ── */}
       <Group title="Gyms">

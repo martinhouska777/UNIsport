@@ -298,6 +298,17 @@ export const runningUnits: { key: RunningUnit; label: string }[] = [
   { key: "mi", label: "Miles" },
 ];
 
+/*
+  WEIGHTS — kilograms or pounds for the sets in Log session. A setting, not a
+  switch on that screen (owner, 2026-10-04), like the distance unit above.
+*/
+export type LiftingUnit = "kg" | "lb";
+
+export const liftingUnits: { key: LiftingUnit; label: string }[] = [
+  { key: "kg", label: "Kilograms" },
+  { key: "lb", label: "Pounds" },
+];
+
 export const runningHints: Record<RunningUnit, { distance: string; pace: string }> = {
   km: { distance: "e.g. 8 km", pace: "e.g. 5:00 /km" },
   mi: { distance: "e.g. 5 mi", pace: "e.g. 8:00 /mi" },
@@ -718,6 +729,8 @@ export type OnboardingProfile = {
   gymStyle: string;
   gymSplit: string;
   runningUnit: RunningUnit;
+  /** Settings → Training. Missing on older accounts — read it as kg. */
+  weightUnit?: LiftingUnit;
   runningDistance: string;
   runningPace: string;
   runningExperience: string;
