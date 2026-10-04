@@ -24,8 +24,8 @@
   obvious. Plan opens a session and the finger writes one: the type, how
   hard, a usual workout, the time, sharing the results, Every week — then
   says what Done and Publish do. The editor is left with Back; Done is never
-  pressed. Lineup followed (2026-10-04): a practice is opened, a boat added, a
-  rower seated and moved. (Workouts gets the same treatment next.)
+  pressed. Lineup followed (2026-10-04), then was cut back to three steps the
+  same day: the day list, Repeat, and the pool, which says how to fill a seat.
 
   IT MUST SURVIVE AN EMPTY CONSOLE — no block, no lineups, maybe no athletes.
     Today      the Today section, which is there with or without a plan
@@ -35,7 +35,7 @@
                shown to the coach who needs it most
     Lineup     a practice of the next seven days, always there (the first
                that still needs its boats, or today's morning), and the
-               builder's Add Boat, there with or without a plan or a crew
+               builder's athlete pool, there with or without a plan or a crew
     Workouts   the Erg | Water | Ranking switch, plus the first row if any
     Ranking    the same switch, plus the list switch under it
     Team       the squad's week card (a dash when nobody logged), then the
@@ -44,7 +44,7 @@
   IT CHANGES NOTHING. It opens the session editor and fills in its form, but
   leaves with Back, which keeps nothing; it never presses Done or Publish.
   The lineup builder saves by itself, so while a walk is on screen it writes
-  nothing at all, and it forgets the walk's boat when the walk ends.
+  nothing at all.
   Abandoned inside either, the walk presses its Back on the way out
   (closeOnExit).
 
@@ -172,12 +172,14 @@ const steps: TourStep[] = [
 
   /* ── Lineup ───────────────────────────────────────────────────────────── */
   /*
-    SEATING A CREW, by the finger (owner, 2026-10-04: "yes do the lineups
-    next"). It opens a practice that still needs its boats, adds a boat and
-    seats a rower, then moves them — on the squad's real practice, because the
-    builder writes nothing while a walk is on screen and forgets what the walk
-    did once it is over (LineupBuilderScreen). Repeat is pointed at, never
-    pressed, and only where there is an earlier crew to repeat.
+    THREE STEPS (owner, 2026-10-04: "chci jen aby tam bylo 1, 3 a 7 u lineups
+    a že tap a seat to fill it or drag it … jinak je to zbytečné"). The eight-
+    step version opened a practice, added a boat, seated a rower and moved
+    them; what is left is the day list, Repeat and the pool, which says how a
+    seat is filled instead of acting it out. The finger still opens a practice
+    for Repeat — on the squad's real one, which is safe because the builder
+    writes nothing while a walk is on screen (LineupBuilderScreen). Repeat is
+    pointed at, never pressed, and only where there is an earlier crew.
   */
   {
     press: tab(LINEUP),
@@ -187,56 +189,18 @@ const steps: TourStep[] = [
     body: "Every practice of the next seven days. Each one says how far its lineup has got: not started, draft or published.",
   },
   {
-    press: "coach-lineup-open-practice",
-    anchor: "coach-lineup-head",
-    title: "Seat a practice",
-    body: "Tap a practice to seat its boats. The arrows go to the next water session, so you can do the whole week in one go.",
-  },
-  {
     // Only where there is an earlier published crew; the builder says so
     // when there is not (data-tour-absent) and the step is passed at once.
+    press: "coach-lineup-open-practice",
     anchor: "coach-lineup-repeat",
     title: "Repeat",
     body: "Starts from the last lineup you published. Then change only what’s different.",
   },
   {
-    press: "coach-lineup-add-boat",
-    anchor: "coach-lineup-kinds",
-    group: "boat",
-    title: "Add a boat",
-    body: "Add a boat, then pick its size.",
-  },
-  {
-    press: ["coach-lineup-kind-first", "coach-lineup-seat-first"],
-    anchor: "coach-lineup-seat-first",
-    alsoAnchor: "coach-lineup-seat-pool",
-    group: "boat",
-    title: "Fill a seat",
-    body: "Tap a seat, then the rower who sits in it. Search finds a name fast. Bow is at the top.",
-  },
-  {
-    // Seats the first name, then picks them up and moves them a seat down.
-    press: ["coach-lineup-match-first", "coach-lineup-seat-first", "coach-lineup-seat-second"],
-    anchor: "coach-lineup-seat-first",
-    alsoAnchor: "coach-lineup-seat-second",
-    group: "boat",
-    title: "Change seats",
-    body: "To move someone, tap them, then the seat they go to. If it’s taken, the two swap. × takes them out of the boat.",
-  },
-  {
     anchor: "coach-lineup-count",
     alsoAnchor: "coach-lineup-filters",
     title: "Athlete pool",
-    body: "Everyone not in a boat. You can also tap a name here, then a seat. Anyone sick or injured is listed under Unavailable.",
-  },
-  {
-    anchor: "coach-lineup-publish",
-    title: "Publish",
-    body: "A lineup saves itself as a draft while you work. Publish, and every rower sees their seat on Home.",
-    bodyWhen: {
-      live: "It’s published, so every change reaches the squad as you make it. Change something and Publish comes back, to send them a notification. Unpublish hides it again.",
-      edited: "Changes to a published lineup reach the squad as you make them. Publish sends them a notification.",
-    },
+    body: "Everyone not in a boat. Tap a seat to fill it, or drag a name onto it. Anyone sick or injured is listed under Unavailable.",
   },
 
   /* ── Workouts ─────────────────────────────────────────────────────────── */
