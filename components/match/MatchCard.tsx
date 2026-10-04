@@ -1,13 +1,13 @@
 "use client";
 
-import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { Match, PersonCard } from "@/lib/supabase/matching";
 import { cardChips, type CardChip, type ReasonRarity } from "@/lib/matchReasons";
 import { classYearWord } from "@/lib/onboarding";
 import { markColor } from "@/lib/colorMarks";
 import Button from "@/components/ui/Button";
 import ProfileBadge from "@/components/ProfileBadge";
-import { IconCheck } from "@/components/icons";
+import { IconActivity, IconBarbell, IconCheck, IconRun } from "@/components/icons";
 import InitialsAvatar from "@/components/ui/InitialsAvatar";
 import { useAppState } from "@/components/AppState";
 import { teamFor } from "@/lib/cohorts";
@@ -19,7 +19,7 @@ import { teamFor } from "@/lib/cohorts";
   Under the name, WHO THEY ARE, in two short lines (owner picked look "B",
   2026-10-04): "Junior in Dunster" with the house in its own colour, then
   everything they train — the main activity first, then their extras
-  ("Lifts, Climbing"). VARSITY / MENTOR sit under the photo, the same small
+  ("Lifts · Climbing", bold, an icon each). VARSITY / MENTOR sit under the photo, the same small
   pair as on their profile. Badges and extras come from `card`
   (db/people_cards_2026-10-04.sql); without it the card shows the main
   activity alone and no badges.
@@ -131,7 +131,22 @@ export default function MatchCard({
           )}
           {!year && !match.residence && "\u00a0"}
         </div>
-        <div className="truncate text-[11px] text-muted">{trains.join(", ") || "\u00a0"}</div>
+        {/* What they train, in its own weight with an icon each (owner,
+            2026-10-04: "Lifts" was too small in grey) \u2014 look "B" of three. */}
+        <div className="mt-1 truncate text-[12px] font-semibold text-text">
+          {trains.length === 0
+            ? "\u00a0"
+            : trains.map((t, i) => {
+                const Icon = ACTIVITY_ICON[t.key];
+                return (
+                  <span key={t.word}>
+                    {i > 0 && <span className="mx-1 text-faint">{"\u00b7"}</span>}
+                    {Icon && <Icon size={13} className="mr-0.5 inline-block align-[-2px]" />}
+                    {t.word}
+                  </span>
+                );
+              })}
+        </div>
 
         {/*
           WHO THEY ARE AND WHAT YOU SHARE — always exactly three rows tall.
@@ -194,12 +209,18 @@ export default function MatchCard({
   left out.
 */
 const ACTIVITY_WORD: Record<string, string> = { gym: "Lifts", running: "Runs", cardio: "Cardio" };
+// An "Other" ("Climbing") has no icon of its own and goes without.
+const ACTIVITY_ICON: Record<string, (p: { size?: number; className?: string }) => ReactNode> = {
+  gym: IconBarbell,
+  running: IconRun,
+  cardio: IconActivity,
+};
 
-function trainsList(main: string | null, card: PersonCard | undefined): string[] {
-  const out: string[] = [];
+function trainsList(main: string | null, card: PersonCard | undefined): { key: string; word: string }[] {
+  const out: { key: string; word: string }[] = [];
   const add = (key: string | null, note: string | null | undefined) => {
     const word = key === "other" ? note?.trim() || null : key ? ACTIVITY_WORD[key] ?? null : null;
-    if (word && !out.includes(word)) out.push(word);
+    if (key && word && !out.some((t) => t.word === word)) out.push({ key, word });
   };
   add(main, card?.activityOther);
   card?.otherActivities.forEach((o) => add(o.key, o.note));
