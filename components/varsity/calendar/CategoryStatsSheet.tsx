@@ -9,14 +9,14 @@
   week in time and sessions … do it for everything"). A week is how training
   is planned and talked about, so the average is per week.
 
-  DRAWN LIKE THE REST OF THE NUMBERS IN VARSITY (owner, 2026-10-04: "jen chci
-  vidět kolik sessions, time a distance a average, ale udělej to lepší UI"):
-  two groups under a small heading — This month, and Average a week — each a
-  row of tiles with the label on top and the figure under it, the tiles of
-  the coach's squad week and of the Statistics screen. The average used to be
-  a sentence in a grey box ("Averaging 1.2 sessions and 1h 22m a week"); it is
-  tiles now, distance included. The list of the month's sessions that was
-  under the numbers for an hour is gone ("nechci, aby tam byly ty workouts").
+  WHITE TILES AND ONE SENTENCE (owner, 2026-10-04: "jen chci vidět kolik
+  sessions, time a distance a average, ale udělej to lepší UI", then "ať to
+  není tmavě šedé, o tom to je, a pak tam jen chci jednu větu, jak jsem
+  měl"): the three figures are white tiles with a hairline, the label on top
+  and the figure under it — the grey boxes read dark — and the average is the
+  one sentence it always was, in the same white. For an hour the average was
+  a second row of tiles, and a list of the month's sessions sat under the
+  numbers ("nechci, aby tam byly ty workouts"); both are gone.
 
   A MONTH'S FIRST DAYS ARE ONE WEEK, not a fraction of one: three sessions on
   the 4th read "5.3 a week" when four days were divided out to a whole week.
@@ -39,19 +39,9 @@ import { formatDistance, formatDuration, type Units } from "@/lib/varsity/units"
 /* One figure: its label on top, the number under it. */
 function Tile({ value, label }: { value: string; label: string }) {
   return (
-    <div className="min-w-0 flex-1 rounded-xl border border-border bg-surface-2 px-3 py-2.5">
+    <div className="min-w-0 flex-1 rounded-xl border border-border bg-surface px-3 py-2.5">
       <div className="truncate text-[9px] font-semibold uppercase tracking-[0.1em] text-muted">{label}</div>
       <div className="mt-1 truncate text-[22px] font-semibold leading-none tabular-nums text-text">{value}</div>
-    </div>
-  );
-}
-
-/* A small heading over a row of tiles. */
-function Group({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <div className="pb-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">{title}</div>
-      <div className="flex gap-2">{children}</div>
     </div>
   );
 }
@@ -96,21 +86,25 @@ export default function CategoryStatsSheet({
 
   return (
     <Sheet title={`${label} · ${monthLabel}`} onClose={onClose}>
-      <Group title="This month">
+      <div className="flex gap-2">
         <Tile value={String(sessions)} label={sessions === 1 ? "Session" : "Sessions"} />
         <Tile value={minutes > 0 ? formatDuration(minutes) : "—"} label="Time" />
         {hasDistance && <Tile value={metres > 0 ? formatDistance(metres, units.distance) : "—"} label="Distance" />}
-      </Group>
+      </div>
 
       {sessions > 0 && (
-        <div className="mt-5">
-          <Group title="Average a week">
-            <Tile value={oneDecimal(sessions / per)} label={sessions / per === 1 ? "Session" : "Sessions"} />
-            <Tile value={minutes > 0 ? formatDuration(Math.round(minutes / per)) : "—"} label="Time" />
-            {hasDistance && (
-              <Tile value={metres > 0 ? formatDistance(metres / per, units.distance) : "—"} label="Distance" />
-            )}
-          </Group>
+        <div className="mt-2 rounded-xl border border-border bg-surface px-3.5 py-2.5 text-[13px] text-muted">
+          Averaging{" "}
+          <span className="font-semibold text-text">
+            {oneDecimal(sessions / per)} {sessions / per === 1 ? "session" : "sessions"}
+          </span>
+          {minutes > 0 && (
+            <>
+              {" "}and{" "}
+              <span className="font-semibold text-text">{formatDuration(Math.round(minutes / per))}</span>
+            </>
+          )}{" "}
+          a week.
         </div>
       )}
     </Sheet>
