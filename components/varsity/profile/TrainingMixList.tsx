@@ -17,9 +17,10 @@
   and the block is simply whatever rows it was handed.
 
   NO FIGURES UNDER THE BARS (same day). "42.0 km · 3h 30m · 4 sessions" in grey
-  under every bar was more small text than the block could carry; the line
-  above the bars says how big the whole thing is, and the calendar says what
-  each session was.
+  under every bar was more small text than the block could carry, and the
+  calendar says what each session was. NOR A TOTAL ABOVE THEM (owner,
+  2026-10-04: "39 sessions · 32h 59m smaž") — the bars are shares, and the
+  statistics above them already say how much was trained.
 
   Colours are the calendar's own (lib/varsity/home → kindColor), applied inline
   — per-entity content colour from a data file, the documented exception to
@@ -28,7 +29,6 @@
 import { useState } from "react";
 import Dropdown from "@/components/varsity/profile/Dropdown";
 import { statRanges } from "@/lib/varsity/athleteStats";
-import { formatDuration } from "@/lib/varsity/units";
 import type { MixRow } from "@/lib/varsity/trainingMix";
 import { markColor } from "@/lib/colorMarks";
 
@@ -50,8 +50,6 @@ export default function TrainingMixList({
   heading?: string;
 }) {
   const [open, setOpen] = useState(false);
-  const sessions = rows.reduce((s, r) => s + r.sessions, 0);
-  const minutes = rows.reduce((s, r) => s + r.minutes, 0);
   const label = statRanges.find((r) => r.key === rangeKey)?.label ?? "Month";
   const ownWindow = rangeKey !== undefined && onRange !== undefined;
 
@@ -86,13 +84,6 @@ export default function TrainingMixList({
         </div>
       ) : (
         <div className="flex flex-col gap-2.5 rounded-2xl border border-border bg-surface px-3.5 py-3.5">
-          {/* The one line that says how big the whole thing is, so every bar
-              below has something to be a share OF. */}
-          <div className="text-[11px] text-muted">
-            {sessions} session{sessions === 1 ? "" : "s"}
-            {minutes > 0 && <> · {formatDuration(Math.round(minutes))}</>}
-          </div>
-
           {rows.map((r) => (
             <div key={r.key}>
               <div className="flex items-baseline justify-between gap-3">
