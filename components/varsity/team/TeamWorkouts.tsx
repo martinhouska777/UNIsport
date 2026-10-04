@@ -443,6 +443,8 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
 
   return (
     <div className="mt-4">
+      {/* No erg board to open: the console walk passes that step at once. */}
+      {inConsole && ergRows.length === 0 && <span hidden data-tour-absent="coach-workouts-first" />}
       {/* ERG | WATER — the same full-width switch the Team tab uses above the
           roster: the two halves ARE the box, no inset pill, and overflow-hidden
           is what lets the selected fill take the rounded corners with it. */}
@@ -494,6 +496,7 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
             <button
               type="button"
               onClick={() => setPickingRace(true)}
+              data-tour="coach-workouts-add-race"
               aria-label="Time race pieces"
               className="tap44 press-icon flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary text-primary-contrast"
             >
@@ -527,8 +530,11 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
           </div>
         )}
         {shownRows.map((row, i) => {
-          // The first row is lit with the switch by Varsity Mode's tour.
-          const tour = i === 0 ? "varsity-workouts-first" : undefined;
+          // The first row is lit with the switch by Varsity Mode's tour. The
+          // console walk OPENS it, so there it is named on the Erg side only:
+          // a Water row may be a timing sheet, which is not the board it shows.
+          const tour =
+            i !== 0 ? undefined : !inConsole ? "varsity-workouts-first" : side === "erg" ? "coach-workouts-first" : undefined;
           if (row.workout) {
             const w = row.workout;
             return (

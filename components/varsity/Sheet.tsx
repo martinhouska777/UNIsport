@@ -18,6 +18,7 @@ export default function Sheet({
   onClose,
   children,
   full = false,
+  backTour,
 }: {
   title: string;
   onClose: () => void;
@@ -26,6 +27,8 @@ export default function Sheet({
      (owner, 2026-09-16: a team workout "goes all the way", not three
      quarters). It still slides up and closes the same way. */
   full?: boolean;
+  /** data-tour on a full page's Back, so a walk can leave it (lib/varsity/coachTour.ts). */
+  backTour?: string;
 }) {
   const vTheme = useVarsityTheme();
   // The bottom sheet follows a finger down and closes (the full page has Back).
@@ -46,7 +49,7 @@ export default function Sheet({
       <ThemeProvider tokens={vTheme.dark} light={vTheme.light}>
         <div className="fixed inset-0 z-[60] flex h-dvh flex-col bg-background pt-[env(safe-area-inset-top)] [animation:backdrop-in_0.18s_ease-out]">
           <div className="flex flex-shrink-0 items-center gap-2 border-b border-border px-4 py-3">
-            <button type="button" onClick={onClose} className="tap44 flex items-center gap-1 text-[13px] text-muted">
+            <button type="button" onClick={onClose} data-tour={backTour} className="tap44 flex items-center gap-1 text-[13px] text-muted">
               <IconArrowLeft size={18} /> Back
             </button>
             {title && <div className="ml-1 truncate text-[15px] font-semibold text-text">{title}</div>}

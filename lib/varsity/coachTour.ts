@@ -22,13 +22,17 @@
   date or a name, but not repeat every week, or how to choose the intensity,
   or how to make lineups". So the walk SHOWS HOW again, where the how is not
   obvious. Plan opens a session and the finger writes one: the type, how
-  hard, a usual workout, the time, sharing the results, Every week — then
-  says what Done and Publish do. The editor is left with Back; Done is never
-  pressed. Lineup followed (2026-10-04), then was cut back to three steps the
-  same day: the day list, Repeat, and the pool, which says how to fill a seat.
+  hard, a usual workout, the time, sharing the results, Every week. The
+  editor is left with Back; Done is never pressed. Lineup followed
+  (2026-10-04), then was cut back to three steps the same day: the day list,
+  Repeat, and the pool, which says how to fill a seat. Then Workouts: an erg
+  board opened, and the + that times race pieces.
+
+  ONLY THE HOW (owner, 2026-10-04: "nepotřebujeme vysvětlovat každý button,
+  například publish nebo jaký je dnes workout, bylo jasné"). So no Today step,
+  and no Done or Publish steps on the plan.
 
   IT MUST SURVIVE AN EMPTY CONSOLE — no block, no lineups, maybe no athletes.
-    Today      the Today section, which is there with or without a plan
     Plan       the block's card and its week tabs. With no block of its own
                the screen draws an EXAMPLE week while the walk is on
                (lib/varsity/coachTourExample.ts), so the session editor can be
@@ -36,7 +40,9 @@
     Lineup     a practice of the next seven days, always there (the first
                that still needs its boats, or today's morning), and the
                builder's athlete pool, there with or without a plan or a crew
-    Workouts   the Erg | Water | Ranking switch, plus the first row if any
+    Workouts   the Erg | Water | Ranking switch, plus the first erg row if
+               any — its board is opened only when there is one — and the
+               Water side's +, there with or without a race
     Ranking    the same switch, plus the list switch under it
     Team       the squad's week card (a dash when nobody logged), then the
                first rower
@@ -44,9 +50,10 @@
   IT CHANGES NOTHING. It opens the session editor and fills in its form, but
   leaves with Back, which keeps nothing; it never presses Done or Publish.
   The lineup builder saves by itself, so while a walk is on screen it writes
-  nothing at all.
-  Abandoned inside either, the walk presses its Back on the way out
-  (closeOnExit).
+  nothing at all. A workout board only reads, and the walk points at the
+  race +, never presses it.
+  Abandoned inside the editor, the builder or a board, the walk presses its
+  Back on the way out (closeOnExit).
 
   CAPTAINS DO NOT GET THIS. A captain's console is the squad screen and
   settings — most of these steps point at tabs they do not have. The gate in
@@ -70,13 +77,6 @@ const steps: TourStep[] = [
     title: "Take a quick tour?",
     body: "How to plan the training, seat the boats and read the results.",
     next: "Show me",
-  },
-
-  /* ── Today ────────────────────────────────────────────────────────────── */
-  {
-    anchor: "coach-today",
-    title: "Today",
-    body: "Today’s and tomorrow’s sessions, and whether their boats are out.",
   },
 
   /* ── Plan ─────────────────────────────────────────────────────────────── */
@@ -150,25 +150,6 @@ const steps: TourStep[] = [
     title: "Every week",
     body: "Write your regular week once. Every week fills in the rest of the block.",
   },
-  {
-    anchor: "coach-plan-confirm",
-    group: "editor",
-    title: "Done",
-    body: "Puts it on the plan. Tap a session again to change it or remove it.",
-  },
-  {
-    // Out with Back — nothing written in the walk is kept.
-    press: "coach-plan-editor-back",
-    anchor: "coach-plan-publish",
-    title: "Publish",
-    body: "The squad sees nothing until you publish. After that, every change reaches them as you make it, and Publish sends them a notification.",
-    // A plan that is already out wears Unpublish here, or Publish again once
-    // it has changed since the squad was told (PublishBar's data-tour-state).
-    bodyWhen: {
-      live: "It’s published, so every change reaches the squad as you make it. Change something and Publish comes back, to send them a notification. Unpublish hides the plan again.",
-      edited: "It’s published, so your changes are already on the squad’s phones. Publish sends them a notification.",
-    },
-  },
 
   /* ── Lineup ───────────────────────────────────────────────────────────── */
   /*
@@ -182,7 +163,9 @@ const steps: TourStep[] = [
     pointed at, never pressed, and only where there is an earlier crew.
   */
   {
-    press: tab(LINEUP),
+    // Out of the session editor with Back first — nothing written in the
+    // walk is kept (passed over when the editor never opened).
+    press: ["coach-plan-editor-back", tab(LINEUP)],
     route: LINEUP,
     anchor: "coach-lineup-open-day",
     title: "Lineup",
@@ -204,13 +187,34 @@ const steps: TourStep[] = [
   },
 
   /* ── Workouts ─────────────────────────────────────────────────────────── */
+  /*
+    READING THE RESULTS, and TIMING A RACE (owner, 2026-10-04: "udělej teď
+    workouts how-to … nepotřebujeme vysvětlovat každý button"). It opens the
+    newest erg board, leaves it with Back, and points at the Water side's +
+    without pressing it — picking a session there makes a race day, which the
+    walk must not. With no erg board the opening step is passed at once
+    (data-tour-absent in TeamWorkouts).
+  */
   {
     press: tab(WORKOUTS),
     route: WORKOUTS,
     anchor: "varsity-workouts-switch",
-    alsoAnchor: "varsity-workouts-first",
+    alsoAnchor: "coach-workouts-first",
     title: "Workouts",
-    body: "Every team piece with everyone’s result, on the erg and on the water.",
+    body: "Every session you share the results of. Each rower logs their own result, and the board fills itself.",
+  },
+  {
+    press: "coach-workouts-first",
+    anchor: "coach-board-view",
+    alsoAnchor: "coach-board-first",
+    title: "Everyone’s result",
+    body: "Tap a name for their whole piece. All stats shows every number at once, like a spreadsheet.",
+  },
+  {
+    press: ["coach-board-back", "varsity-workouts-water"],
+    anchor: "coach-workouts-add-race",
+    title: "Race pieces",
+    body: "Tap + to time a session’s pieces: each crew’s start and finish, and the board works out the rest. From the second piece on, Switch swaps two rowers for a seat race.",
   },
   {
     press: "varsity-workouts-ranking",
@@ -249,5 +253,5 @@ const steps: TourStep[] = [
 export const coachTour: Tour = {
   id: "coach",
   steps,
-  closeOnExit: ["coach-plan-editor-back", "coach-lineup-back"],
+  closeOnExit: ["coach-plan-editor-back", "coach-lineup-back", "coach-board-back"],
 };

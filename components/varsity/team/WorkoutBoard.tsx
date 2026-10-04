@@ -206,7 +206,7 @@ export default function WorkoutBoard({
       the session, the workout and the day it was pulled. The bar keeps the
       handle and the X.
     */
-    <Sheet title="" onClose={onClose} full>
+    <Sheet title="" onClose={onClose} full backTour="coach-board-back">
       {/*
         THE WORKOUT AND YOUR OWN RESULT, IN ONE CARD.
 
@@ -336,8 +336,9 @@ export default function WorkoutBoard({
         ))}
 
       {/* list or full table — the selected half fills its side, edge to edge,
-          the same as the Roster / Workouts switch above it (owner, 2026-09-14). */}
-      <div className="mt-3 flex overflow-hidden rounded-xl border border-border bg-surface">
+          the same as the Roster / Workouts switch above it (owner, 2026-09-14).
+          data-tour: the console walk lights it with the first name. */}
+      <div data-tour="coach-board-view" className="mt-3 flex overflow-hidden rounded-xl border border-border bg-surface">
         {(["list", "table"] as View[]).map((v) => (
           <button
             key={v}
@@ -353,7 +354,7 @@ export default function WorkoutBoard({
       </div>
 
       {board.logged === 0 ? (
-        <div className="mt-2 rounded-2xl border border-dashed border-border bg-surface px-4 py-8 text-center text-[12px] text-muted">
+        <div data-tour="coach-board-first" className="mt-2 rounded-2xl border border-dashed border-border bg-surface px-4 py-8 text-center text-[12px] text-muted">
           Nobody has logged this one yet.
         </div>
       ) : view === "table" ? (
@@ -383,6 +384,7 @@ export default function WorkoutBoard({
               key={row.result.id}
               type="button"
               onClick={() => setOpenRow(row.result.id)}
+              data-tour={i === 0 ? "coach-board-first" : undefined}
               /* The columns stand well apart (owner, 2026-10-02: "they're
                  crammed"). The room comes from the ± chip, which sits UNDER
                  the result rather than beside it. A name too long for its
