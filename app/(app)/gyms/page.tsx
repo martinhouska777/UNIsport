@@ -208,7 +208,7 @@ export default function GymsPage() {
   const { userId, universityKey } = useAppState();
   const { isFavorite, toggle } = useFavorites(userId);
   // The Buddy Board by gym — "3 going tonight" on the card people choose from.
-  const { goingFor } = useBoardByGym(userId);
+  const { goingFor, loaded: boardLoaded } = useBoardByGym(userId);
   // One clock for the whole list, so every card agrees on what time it is.
   const now = useClock();
   const [filter, setFilter] = useState<Filter>("all");
@@ -263,6 +263,9 @@ export default function GymsPage() {
       {/* The route's title, for screen readers only — no visible "Gyms" on any
           screen size; the tab bar already says where you are. */}
       <h1 className="sr-only">Gyms</h1>
+      {/* For the app walk (components/tour/TourOverlay): the first card is on
+          screen but its "going" line is still loading, and will grow it. */}
+      {!boardLoaded && <span hidden data-tour-pending="gyms-first-card" />}
 
       {/* Search bar — filters the list as you type */}
       <div className="px-3 pt-3">

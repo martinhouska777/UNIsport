@@ -152,6 +152,8 @@ function declaredAbsent(anchor: string) {
   as a step's own target would be. The leaderboards' podium is the case — the
   board is its own read, and arming without it lit the controls alone and then
   lurched down over the houses when the board landed (owner, 2026-10-03).
+  A step's OWN target can say it too, when it is on screen but not finished —
+  the first gym card, before its "going" line has loaded.
 */
 function declaredPending(anchor: string) {
   return !!document.querySelector(`[data-tour-pending~="${anchor}"]`);
@@ -464,6 +466,7 @@ export default function TourOverlay({
     let pushed = false;
     let beats = 0;
     let alsoBeats = 0;
+    let pendingBeats = 0;
     let timer: ReturnType<typeof setTimeout>;
 
     /*
@@ -531,14 +534,25 @@ export default function TourOverlay({
       }
 
       if (arrived() && (step.anchor === null || !!visibleAnchor(step.anchor))) {
+        /* Its own target is on screen but still filling in (`data-tour-pending`
+           on it): the first gym's "1 going" line is its own read, and it grew
+           the lit card under a caption that had already appeared — the text
+           hopped down a line (2026-10-04, run on the live site). It is waited
+           for as long as a step waits for anything, then lit as it is. */
+        if (step.anchor && declaredPending(step.anchor) && ++pendingBeats < PATIENCE) {
+          timer = setTimeout(attempt, BEAT);
+          return;
+        }
         /* The second thing in the light often lands a beat after the first —
            the first person on Match, "Why you match" on a profile, each its
            own fetch. Give it a moment, so the light opens on both instead of
            on half and then lurching. (Beats spent here aren't held against
-           the step: its anchor is already there.) */
+           the step: its anchor is already there.) One the screen says is NOT
+           coming — Match with nobody on it — isn't waited for at all. */
         if (
           step.alsoAnchor &&
           !visibleAnchor(step.alsoAnchor) &&
+          !declaredAbsent(step.alsoAnchor) &&
           (++alsoBeats < ALSO_WAIT || (declaredPending(step.alsoAnchor) && alsoBeats < PATIENCE))
         ) {
           timer = setTimeout(attempt, BEAT);
@@ -930,9 +944,11 @@ export default function TourOverlay({
               {last ? "Close" : "Skip"}
             </button>
             <div className="flex items-center gap-3">
-              {/* A card that ASKS (the opening "Show me") is a question, not
-                  step one of ten — no counter on it. */}
-              {!step.next && (
+              {/* The opening card ASKS ("Show me") — a question, not step one
+                  of ten, so no counter on it. The invite's "Accept" is a step
+                  like any other and keeps its number: without it the count
+                  read 5, nothing, 7 (2026-10-04). */}
+              {!(step.next && i === 0) && (
                 <span className="text-[11px] tabular-nums text-text-3">
                   {i + 1 - skipped} / {steps.length - skipped}
                 </span>

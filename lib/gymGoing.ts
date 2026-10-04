@@ -27,6 +27,8 @@ export function announceBoardChange() {
 
 export function useBoardByGym(userId: string | null) {
   const [byGym, setByGym] = useState<Map<string, GoingPost[]>>(new Map());
+  // The first read has answered (either way) — until then a card may still grow a line.
+  const [settled, setSettled] = useState(false);
 
   useEffect(() => {
     if (!userId || !hasSupabaseEnv()) return;
@@ -69,9 +71,11 @@ export function useBoardByGym(userId: string | null) {
             next.set(p.gym, list);
           }
           setByGym(next);
+          setSettled(true);
         })
         .catch(() => {
           /* offline, or the board table isn't there — the line simply stays absent */
+          if (active) setSettled(true);
         });
     refresh();
     const timer = setInterval(refresh, BOARD_POLL_MS);
@@ -94,5 +98,8 @@ export function useBoardByGym(userId: string | null) {
     [byGym],
   );
 
-  return { goingFor };
+  /** False while the first read is out — nothing to wait for without a user or a database. */
+  const loaded = settled || !userId || !hasSupabaseEnv();
+
+  return { goingFor, loaded };
 }

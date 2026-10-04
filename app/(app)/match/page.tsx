@@ -236,6 +236,14 @@ function MatchScreen() {
               Showing your class year first while you&apos;re new. Tap the chip to see everyone.
             </p>
           )}
+          {/* For the app walk (components/tour/TourOverlay): the first person
+              is still coming while the list loads — and is not coming at all
+              on an empty or failed list, so the walk doesn't sit for seconds
+              waiting to open a profile nobody can open. */}
+          {!browseErr && browse === null && <span hidden data-tour-pending="match-first-card" />}
+          {(browseErr || browse?.length === 0) && (
+            <span hidden data-tour-absent="match-first-card match-first-card-view" />
+          )}
           {browseErr && <Status>Couldn’t load matches: {browseErr}</Status>}
           {!browseErr && browse === null && <Status>Finding your matches…</Status>}
           {!browseErr && browse && browse.length === 0 && (
