@@ -128,7 +128,9 @@ const steps: TourStep[] = [
     body: "Filled in for you. Tap it to change it.",
   },
   {
-    press: "coach-plan-team",
+    // The switch, tapped only while it is off (a session that already
+    // shares its results is left as it is).
+    press: "coach-plan-team-on",
     anchor: "coach-plan-team",
     alsoAnchor: "coach-plan-boards",
     group: "editor",

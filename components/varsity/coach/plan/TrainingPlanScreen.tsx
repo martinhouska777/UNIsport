@@ -883,14 +883,17 @@ export default function TrainingPlanScreen({
     /* The slot the console walk opens to show how a session is written: the
        first EMPTY one from today on, so it writes into a gap the coach could
        really fill rather than last Monday's — failing that the first gap this
-       week, or the first slot when the week is full. Its day is what the walk
-       lights first ("Every day has two sessions"). */
+       week. A week planned to the last slot (the squad's real one, 4 Oct)
+       has no gap at all: then today's session, and the first slot only for a
+       week that is over. Its day is what the walk lights first ("Every day
+       has two sessions"). */
     const slots = week.days.flatMap((d) =>
       periods.map((p) => ({ key: sessionKey(d.date, p), ahead: toISO(d.date) >= todayISO })),
     );
     const tourSlot = (
       slots.find((s) => s.ahead && !sessions[s.key]) ??
       slots.find((s) => !sessions[s.key]) ??
+      slots.find((s) => s.ahead) ??
       slots[0]
     ).key;
     return (
@@ -1404,9 +1407,13 @@ export default function TrainingPlanScreen({
                   </span>
                 </span>
                 {/* The app's one switch (onboarding/controls Toggle), drawn
-                    here because the whole row is the button. */}
+                    here because the whole row is the button. data-tour: the
+                    console walk taps it ON — and only while it is off, so a
+                    session that already shares its results is not switched
+                    off under a caption about sharing them. */}
                 <span
                   aria-hidden
+                  data-tour={form.teamWorkout ? undefined : "coach-plan-team-on"}
                   className={`relative h-[22px] w-[38px] flex-shrink-0 rounded-full transition-colors ${
                     form.teamWorkout ? "bg-primary-live" : "bg-switch-off"
                   }`}
