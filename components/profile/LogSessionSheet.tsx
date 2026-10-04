@@ -15,7 +15,7 @@
   Saves through lib/supabase/workouts.ts. All colors are theme tokens (rule 1);
   inputs stay text-base so phones don't auto-zoom.
 */
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Button from "@/components/ui/Button";
 import { primaryActivities, cardioTypes, verifiedGyms } from "@/lib/onboarding";
 import {
@@ -112,6 +112,17 @@ export default function LogSessionSheet({
   const [photos, setPhotos] = useState<string[]>(existing?.photos ?? []);
   const [photoBusy, setPhotoBusy] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
+  /* "How did it go?" is ONE line until you write more (owner, 2026-10-04:
+     "make it smaller, like one line"), then it grows with the text — so a
+     longer note, or one opened to edit, is never hidden behind a scroll. */
+  const noteRef = useRef<HTMLTextAreaElement>(null);
+  useLayoutEffect(() => {
+    const el = noteRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    // + the border: the box is border-box, scrollHeight stops inside it.
+    el.style.height = `${el.scrollHeight + el.offsetHeight - el.clientHeight}px`;
+  }, [note]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // A planned session's row is written (see save): a retry only answers the plan.
@@ -623,15 +634,15 @@ export default function LogSessionSheet({
           )}
 
           {/* THE NOTE, asked as a question (owner, 2026-09-27: "name it how did
-              it go"). A few lines, not one: it is the question you answer in
-              a sentence or two. */}
+              it go"). One line that grows as you write (noteRef above). */}
           <label className="block">
             <span className={`${labelCls} mt-6 block`}>How did it go?</span>
             <textarea
+              ref={noteRef}
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              rows={3}
-              className={`${inputCls} resize-none leading-snug`}
+              rows={1}
+              className={`${inputCls} resize-none overflow-hidden leading-snug`}
             />
           </label>
 
