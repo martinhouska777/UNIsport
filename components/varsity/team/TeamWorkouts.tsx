@@ -108,7 +108,7 @@ import { coachTourExampleRace } from "@/lib/varsity/coachTourExample";
   plné, abych mohl ukázat vše"). The example's tests used to go the moment the
   first real result came in — the squad's real 5k of 28 Sep — and the Erg list
   shrank to one row. With this on, the example's past tests stay listed next
-  to the real ones, each still wearing its EXAMPLE tag, on boards of their own
+  to the real ones (the EXAMPLE tag on the board, not the row), on boards of their own
   (a real board is never compared with an invented one: the example's people
   are roster seats, the sheet's are their own ids). Nothing is stored.
   Set it to false after the demo and only real boards show once one exists.
@@ -625,11 +625,10 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
                 />
                 <div className="flex min-w-0 flex-1 items-center gap-2">
                   <span className={NAME}>{w.session.description.trim() || sessionLabel(w.session)}</span>
-                  {/* NO ERG / WATER TAG — the tab above says it. The one tag
-                      a row wears is EXAMPLE, on a worked example (audit,
-                      2026-09-27): its results sit under the squad's real
-                      names, so it must say nobody rowed it. */}
-                  {exampleKeys.has(w.dayKey) && <ExampleTag />}
+                  {/* NO TAG AT ALL — the tab above says erg or water, and a
+                      worked example's EXAMPLE tag is on its board, where the
+                      invented times are, not on every row of the list
+                      (owner, 2026-10-04: "nedávej všude example"). */}
                 </div>
                 <When day={w.dateLabel} time={w.session.time?.trim() || w.period} />
                 <span className="text-muted">
