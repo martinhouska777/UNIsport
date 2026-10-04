@@ -364,6 +364,7 @@ export default function TeamStatsScreen({ onClose }: { onClose: () => void }) {
             <button
               type="button"
               onClick={onClose}
+              data-tour="coach-stats-close"
               aria-label="Close team statistics"
               className="tap44 press-icon flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-surface-2 text-muted"
             >
@@ -393,7 +394,7 @@ export default function TeamStatsScreen({ onClose }: { onClose: () => void }) {
         <div className="flex-1 overflow-y-auto overscroll-contain pb-[max(2rem,env(safe-area-inset-bottom))]">
           <div className="mx-auto w-full max-w-screen-sm px-3.5">
             {/* ── The three choices, the athlete's own dropdowns. ── */}
-            <div className="flex flex-wrap items-center gap-2 py-3">
+            <div data-tour="coach-stats-choices" className="flex flex-wrap items-center gap-2 py-3">
               <Dropdown
                 label={metric.label(units)}
                 options={teamMetrics.map((m) => ({ key: m.key, label: m.label(units) }))}
@@ -430,6 +431,10 @@ export default function TeamStatsScreen({ onClose }: { onClose: () => void }) {
               />
             </div>
 
+            {/* What the console walk is told: the parts below are still being
+                added up, or (nobody trained in the window) not coming. */}
+            {loading && <span hidden data-tour-pending={STATS_PARTS} />}
+            {!loading && empty && <span hidden data-tour-absent={STATS_PARTS} />}
             {loading ? (
               <p className="py-12 text-center text-[13px] text-muted">Adding up the squad…</p>
             ) : empty ? (
@@ -439,7 +444,7 @@ export default function TeamStatsScreen({ onClose }: { onClose: () => void }) {
                 {/* THE GRAPH — its number on every column while they fit (the
                     best one alone when they don't), a dashed average across
                     the ones that had training; tap to read out, drag to zoom. */}
-                <div className="rounded-2xl border border-border bg-surface p-3">
+                <div data-tour="coach-stats-graph" className="rounded-2xl border border-border bg-surface p-3">
                   <Plot
                     points={points}
                     metric={plotMetric}
@@ -506,6 +511,7 @@ export default function TeamStatsScreen({ onClose }: { onClose: () => void }) {
                 <button
                   type="button"
                   onClick={() => setMixOpen(true)}
+                  data-tour="coach-stats-mix"
                   className="mt-5 flex w-full items-center gap-3 rounded-2xl border border-border bg-surface px-3.5 py-3.5 text-left active:bg-surface-2"
                 >
                   <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[10px] border border-primary-line bg-primary-tint text-primary">
@@ -547,6 +553,9 @@ export default function TeamStatsScreen({ onClose }: { onClose: () => void }) {
     document.body,
   );
 }
+
+/* The parts the console walk lights, one by one (lib/varsity/coachTour.ts). */
+const STATS_PARTS = "coach-stats-graph coach-stats-people coach-stats-weeks coach-stats-mix";
 
 /*
   ONE COLUMN, READ OUT — the day or the week that was tapped: the average
@@ -656,7 +665,7 @@ function PeopleTable({ rows, average, units }: { rows: SquadRow[]; average: Squa
     { key: "plan", label: "Plan", end: true },
   ];
   return (
-    <div className="mt-5">
+    <div data-tour="coach-stats-people" className="mt-5">
       <div className="pb-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">
         Person by person
       </div>
@@ -773,7 +782,7 @@ function CompareTable({
   const head = "text-[11px] font-semibold uppercase tracking-[0.1em] text-muted";
 
   return (
-    <div className="mt-5">
+    <div data-tour="coach-stats-weeks" className="mt-5">
       <div className="pb-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">
         {each} by {each}
       </div>

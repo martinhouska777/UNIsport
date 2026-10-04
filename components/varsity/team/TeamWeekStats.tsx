@@ -257,6 +257,7 @@ export default function TeamWeekStats({ week }: { week: TeamWeek }) {
         <button
           type="button"
           onClick={() => setFull(true)}
+          data-tour="coach-team-full-stats"
           className="tap44 flex flex-shrink-0 items-center gap-1 rounded-full border border-border bg-surface-2 px-3 py-1.5 text-[12px] font-medium text-text"
         >
           Full statistics <IconChevronRight size={13} />

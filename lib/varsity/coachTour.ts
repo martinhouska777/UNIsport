@@ -212,7 +212,41 @@ const steps: TourStep[] = [
     title: "Team",
     body: "The squad’s average week: how far each rower went and how long they trained.",
   },
+  /*
+    TEAM STATISTICS, part by part (owner, 2026-10-04: "ty team statistics
+    ukaž, jaké části"). Full statistics is opened and each part lit as it is
+    scrolled to; nothing is pressed inside it. Still adding up, the screen says
+    so (data-tour-pending); nobody trained in the window, it says the parts are
+    not coming, and the rest of the group is passed at once.
+  */
   {
+    press: "coach-team-full-stats",
+    anchor: "coach-stats-choices",
+    alsoAnchor: "coach-stats-graph",
+    group: "stats",
+    title: "Team statistics",
+    body: "Pick what to measure, over how long, as columns or a line. Tap a column to read it, drag across columns to zoom in.",
+  },
+  {
+    anchor: "coach-stats-people",
+    group: "stats",
+    title: "Person by person",
+    body: "Everyone’s kilometres, hours and sessions done out of planned, against the team average. Tap a heading to sort.",
+  },
+  {
+    anchor: "coach-stats-weeks",
+    group: "stats",
+    title: "Week by week",
+    body: "Each week under the one before, so you see the training build up or taper.",
+  },
+  {
+    anchor: "coach-stats-mix",
+    group: "stats",
+    title: "Training mix",
+    body: "What all that training was: each kind’s share of it.",
+  },
+  {
+    press: "coach-stats-close",
     anchor: "coach-team-first-rower",
     title: "Profiles",
     body: "Tap anyone to see their profile. The pencil writes them a note.",
@@ -233,5 +267,5 @@ const steps: TourStep[] = [
 export const coachTour: Tour = {
   id: "coach",
   steps,
-  closeOnExit: ["coach-plan-editor-back", "coach-lineup-back"],
+  closeOnExit: ["coach-plan-editor-back", "coach-lineup-back", "coach-stats-close"],
 };
