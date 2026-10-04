@@ -62,21 +62,25 @@ export function SettingsHeader({
 }) {
   const router = useRouter();
   return (
-    <div className="flex items-center gap-3 border-b border-border bg-surface px-3.5 py-3">
-      <button
-        type="button"
-        onClick={() => (window.history.length > 1 ? router.back() : router.push(fallback))}
-        aria-label="Back"
-        className="tap44 press-icon text-text"
-      >
-        <IconArrowLeft size={20} />
-      </button>
-      <h1 className="flex-1 text-base font-medium text-text">{title}</h1>
-      {saveState !== "idle" && (
-        <span className={`text-[11px] ${saveState === "error" ? "text-danger" : "text-muted"}`}>
-          {saveState === "saving" ? "Saving…" : saveState === "saved" ? "Saved ✓" : "Couldn’t save"}
-        </span>
-      )}
+    /* The bar runs the full width; what is in it lines up with the column
+       below (SettingsBody), which on a laptop sits in the middle. */
+    <div className="border-b border-border bg-surface">
+      <div className="mx-auto flex w-full max-w-screen-sm items-center gap-3 px-3.5 py-3">
+        <button
+          type="button"
+          onClick={() => (window.history.length > 1 ? router.back() : router.push(fallback))}
+          aria-label="Back"
+          className="tap44 press-icon text-text"
+        >
+          <IconArrowLeft size={20} />
+        </button>
+        <h1 className="flex-1 text-base font-medium text-text">{title}</h1>
+        {saveState !== "idle" && (
+          <span className={`text-[11px] ${saveState === "error" ? "text-danger" : "text-muted"}`}>
+            {saveState === "saving" ? "Saving…" : saveState === "saved" ? "Saved ✓" : "Couldn’t save"}
+          </span>
+        )}
+      </div>
     </div>
   );
 }

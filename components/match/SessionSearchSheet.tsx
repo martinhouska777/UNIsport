@@ -71,7 +71,7 @@ export default function SessionSearchSheet({
         className="absolute inset-0 bg-background/70 [animation:backdrop-in_0.2s_ease-out]"
       />
 
-      <div className="sheet-ceiling relative flex max-h-[92%] flex-col rounded-b-3xl border-b border-border bg-surface [animation:sheet-down_0.28s_cubic-bezier(0.2,0.8,0.2,1)]">
+      <div className="sheet-panel sheet-ceiling relative flex max-h-[92%] flex-col rounded-b-3xl border-b border-border bg-surface [animation:sheet-down_0.28s_cubic-bezier(0.2,0.8,0.2,1)]">
         <div className="flex items-center justify-between border-b border-border px-4 pb-3 pt-4">
           <div className="text-[15px] font-medium text-text">Search by time</div>
           <button

@@ -8,15 +8,15 @@
     header  the crest + "Varsity Mode", which opens the mode switcher
     action  Log session (the phone's round + button)
     tabs    Home · Calendar · Workouts · Profile (from VarsityNav — one list)
-    footer  settings, light/dark — no Exit (owner, 2026-10-01: the way out is
-            the crest; the Coach Console keeps its "Athlete view")
+    footer  settings — no Exit (owner, 2026-10-01: the way out is the crest;
+            the Coach Console keeps its "Athlete view"), and no light/dark
+            (owner, 2026-10-04: it lives in Settings → Design, as on the phone)
 */
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import SideRail, { railIconCls } from "@/components/SideRail";
 import VarsityCrest from "@/components/varsity/VarsityCrest";
 import ModeSwitcherSheet from "@/components/ModeSwitcherSheet";
-import { ThemeModeToggle } from "@/components/ThemeMode";
 import { useAppState } from "@/components/AppState";
 import { getUniversity } from "@/lib/themes";
 import { varsityTabs } from "@/components/varsity/VarsityNav";
@@ -77,7 +77,6 @@ export default function VarsitySideNav() {
             <Link href="/settings" aria-label="Settings" className={railIconCls}>
               <IconSettings size={16} />
             </Link>
-            <ThemeModeToggle />
           </div>
         }
       />

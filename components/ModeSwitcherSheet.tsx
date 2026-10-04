@@ -83,7 +83,7 @@ export default function ModeSwitcherSheet({
         className="absolute inset-0 bg-background/70 [animation:backdrop-in_0.2s_ease-out]"
       />
 
-      <div className="sheet-ceiling relative rounded-b-3xl border-b border-border bg-surface [animation:sheet-down_0.28s_cubic-bezier(0.2,0.8,0.2,1)]">
+      <div className="sheet-panel sheet-ceiling relative rounded-b-3xl border-b border-border bg-surface [animation:sheet-down_0.28s_cubic-bezier(0.2,0.8,0.2,1)]">
         <div className="flex flex-col gap-2.5 px-4 pb-4 pt-5">
           {/* Student mode — the plain crest. */}
           <button

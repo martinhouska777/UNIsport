@@ -109,7 +109,7 @@ export default function AboutYouSheet({
 
       <div
         style={sheetStyle}
-        className="sheet-floor relative flex max-h-[90%] flex-col rounded-t-3xl border-t border-border bg-surface [animation:sheet-up_0.28s_cubic-bezier(0.2,0.8,0.2,1)]"
+        className="sheet-panel sheet-floor relative flex max-h-[90%] flex-col rounded-t-3xl border-t border-border bg-surface [animation:sheet-up_0.28s_cubic-bezier(0.2,0.8,0.2,1)]"
       >
         {/* Grab area: handle + title. Drag it down to close. It stops here —
             over the scrolling body it would fight every scroll. */}

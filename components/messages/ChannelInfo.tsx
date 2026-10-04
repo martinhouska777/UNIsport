@@ -441,7 +441,7 @@ function BottomMenu({
         onClick={onClose}
         className="absolute inset-0 bg-background/70"
       />
-      <div role="menu" className="relative mx-auto w-full max-w-screen-sm overflow-hidden rounded-t-3xl border-t border-border bg-surface pb-6">
+      <div role="menu" className="sheet-panel relative mx-auto w-full max-w-screen-sm overflow-hidden rounded-t-3xl border-t border-border bg-surface pb-6">
         <div className="px-4 pb-3 pt-4 text-center text-[13px] text-muted">{title}</div>
         {children}
       </div>

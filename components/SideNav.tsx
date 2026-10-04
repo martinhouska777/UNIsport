@@ -12,7 +12,6 @@
 */
 import { usePathname } from "next/navigation";
 import { tabs, tabActive, useUnreadCount } from "@/components/BottomNav";
-import { ThemeModeToggle } from "@/components/ThemeMode";
 import SideRail from "@/components/SideRail";
 import Wordmark from "@/components/landing/Wordmark";
 import { useAppState } from "@/components/AppState";
@@ -43,13 +42,13 @@ export default function SideNav() {
         tour: `tab-${tab.href}`,
         badge: tab.href === "/messages" ? unread : undefined,
       }))}
+      /* No light/dark button here: it lives in Settings → Design, as on the
+         phone (owner, 2026-10-04: "on the computer I still see the light and
+         dark button"). */
       footer={
-        <>
-          <span className="truncate text-[11px] uppercase tracking-[0.1em] text-muted">
-            {university}
-          </span>
-          <ThemeModeToggle />
-        </>
+        <span className="truncate text-[11px] uppercase tracking-[0.1em] text-muted">
+          {university}
+        </span>
       }
     />
   );

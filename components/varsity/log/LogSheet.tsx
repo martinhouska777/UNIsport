@@ -44,7 +44,7 @@ export default function LogSheet({ onClose }: { onClose: () => void }) {
         {/* No fill-mode on the slide, on purpose: once it ends the sheet has no
             transform, so the editor's `fixed inset-0` inside it still covers
             the whole screen. */}
-        <div ref={panelRef} className="relative flex h-[75dvh] flex-col overflow-hidden rounded-t-3xl border-t border-border bg-background [animation:sheet-up_0.28s_cubic-bezier(0.2,0.8,0.2,1)]">
+        <div ref={panelRef} className="sheet-panel relative flex h-[75dvh] flex-col overflow-hidden rounded-t-3xl border-t border-border bg-background [animation:sheet-up_0.28s_cubic-bezier(0.2,0.8,0.2,1)]">
           <div className="relative flex flex-shrink-0 justify-center pb-1 pt-2.5">
             <div className="h-1 w-9 rounded-full bg-border" />
             <button

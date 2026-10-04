@@ -286,7 +286,7 @@ export default function TimeSheet({
           role="dialog"
           aria-label={`${what}, ${who}`}
           data-tour="coach-race-watch"
-          className="relative rounded-t-3xl border-t border-border bg-surface px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-2.5 [animation:sheet-up_0.28s_cubic-bezier(0.2,0.8,0.2,1)]"
+          className="sheet-panel relative rounded-t-3xl border-t border-border bg-surface px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-2.5 [animation:sheet-up_0.28s_cubic-bezier(0.2,0.8,0.2,1)]"
         >
           <div className="mx-auto mb-2.5 h-1 w-9 rounded-full bg-border" />
           <div className="mx-auto w-full max-w-sm">

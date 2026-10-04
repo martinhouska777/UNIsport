@@ -1871,6 +1871,36 @@ body {
   padding-top: env(safe-area-inset-top, 0px);
 }
 
+/*
+  .sheet-panel — A SHEET ON A LAPTOP (owner, 2026-10-04: "on the computer…
+  make it look good there"). On a phone a sheet hangs from an edge of the
+  screen and spans it, which is right for a thumb. On a 1440px laptop the same
+  sheet became a strip running edge to edge, the mode switcher's two buttons
+  1400px wide. From lg up the panel is a card in the middle of the screen
+  instead: every overlay that holds one is already a full-screen flex column,
+  so `margin: auto` centres it both ways, and with no screen edge to sit on it
+  gets all four corners and a border all round. Unlayered, so it wins over the
+  panel's own phone utilities (rounded-t-3xl, border-t, max-h-[85%]).
+*/
+@media (min-width: 1024px) {
+  .sheet-panel {
+    width: min(560px, calc(100% - 48px));
+    margin: auto;
+    max-height: min(85dvh, 820px);
+    border-width: 1px;
+    border-radius: var(--radius-3xl);
+    box-shadow: var(--overlay-shadow);
+    animation: sheet-pop 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+}
+@keyframes sheet-pop {
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to   { opacity: 1; transform: none; }
+}
+@media (min-width: 1024px) and (prefers-reduced-motion: reduce) {
+  .sheet-panel { animation: none; }
+}
+
 /* THE LEAGUE'S COMPETITION SWITCH (components/leaderboards/CompetitionSwitcher.tsx):
    the new competition's name slides in from the side it came from — next from
    the right, previous from the left (owner, 2026-09-15). */
