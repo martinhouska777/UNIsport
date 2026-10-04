@@ -13,9 +13,8 @@
 
   Data is REAL: it loads the person's public profile via the get_public_profile
   RPC (RLS-safe) and runs it through profileFromOnboarding — the SAME mapping the
-  owner's own Profile tab uses — so nothing here is faked. The fit tier is the
-  same one shown on the card the user tapped — no longer shown here (owner,
-  2026-09-30); Match still adds ?fit= to the link, and it is ignored. All colors are theme tokens (rule 1).
+  owner's own Profile tab uses — so nothing here is faked. No fit tier, here
+  or on the Match card (owner, 2026-09-30 and 2026-10-04). All colors are theme tokens (rule 1).
 */
 import { Suspense, useEffect, useState } from "react";
 import Button from "@/components/ui/Button";

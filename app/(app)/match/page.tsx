@@ -4,7 +4,7 @@
   MATCH TAB. TWO sub-tabs — it had three, and all three meant "find a partner",
   which left nobody able to say which one they were supposed to use:
 
-  - People: everyone at your school, best fit first, then "Also on campus".
+  - People: everyone at your school, best match first, in one grid.
   - Sessions: the Buddy Board — everyone who has said what they want to train
     and when — IS the tab. You land on people, not on controls. Posting your
     own is a button on it, and the timed search ("who is going Thursday around
@@ -32,7 +32,6 @@ import { getBrowseMatches, type Match, type MatchFilters } from "@/lib/supabase/
 import { verifiedGyms } from "@/lib/onboarding";
 import type { TimeSearch } from "@/lib/buddyBoard";
 import { isNewFirstYear as newFirstYear } from "@/lib/cohorts";
-import { matchTier } from "@/lib/matchTier";
 import MatchGrid from "@/components/match/MatchGrid";
 import BuddyBoard from "@/components/match/BuddyBoard";
 import SessionSearchSheet from "@/components/match/SessionSearchSheet";
@@ -96,16 +95,7 @@ function MatchScreen() {
     [myProfile],
   );
 
-  // Open another person's profile, passing the exact fit tier shown on their
-  // card so the profile badge says the same thing the card did.
-  const viewProfile = (m: Match, max: number) => {
-    const tier = matchTier(m.score, max);
-    router.push(
-      tier
-        ? `/people/${m.userId}?fit=${encodeURIComponent(tier.label)}`
-        : `/people/${m.userId}`,
-    );
-  };
+  const viewProfile = (m: Match) => router.push(`/people/${m.userId}`);
 
   // --- People filters ---
   /*
@@ -261,7 +251,7 @@ function MatchScreen() {
           )}
           {!browseErr && browse && browse.length > 0 && (
             /* No count on an unfiltered list — it appears above once a filter is set. */
-            <MatchGrid matches={browse} max={100} onView={viewProfile} />
+            <MatchGrid matches={browse} onView={viewProfile} />
           )}
         </>
       )}

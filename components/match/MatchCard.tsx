@@ -2,7 +2,6 @@
 
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { Match } from "@/lib/supabase/matching";
-import { matchTier } from "@/lib/matchTier";
 import { cardChips, type CardChip, type ReasonRarity } from "@/lib/matchReasons";
 import { classYearLabel } from "@/lib/onboarding";
 import Button from "@/components/ui/Button";
@@ -12,8 +11,7 @@ import { useAppState } from "@/components/AppState";
 import { teamFor } from "@/lib/cohorts";
 
 /*
-  One result card in the Match grid: avatar block with a compatibility badge,
-  name, an identity line, the reasons this person ranked where they did, and a
+  One result card in the Match grid: avatar block, name, an identity line, the reasons this person ranked where they did, and a
   View Profile button. All colors are theme tokens.
 
   The line under the name is WHO THEY ARE — year, house, what they train. Three
@@ -31,14 +29,12 @@ import { teamFor } from "@/lib/cohorts";
 */
 export default function MatchCard({
   match,
-  max,
   onView,
   rarity,
   chipCount = 14,
   tour,
 }: {
   match: Match;
-  max: number; // 100 for browse, 92 for session search
   onView?: (m: Match) => void;
   // How common each kind of reason is across the list this card belongs to.
   // Without it the chips fall back to strongest-first.
@@ -54,8 +50,6 @@ export default function MatchCard({
   const { universityKey } = useAppState();
   const houseColors = teamFor(universityKey, match.residence, match.classYear)?.colors ?? null;
 
-  // A qualitative tier, not a raw percentage — see lib/matchTier.ts for why.
-  const tier = matchTier(match.score, max);
   // Year · house · what they train. Anything they never answered drops out
   // rather than leaving a stray separator.
   const subtitle = [
@@ -96,20 +90,16 @@ export default function MatchCard({
   return (
     <div data-tour={tour} className="overflow-hidden rounded-2xl border border-border bg-surface">
       {/*
-        Avatar block + compatibility badge. The head is a SUNKEN panel with a
+        Avatar block. No fit badge ("Strong fit" etc. — cut, owner 2026-10-04);
+        the chips below say what you share. The head is a SUNKEN panel with a
         hairline under it, so the card reads as two parts — the person, then
         the facts. It used to be a diagonal gradient that started lighter than
         the card and ended darker, which averaged out to the card's own tone
         and left the top of the card looking like a smudge on the dark theme
         (owner, 2026-09-14).
       */}
-      <div className="relative flex h-24 items-center justify-center border-b border-border bg-sunken">
+      <div className="flex h-24 items-center justify-center border-b border-border bg-sunken">
         <InitialsAvatar name={match.name} size={48} colors={houseColors} />
-        {tier && (
-          <span className="absolute right-2 top-2 rounded-lg border border-border bg-surface px-2 py-0.5 text-[11px] font-semibold text-text">
-            {tier.label}
-          </span>
-        )}
       </div>
 
       {/* Details */}
