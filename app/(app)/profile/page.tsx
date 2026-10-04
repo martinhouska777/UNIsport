@@ -930,6 +930,7 @@ export default function ProfilePage() {
           initialActivity={logPrefill?.activity}
           initialPartner={logPrefill?.partner}
           plan={logPrefill?.plan}
+          distanceUnit={data?.runningUnit === "mi" ? "mi" : "km"}
           onClose={() => {
             setLogging(false);
             setLogPrefill(null);

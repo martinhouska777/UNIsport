@@ -428,6 +428,24 @@ export default function TrainingSettings({
         </div>
       </Group>
 
+      {/* ── Kilometres or miles, for everyone who isn't a runner (a runner
+             picks it in the running card above). Log session reads it and
+             has no switch of its own (owner, 2026-10-04). ── */}
+      {main !== "running" && (
+        <Group title="Distance">
+          <div className="flex flex-wrap gap-1.5">
+            {runningUnits.map((u) => (
+              <Pill
+                key={u.key}
+                label={u.label}
+                selected={unit === u.key}
+                onClick={() => onSave({ runningUnit: u.key })}
+              />
+            ))}
+          </div>
+        </Group>
+      )}
+
       {/* ── Your gyms, in order — the order is what matching reads ── */}
       <Group title="Gyms">
         <div className="flex flex-col gap-2">

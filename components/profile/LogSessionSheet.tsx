@@ -39,7 +39,7 @@ import { fileToDataUrl } from "@/lib/image";
 import { notifyPartnerTag } from "@/lib/push/client";
 import { confirmPlan } from "@/lib/supabase/sessionPlans";
 import { PARTNER_CONFIRM_HOURS, sessionPoints } from "@/lib/points";
-import { IconArrowLeft, IconCheck, IconChevronRight, IconPlus, IconSwap, IconTrash, IconX } from "@/components/icons";
+import { IconArrowLeft, IconCheck, IconChevronRight, IconPlus, IconTrash, IconX } from "@/components/icons";
 import Segmented from "@/components/ui/Segmented";
 import DetailRow, { detailRowInput as rowInput } from "@/components/ui/DetailRow";
 
@@ -64,6 +64,7 @@ export default function LogSessionSheet({
   initialActivity,
   initialPartner,
   plan,
+  distanceUnit,
   onClose,
   onSaved,
 }: {
@@ -85,6 +86,8 @@ export default function LogSessionSheet({
     confirms both people's sessions.
   */
   plan?: { planId: string; conversationId: string; scheduledAt: string };
+  /** Kilometres or miles — chosen in Settings → Training, never here. */
+  distanceUnit?: DistanceUnit;
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -106,7 +109,6 @@ export default function LogSessionSheet({
   // Running / cardio metrics.
   const [cardioType, setCardioType] = useState(existing?.metrics.cardioType ?? "");
   const [distance, setDistance] = useState(existing?.metrics.distance ?? "");
-  const [unit, setUnit] = useState<DistanceUnit>(existing?.metrics.unit ?? "km");
   // Typed in minutes; saved as "45 min" (see save). An older "44:05" stays as it is.
   const [duration, setDuration] = useState((existing?.metrics.duration ?? "").replace(/\s*min$/i, ""));
   const [note, setNote] = useState(existing?.note ?? "");
@@ -134,13 +136,16 @@ export default function LogSessionSheet({
   const isRunning = activity === "running";
   const isCardio = activity === "cardio";
   const usesExercises = !isRunning && !isCardio; // gym / other
-  // Running uses km/mi; cardio also allows metres (rowing, swimming).
-  const unitOptions: DistanceUnit[] = isCardio ? ["km", "mi", "m"] : ["km", "mi"];
-  /* ONE button that says the unit, not a switch (owner, 2026-10-04): a tap
-     moves it on to the next one. A cardio "m" carried over to a run is km. */
-  const shownUnit: DistanceUnit = unitOptions.includes(unit) ? unit : "km";
-  const nextUnit = () => setUnit(unitOptions[(unitOptions.indexOf(shownUnit) + 1) % unitOptions.length]);
-  const unitSlot = "ml-2 flex h-8 w-[60px] flex-shrink-0 items-center text-[13px] font-semibold";
+  /*
+    THE DISTANCE UNIT IS A SETTING, not a switch on this screen (owner,
+    2026-10-04: "leave it only in settings") — Settings → Training, saved as
+    `runningUnit`. A session saved before keeps the unit it was logged in (an
+    old cardio "m" stays metres, but a run is never in metres).
+  */
+  const kept = existing?.metrics.unit;
+  const unit: DistanceUnit = kept && !(isRunning && kept === "m") ? kept : (distanceUnit ?? "km");
+  // "km" and "min" in one column, so the two numbers end at the same place.
+  const unitWord = "ml-2 w-9 flex-shrink-0 text-base text-text";
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -249,7 +254,7 @@ export default function LogSessionSheet({
       metrics: {
         cardioType,
         distance,
-        unit: shownUnit,
+        unit,
         // A bare number is minutes — the field says so — and is kept that way.
         duration: /^\d+(\.\d+)?$/.test(duration.trim()) ? `${duration.trim()} min` : duration,
         weightUnit,
@@ -561,18 +566,7 @@ export default function LogSessionSheet({
                   inputMode="decimal"
                   className={rowInput}
                 />
-                {/* The two units sit in one column (owner, 2026-10-04: "km and
-                    min above each other"): the same width, the words starting
-                    at the same point, so both numbers end at the same place. */}
-                <button
-                  type="button"
-                  onClick={nextUnit}
-                  aria-label={`Distance in ${shownUnit}. Change unit`}
-                  className={`press-icon justify-between rounded-full border border-border bg-surface pl-3 pr-2.5 text-text ${unitSlot}`}
-                >
-                  {shownUnit}
-                  <IconSwap size={12} className="text-muted" />
-                </button>
+                <span className={unitWord}>{unit}</span>
               </DetailRow>
               <DetailRow label="Duration">
                 <input
@@ -581,8 +575,7 @@ export default function LogSessionSheet({
                   inputMode="numeric"
                   className={rowInput}
                 />
-                {/* pl one px more than the pill's: its border. */}
-                <span className={`pl-[13px] text-text ${unitSlot}`}>min</span>
+                <span className={unitWord}>min</span>
               </DetailRow>
             </div>
           )}
