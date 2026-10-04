@@ -140,6 +140,7 @@ export default function LogSessionSheet({
      moves it on to the next one. A cardio "m" carried over to a run is km. */
   const shownUnit: DistanceUnit = unitOptions.includes(unit) ? unit : "km";
   const nextUnit = () => setUnit(unitOptions[(unitOptions.indexOf(shownUnit) + 1) % unitOptions.length]);
+  const unitSlot = "ml-2 flex h-8 w-[60px] flex-shrink-0 items-center text-[13px] font-semibold";
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -560,11 +561,14 @@ export default function LogSessionSheet({
                   inputMode="decimal"
                   className={rowInput}
                 />
+                {/* The two units sit in one column (owner, 2026-10-04: "km and
+                    min above each other"): the same width, the words starting
+                    at the same point, so both numbers end at the same place. */}
                 <button
                   type="button"
                   onClick={nextUnit}
                   aria-label={`Distance in ${shownUnit}. Change unit`}
-                  className="press-icon ml-2 flex h-8 flex-shrink-0 items-center gap-1 rounded-full border border-border bg-surface-2 px-3 text-[13px] font-semibold text-text"
+                  className={`press-icon justify-between rounded-full border border-border bg-surface-2 pl-3 pr-2.5 text-text ${unitSlot}`}
                 >
                   {shownUnit}
                   <IconSwap size={12} className="text-muted" />
@@ -577,7 +581,8 @@ export default function LogSessionSheet({
                   inputMode="numeric"
                   className={rowInput}
                 />
-                <span className="ml-1.5 flex-shrink-0 text-base text-muted">min</span>
+                {/* pl one px more than the pill's: its border. */}
+                <span className={`pl-[13px] text-text ${unitSlot}`}>min</span>
               </DetailRow>
             </div>
           )}
