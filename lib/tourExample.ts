@@ -16,9 +16,12 @@
 
   Who sends it and what it says is data, here (rule 7). The place is the
   school's first main gym, so it is a real gym at whichever school you are.
+
+  The walk's other example, the HOUSE RACE it ends on, is at the bottom.
 */
 import { useSyncExternalStore } from "react";
 import { gymsFor } from "@/lib/gyms";
+import type { GroupRow } from "@/lib/leaderboards";
 import type { DmConversation, DmMessage } from "@/lib/supabase/messages";
 import { planWhenLabel, type UpcomingPlan } from "@/lib/supabase/sessionPlans";
 import { activityLabel } from "@/lib/supabase/workouts";
@@ -139,4 +142,42 @@ export function tourExamplePlan(e: TourExample): UpcomingPlan {
     place: e.place,
     scheduledAt: e.scheduledAt,
   };
+}
+
+/*
+  THE EXAMPLE HOUSE RACE — the board the walk ends on, when the real one has
+  nobody on it yet: a campus before launch, or the first days of any month,
+  when every house reads 0.0 under a grey sentence (owner, 2026-10-04: "muzes
+  ukazat ty houses na konci … kdyz tam nebudou jeste lide").
+
+  The school's own houses with made-up points, in an order that is not the
+  alphabet. The same numbers every time, so a recording of the walk comes out
+  the same when it is made again. Your house is marked as yours, as it is on
+  the real board. Shown only while the walk is on screen, and only in place of
+  a board with no points on it (app/(app)/leaderboards/page.tsx).
+*/
+export function tourExampleHouses(keys: string[], mine: string | null): GroupRow[] {
+  const hash = (s: string) => {
+    let h = 7;
+    for (const c of s) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+    return h;
+  };
+  return [...keys]
+    .sort((a, b) => hash(a) - hash(b))
+    .map((key, i) => {
+      const members = 30 + (hash(`${key}·members`) % 31);
+      // 46 per member at the top, about 3.4 less per place, a little uneven.
+      const avgPoints = Math.round((46 - i * 3.4 + ((hash(`${key}·jitter`) % 21) - 10) / 10) * 10) / 10;
+      const points = Math.round(avgPoints * members);
+      return {
+        rank: i + 1,
+        key,
+        members,
+        actives: Math.round(members * 0.6),
+        sessions: Math.round(points / 13),
+        points,
+        avgPoints,
+        isMine: key === mine,
+      };
+    });
 }

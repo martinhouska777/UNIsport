@@ -105,6 +105,7 @@ import YouScreen from "@/components/leaderboards/YouScreen";
 import PersonAvatar from "@/components/leaderboards/PersonAvatar";
 import CompetitionSwitcher from "@/components/leaderboards/CompetitionSwitcher";
 import { useTourRunning } from "@/lib/tour";
+import { tourExampleHouses } from "@/lib/tourExample";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { useProfileData } from "@/components/profile/useProfileData";
 import { houses, residenceLabel, yardDorms } from "@/lib/onboarding";
@@ -474,11 +475,23 @@ export default function LeaderboardsPage() {
   const want = `${competition}|${period}|${userId ?? ""}`;
   const loading = result?.for !== want;
   const people = result?.people ?? [];
+  /*
+    THE WALK'S EXAMPLE RACE (lib/tourExample.ts). The walk ends on this board,
+    and on a campus nobody has trained on yet — or in the first days of any
+    month — that was every house at 0.0 under a grey sentence. While the walk
+    is on screen, a Houses board with no points on it shows made-up points
+    instead; a board with real points is shown as it is, and the example is
+    gone the moment the walk ends (owner, 2026-10-04: "muzes ukazat ty houses
+    na konci").
+  */
+  const realGroups = result?.groups;
+  const exampleRace =
+    touring && competition === "houses" && !loading && !(realGroups ?? []).some((g) => g.points > 0);
   // The metric decides the ORDER, not the read: the database hands back every
   // qualifying group with both numbers on it, so switching is a re-sort.
   const groups = useMemo(
-    () => rankGroups(result?.groups ?? [], metric),
-    [result?.groups, metric],
+    () => rankGroups(exampleRace ? tourExampleHouses(houses, me.residence) : (realGroups ?? []), metric),
+    [exampleRace, realGroups, me.residence, metric],
   );
 
   const def = useMemo(
