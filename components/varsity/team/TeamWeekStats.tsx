@@ -36,7 +36,8 @@
 
   The average is over THE PEOPLE WHO TRAINED that week, not over the roster —
   somebody who logged nothing is an unknown, not a zero. How many people that
-  was is written underneath, so the average is never read alone.
+  was used to be written underneath; the owner cut it (2026-10-04) — the
+  count is in the Full statistics, row by row.
 
   All colours are theme tokens.
 */
@@ -244,16 +245,11 @@ export default function TeamWeekStats({ week }: { week: TeamWeek }) {
         />
       </div>
 
-      {/* How many people the average is over — never the average alone — and
-          the way to the whole reading. */}
+      {/* The way to the whole reading. How many people the average is over
+          ("5 people trained") was written beside it until the owner cut it
+          (2026-10-04: "5 people trained smaž"). */}
       <div className="mt-2.5 flex items-center justify-between gap-2 px-0.5">
-        <div className="min-w-0 truncate text-[12px] text-muted">
-          {loading
-            ? "Adding up the squad…"
-            : data.people > 0
-              ? `${data.people} ${data.people === 1 ? "person" : "people"} trained`
-              : ""}
-        </div>
+        <div className="min-w-0 truncate text-[12px] text-muted">{loading ? "Adding up the squad…" : ""}</div>
         <button
           type="button"
           onClick={() => setFull(true)}

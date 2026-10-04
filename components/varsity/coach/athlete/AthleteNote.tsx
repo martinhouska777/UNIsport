@@ -17,7 +17,7 @@
 import { useEffect, useState } from "react";
 import NoteEditor from "@/components/varsity/coach/notes/NoteEditor";
 import { fetchNote } from "@/lib/varsity/notesStore";
-import { IconCheckCircle, IconPencil, IconMessage } from "@/components/icons";
+import { IconCheckCircle, IconPencil } from "@/components/icons";
 
 export default function AthleteNote({ athleteId, name }: { athleteId: string; name: string }) {
   const [note, setNote] = useState<string | null>(null);
@@ -43,11 +43,9 @@ export default function AthleteNote({ athleteId, name }: { athleteId: string; na
           hasNote ? "border-primary-line bg-surface active:bg-surface-2" : "border-border bg-surface active:bg-surface-2"
         }`}
       >
-        {hasNote ? (
-          <span className="mt-0.5 flex-shrink-0 text-primary">
-            <IconMessage size={17} />
-          </span>
-        ) : (
+        {/* A note is its words alone — the speech-bubble icon in front of it
+            is gone (owner, 2026-10-04: "nechci to message emoji tam"). */}
+        {!hasNote && (
           <span className="mt-0.5 flex-shrink-0 text-success">
             <IconCheckCircle size={18} />
           </span>

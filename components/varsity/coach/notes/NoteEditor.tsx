@@ -110,19 +110,16 @@ export default function NoteEditor({
             </div>
           </div>
 
-          <p className="mt-4 text-[12px] leading-relaxed text-muted">
-            What should they work on? This shows on {member.name.split(/\s+/)[0]}&apos;s Home every
-            time they open the app. Leave it blank to clear it (they&apos;ll see a green
-            &ldquo;Good job&rdquo;).
-          </p>
-
+          {/* No sentence about where the note shows and what a blank one does
+              (owner, 2026-10-04: cut "What should they work on? This shows on
+              …'s Home…"). */}
           <textarea
             data-tour="coach-note-text"
             autoFocus
             value={text}
             onChange={(e) => setText(e.target.value)}
             rows={5}
-            className="mt-3 w-full resize-none rounded-2xl border border-border bg-surface px-3.5 py-3 text-base leading-relaxed text-text outline-none placeholder:text-faint focus:border-primary"
+            className="mt-5 w-full resize-none rounded-2xl border border-border bg-surface px-3.5 py-3 text-base leading-relaxed text-text outline-none placeholder:text-faint focus:border-primary"
           />
         </div>
       </div>

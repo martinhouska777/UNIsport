@@ -280,7 +280,7 @@ export default function AthleteDataScreen({ athleteId }: { athleteId: string }) 
         </AthleteWindow>
       )}
       {openScreen === "workouts" && (
-        <AthleteWindow name={who} title="Past workouts" onClose={() => setOpenScreen(null)}>
+        <AthleteWindow name={who} title="Past workouts" showTitle={false} onClose={() => setOpenScreen(null)}>
           <AthleteWorkouts athleteId={athleteId} demo={exampleLogs ? logs : undefined} />
         </AthleteWindow>
       )}

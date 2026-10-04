@@ -162,6 +162,10 @@ export default function AthleteWorkouts({
               key={l.id}
               log={l}
               day={dayLabel(l.logDate, now.getFullYear())}
+              /* The water's rows read like the Workouts tab's: the day on the
+                 right over the session's start time, or its AM / PM. */
+              dayOnRight={side === "water"}
+              time={(l.dayKey ? plan[l.dayKey]?.time?.trim() : "") || l.period || ""}
               color={colorOf(l)}
               onOpen={() => setOpen(l)}
             />

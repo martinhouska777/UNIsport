@@ -26,6 +26,7 @@ import { IconX } from "@/components/icons";
 export default function AthleteWindow({
   name,
   title,
+  showTitle = true,
   fill = false,
   onClose,
   children,
@@ -34,6 +35,10 @@ export default function AthleteWindow({
   name: string;
   /** Which of their screens: "Statistics", "Past workouts", "Calendar". */
   title: string;
+  /* Whether the bar writes it under their name. Past workouts does not
+     (owner, 2026-10-04: "u past workouts smaž nahoře to Past workouts") — its
+     Erg | Water switch says what the screen is. The cross still names it. */
+  showTitle?: boolean;
   /*
     A screen that wants the HEIGHT rather than a column of its own. The month
     calendar is a wall calendar — its rows share whatever is left below the
@@ -60,7 +65,7 @@ export default function AthleteWindow({
           </button>
           <div className="min-w-0 flex-1">
             <div className="truncate text-[15px] font-semibold leading-tight text-text">{name}</div>
-            <div className="mt-0.5 truncate text-[11px] text-muted">{title}</div>
+            {showTitle && <div className="mt-0.5 truncate text-[11px] text-muted">{title}</div>}
           </div>
         </div>
         {/* The screen itself scrolls; the bar above it does not. */}
