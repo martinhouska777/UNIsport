@@ -77,6 +77,7 @@ import {
 import { markColor } from "@/lib/colorMarks";
 import { useTourRunning } from "@/lib/tour";
 import { coachTourExample } from "@/lib/varsity/coachTourExample";
+import { tourSessionPick } from "@/lib/varsity/coachTour";
 import ExampleTag from "@/components/varsity/ExampleTag";
 
 /*
@@ -1190,9 +1191,15 @@ export default function TrainingPlanScreen({
     if (!editor || typeof document === "undefined") return null;
     const cat = form.category;
     const sugg = workoutsFor(cfg, cat, form.intensity);
-    /* The tour presses the first zoned type and the first zone, so the walk
-       works whatever a squad has called them (lib/varsity/coachTour.ts). */
-    const firstZonedType = cfg.types.find((t) => t.hasZones && cfg.zones.length > 0)?.key;
+    /* What the tour presses: Erg, UT2 and a 3×25' where the squad has them
+       (tourSessionPick), otherwise the first type that asks for a zone, the
+       first zone and the first usual workout — so the walk works whatever a
+       squad has called them (lib/varsity/coachTour.ts). */
+    const named = (re: RegExp, o: { key: string; label: string }) => re.test(o.label) || re.test(o.key);
+    const zoned = cfg.zones.length > 0 ? cfg.types.filter((t) => t.hasZones) : [];
+    const tourType = (zoned.find((t) => named(tourSessionPick.type, t)) ?? zoned[0])?.key;
+    const tourZone = (cfg.zones.find((z) => named(tourSessionPick.zone, z)) ?? cfg.zones[0])?.key;
+    const tourOption = sugg.find((text) => tourSessionPick.workout.test(text)) ?? sugg[0];
     const weekday = editor.date.toLocaleDateString("en-US", { weekday: "long" });
     const longDate = editor.date.toLocaleDateString("en-US", { month: "long", day: "numeric" });
     const existing = !!sessions[sessionKey(editor.date, editor.period)];
@@ -1252,10 +1259,9 @@ export default function TrainingPlanScreen({
           {/* category */}
           <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">Type</div>
           {/* data-tour: every field below this one only exists once a type is
-              chosen, so the tour presses the first type that asks for a zone —
-              the one that shows the whole form — and the rest of the walk has
-              something to point at. The types themselves come from the squad's
-              settings, so the anchor cannot name one.
+              chosen, so the tour presses a type that asks for a zone — the one
+              that shows the whole form — and the rest of the walk has
+              something to point at (tourType above).
               The column count follows the list rather than being fixed at five,
               so three types are not three fifths of a row and seven wrap. */}
           <div
@@ -1269,7 +1275,7 @@ export default function TrainingPlanScreen({
                 <button
                   key={t.key}
                   type="button"
-                  data-tour={t.key === firstZonedType ? "coach-plan-cat-first" : undefined}
+                  data-tour={t.key === tourType ? "coach-plan-cat-pick" : undefined}
                   onClick={() =>
                     setForm((f) => ({ ...f, category: t.key, intensity: undefined, description: "" }))
                   }
@@ -1293,13 +1299,13 @@ export default function TrainingPlanScreen({
                 className="grid gap-1.5"
                 style={{ gridTemplateColumns: `repeat(${Math.min(cfg.zones.length, 4)}, minmax(0, 1fr))` }}
               >
-                {cfg.zones.map((z, zi) => {
+                {cfg.zones.map((z) => {
                   const active = form.intensity === z.key;
                   return (
                     <button
                       key={z.key}
                       type="button"
-                      data-tour={zi === 0 ? "coach-plan-int-first" : undefined}
+                      data-tour={z.key === tourZone ? "coach-plan-int-pick" : undefined}
                       onClick={() => setForm((f) => ({ ...f, intensity: z.key }))}
                       className={`flex items-center justify-center gap-1.5 rounded-xl border py-2.5 ${
                         active ? "border-primary bg-primary-tint" : "border-border bg-surface"
@@ -1318,16 +1324,16 @@ export default function TrainingPlanScreen({
           {cat && sugg.length > 0 && (
             <>
               <div className={labelCls}>Most used · tap to fill</div>
-              {/* data-tour: the tour taps the FIRST chip, so the description
-                  fills in front of you (and Confirm stops being greyed out). */}
+              {/* data-tour: the tour taps one chip (tourOption), so the
+                  description fills in front of you. */}
               <div data-tour="coach-plan-options" className="flex flex-wrap gap-1.5">
-                {sugg.map((text, si) => {
+                {sugg.map((text) => {
                   const active = form.description === text;
                   return (
                     <button
                       key={text}
                       type="button"
-                      data-tour={si === 0 ? "coach-plan-opt-first" : undefined}
+                      data-tour={text === tourOption ? "coach-plan-opt-pick" : undefined}
                       onClick={() => setForm((f) => ({ ...f, description: text }))}
                       className={`rounded-lg border px-2.5 py-1.5 text-[11px] text-text ${
                         active ? "border-primary bg-primary-tint" : "border-border bg-surface"

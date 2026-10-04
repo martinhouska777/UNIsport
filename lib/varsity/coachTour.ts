@@ -70,6 +70,17 @@ const TEAM = "/varsity/coach/team";
 /** The console's nav anchors are named after their route, as the app's are. */
 const tab = (href: string) => `coach-tab-${href}`;
 
+/*
+  What the finger picks in the session editor, matched against the squad's own
+  choices (Training settings) by name: Erg, UT2, and a 3×25' or 3×30' — the
+  owner's own example. TrainingPlanScreen falls back to the first of each.
+*/
+export const tourSessionPick = {
+  type: /^erg$/i,
+  zone: /^ut\s*2$/i,
+  workout: /\b3\s*[x×]\s*(25|30)\b/i,
+};
+
 const steps: TourStep[] = [
   {
     route: TODAY,
@@ -97,41 +108,20 @@ const steps: TourStep[] = [
   },
   /*
     WRITING A SESSION, by the finger. It opens the first gap in the week from
-    today on (coach-plan-open-slot), and each step presses the choice the last one
-    pointed at — the first type that has an intensity, the first intensity,
-    the first usual workout — so the form fills in front of the coach. The
-    choices are the squad's own, from Training settings, so the steps name
-    none of them.
+    today on (coach-plan-open-slot) and fills the form in ONE step (owner,
+    2026-10-04: "jeden klik … choose type, intensity and workout a ukážeš erg
+    ut2 a 3x25 nebo 3x30 … a nedávej tam ten čas"): the type, the intensity
+    and a usual workout, pressed one after the other — tourSessionPick below,
+    or the first of each where a squad has none of those. No Time step.
   */
   {
-    press: "coach-plan-open-slot",
+    press: ["coach-plan-open-slot", "coach-plan-cat-pick", "coach-plan-int-pick", "coach-plan-opt-pick"],
+    // The type down to the description box, which the workout fills.
     anchor: "coach-plan-type",
+    alsoAnchor: "coach-plan-desc",
     group: "editor",
-    title: "Type",
-    body: "First, what kind of session it is.",
-  },
-  {
-    press: "coach-plan-cat-first",
-    anchor: "coach-plan-intensity",
-    group: "editor",
-    title: "Intensity",
-    body: "Then how hard. Its colour marks the session on everyone’s calendar.",
-  },
-  {
-    press: "coach-plan-int-first",
-    // The box is always there; the usual workouts only once a squad has some.
-    anchor: "coach-plan-desc",
-    alsoAnchor: "coach-plan-options",
-    group: "editor",
-    title: "The workout",
-    body: "Tap one of your usual workouts, or write your own in the box.",
-  },
-  {
-    press: "coach-plan-opt-first",
-    anchor: "coach-plan-time",
-    group: "editor",
-    title: "Time",
-    body: "Filled in for you. Tap it to change it.",
+    title: "Write a session",
+    body: "Choose the type, the intensity and the workout. Or write your own in the box.",
   },
   {
     // The switch, tapped only while it is off (a session that already
