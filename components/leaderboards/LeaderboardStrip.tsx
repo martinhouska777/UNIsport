@@ -12,9 +12,11 @@
   own rank so two numbers and the button fit a phone. The grey bar itself is
   drawn by the Profile page, around both.
 
-  It never shows a row of dashes. Before you've logged anything for the period
-  there is no rank to report, so it becomes a single invitation instead; and it
-  holds its own height while loading so the calendar underneath doesn't jump.
+  Before you've logged anything for the period there is no rank to report. The
+  compact card keeps its shields and says so with a dash where each number
+  goes (owner, 2026-10-03: "just do the line like you know that you don't have
+  points"); the full-width strip becomes a single invitation instead. Both hold
+  their height while loading so the calendar underneath doesn't jump.
 
   All color comes from theme tokens (rule 1). The one exception is the house
   shield beside your house rank, drawn in that house's identity colors from
@@ -158,7 +160,7 @@ export default function LeaderboardStrip({
         <CrestTrophy size={compact ? 40 : 30} />
       </span>
 
-      {ranked && standing && compact ? (
+      {compact ? (
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1 text-accent">
             <span className="min-[360px]:hidden">
@@ -173,9 +175,10 @@ export default function LeaderboardStrip({
           </div>
           <div className="mt-2 flex min-w-0 items-center gap-3.5">
             {/* Your rank among your housemates, beside the house's own shield.
-                Someone with no house rank yet (no residence on file) gets the
-                campus rank alone rather than the same number twice. */}
-            {standing.houseRankIn && (
+                Someone ranked with no house rank (no residence on file) gets the
+                campus rank alone rather than the same number twice. Nothing
+                logged yet: the same two shields, each with a dash. */}
+            {(standing?.houseRankIn || (!ranked && team)) && (
               <IconRank
                 icon={
                   team ? (
@@ -184,11 +187,16 @@ export default function LeaderboardStrip({
                     <UniversityCrest size={28} />
                   )
                 }
-                value={ordinal(standing.houseRankIn)}
+                value={standing?.houseRankIn ? ordinal(standing.houseRankIn) : "—"}
                 label={house ?? team?.label ?? "Your house"}
               />
             )}
-            <IconRank fixed icon={<UniversityCrest size={28} />} value={`#${standing.campusRank}`} label="Campus" />
+            <IconRank
+              fixed
+              icon={<UniversityCrest size={28} />}
+              value={ranked ? `#${standing?.campusRank}` : "—"}
+              label="Campus"
+            />
           </div>
         </div>
       ) : ranked && standing ? (
@@ -213,15 +221,9 @@ export default function LeaderboardStrip({
         </div>
       ) : (
         <div className="min-w-0 flex-1">
-          <div
-            className={`font-semibold leading-tight text-text ${compact ? "text-[15px]" : "text-[14px]"}`}
-          >
-            Leaderboards
-          </div>
-          <div className={`mt-0.5 truncate text-muted ${compact ? "text-[12px]" : "text-[11px]"}`}>
-            {compact
-              ? "Log to take your place"
-              : `Log a session to take your place${team ? ` for ${team.label}` : ""}.`}
+          <div className="text-[14px] font-semibold leading-tight text-text">Leaderboards</div>
+          <div className="mt-0.5 truncate text-[11px] text-muted">
+            Log a session to take your place{team ? ` for ${team.label}` : ""}.
           </div>
         </div>
       )}
