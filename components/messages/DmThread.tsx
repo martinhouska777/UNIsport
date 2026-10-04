@@ -173,9 +173,10 @@ export default function DmThread({
           const showDay = i === 0 || !sameDay(m.createdAt, shown[i - 1].createdAt);
           return (
             <div key={m.id} className="flex flex-col gap-2">
+              {/* The day as plain words, no pill (owner, 2026-10-04). */}
               {showDay && (
                 <div className="flex justify-center py-1">
-                  <span className="rounded-lg bg-surface-2 px-3 py-1 text-[11px] font-medium text-muted">
+                  <span className="text-[11px] font-medium text-muted">
                     {dayLabel(m.createdAt)}
                   </span>
                 </div>

@@ -311,7 +311,11 @@ export default function LogSessionSheet({
               ariaLabel="Activity"
               options={primaryActivities.map((a) => ({ key: a.key, label: a.label }))}
               value={activity}
-              onChange={(a) => setActivity(a)}
+              onChange={(a) => {
+                setActivity(a);
+                // A run doesn't happen in a gym: a gym picked earlier goes.
+                if (a === "running" && verifiedGyms.includes(gym)) setGym("");
+              }}
             />
           </div>
 
@@ -563,18 +567,22 @@ export default function LogSessionSheet({
                 className="min-w-0 bg-transparent py-3 text-right text-base text-text outline-none"
               />
             </DetailRow>
+            {/* No gym names for a run (owner, 2026-10-04) — the same as
+                Plan a session; you type where you ran. */}
             <DetailRow label={usesExercises ? "Gym" : "Where"}>
               <input
-                list="gym-options"
+                list={isRunning ? undefined : "gym-options"}
                 value={gym}
                 onChange={(e) => setGym(e.target.value)}
                 className={rowInput}
               />
-              <datalist id="gym-options">
-                {verifiedGyms.map((g) => (
-                  <option key={g} value={g} />
-                ))}
-              </datalist>
+              {!isRunning && (
+                <datalist id="gym-options">
+                  {verifiedGyms.map((g) => (
+                    <option key={g} value={g} />
+                  ))}
+                </datalist>
+              )}
             </DetailRow>
             <button
               type="button"
