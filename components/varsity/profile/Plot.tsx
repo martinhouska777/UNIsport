@@ -162,7 +162,6 @@ export default function Plot({
   selected = null,
   onSelect,
   onRangeSelect,
-  shaded,
   curves,
 }: {
   points: PlotPoint[];
@@ -184,11 +183,9 @@ export default function Plot({
    * index, in order) — the full screen zooms into it. A tap still selects.
    */
   onRangeSelect?: (from: number, to: number) => void;
-  /** Per bucket: does it hold a day marked out (sick, injured, away)? Shaded. */
-  shaded?: boolean[];
   /*
     GIVEN, THIS IS A MULTI-CURVE GRAPH and `points` is only used for the dates,
-    the tap targets and the selection band — no columns, no single line, no
+    the tap targets and the selected dots — no columns, no single line, no
     numbers on the buckets, no dashed average and no peak chip, because none of
     those mean anything when three things are being read at once.
   */
@@ -353,22 +350,15 @@ export default function Plot({
         );
       })}
 
-      {/* DAYS OUT — a soft warm wash behind every column that holds a day
-          marked sick, injured or away, so a dip in the training has its reason
-          drawn right there (lib/varsity/daysOut.ts). */}
-      {shaded?.map((on, i) =>
-        on ? (
-          <rect
-            key={`out-${i}`}
-            x={cx(i) - slot / 2}
-            y={padT - 4}
-            width={slot}
-            height={plotH + 4}
-            fill="var(--warn)"
-            fillOpacity={0.12}
-          />
-        ) : null,
-      )}
+      {/*
+        EVERY COLUMN ON THE ONE BACKGROUND (owner, 2026-10-04: "udělej všude
+        stejnou barvu"). Two washes used to sit behind them: a warm amber one on
+        every week holding a day marked sick, injured or away, and a grey one on
+        the column being read — together they striped the graph three colours
+        and read as a fault ("proč je to tady žluté"). The days out are now
+        COUNTED in the read-out under the graph instead; the column being read
+        still shows as its solid bar, or its big filled dot, and its bold date.
+      */}
 
       {/* THE STRETCH BEING DRAGGED — one band over every column in it, so you
           can see what you are about to zoom into before you let go. */}
@@ -384,20 +374,6 @@ export default function Plot({
           stroke="var(--primary)"
           strokeOpacity={0.5}
           strokeWidth={1}
-        />
-      )}
-
-      {/* THE BUCKET BEING READ — a band behind it, so the detail underneath
-          the graph is visibly about THIS column. */}
-      {selected != null && selected >= 0 && selected < n && (
-        <rect
-          x={cx(selected) - slot / 2}
-          y={padT - 4}
-          width={slot}
-          height={plotH + 4}
-          rx={3}
-          fill="var(--text)"
-          fillOpacity={0.07}
         />
       )}
 

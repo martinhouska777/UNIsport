@@ -82,7 +82,7 @@ import {
 } from "@/lib/varsity/rowingStats";
 import { trainingMix } from "@/lib/varsity/trainingMix";
 import TrainingMixList from "@/components/varsity/profile/TrainingMixList";
-import { type DaysOut } from "@/lib/varsity/daysOut";
+import { countDaysOut, dayOutName, dayOutReasons, type DaysOut } from "@/lib/varsity/daysOut";
 import {
   type CheckIns,
   recoveryCurves,
@@ -143,7 +143,7 @@ export default function StatsFullScreen({
   /** Back to the window from before the first zoom. */
   onZoomOut: () => void;
   zoomed: boolean;
-  /** The days marked sick / injured / away — shaded on the graph, counted below. */
+  /** The days marked sick / injured / away — counted in the read-out and in Consistency. */
   daysOut: DaysOut;
   /** The daily check-ins — the Recovery group under the graph. */
   checkIns: CheckIns;
@@ -213,9 +213,6 @@ export default function StatsFullScreen({
     rowingReport(allLogs, plan, whole, units, daysOut, checkIns),
     metric.key,
   );
-  const shaded = buckets.map((b) =>
-    Object.keys(daysOut).some((iso) => iso >= b.span.startIso && iso <= b.span.endIso),
-  );
   /* What the card under the graph reads: the tapped column, or the whole window. */
   const current: Bucket | null =
     at !== null
@@ -241,6 +238,18 @@ export default function StatsFullScreen({
   const mix = trainingMix(allLogs, plan);
   // More than one day in it → totals by kind; one day → the sessions themselves.
   const manyDays = current ? current.span.startIso !== current.span.endIso : false;
+  /*
+    THE DAYS OUT IN THE COLUMN BEING READ — sick, injured, away (owner,
+    2026-10-04: "do toho review dej, jak hodně jsi byl taky sick"). They used to
+    be an amber wash behind the column on the graph; now the read-out says how
+    many, each in its calendar colour. A single day just names itself.
+  */
+  const outCounts = current ? countDaysOut(daysOut, current.span.startIso, current.span.endIso) : null;
+  const outRows = outCounts
+    ? dayOutReasons
+        .filter((r) => outCounts[r.key] > 0)
+        .map((r) => ({ key: r.key, label: dayOutName(r.key), color: r.color, days: outCounts[r.key] }))
+    : [];
 
   const rangeOptions = [
     ...statRanges.map((r) => ({ key: r.key, label: r.label })),
@@ -337,7 +346,6 @@ export default function StatsFullScreen({
                   curves={curves}
                   selected={at}
                   onSelect={setSelected}
-                  shaded={shaded}
                   onRangeSelect={(from, to) => {
                     const a = buckets[from];
                     const b = buckets[to];
@@ -444,6 +452,27 @@ export default function StatsFullScreen({
                             .filter(Boolean)
                             .join(" · ")}
                         </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {/* The days out in it — see outRows. */}
+                {outRows.length > 0 && (
+                  <div className="mt-2 flex flex-col gap-1.5 border-t border-border pt-2">
+                    {outRows.map((r) => (
+                      <div key={r.key} className="flex items-baseline justify-between gap-3">
+                        <span className="flex min-w-0 items-center gap-2">
+                          <span
+                            className="h-2 w-2 flex-shrink-0 rounded-full"
+                            style={{ background: markColor(r.color) }}
+                          />
+                          <span className="truncate text-[12px] font-medium text-text">{r.label}</span>
+                        </span>
+                        {manyDays && (
+                          <span className="flex-shrink-0 text-[11px] text-muted">
+                            {r.days} day{r.days === 1 ? "" : "s"}
+                          </span>
+                        )}
                       </div>
                     ))}
                   </div>
