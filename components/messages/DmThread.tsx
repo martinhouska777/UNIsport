@@ -158,9 +158,10 @@ export default function DmThread({
         </button>
       </div>
 
-      {/* What the two of you share, said once, where the first message goes. */}
-      {/* Messages */}
-      <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-3.5 py-3">
+      {/* Messages. On WHITE (owner, 2026-10-04: "make the background more
+          white"): their bubbles are the grey well and yours the school tint,
+          flat, like iMessage — on white a card shadow only smudged them. */}
+      <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto bg-surface px-3.5 py-3">
         {error && <div className="py-10 text-center text-sm text-muted">{error}</div>}
         {shown?.length === 0 && !error && (
           <div className="py-10 text-center text-[12px] text-muted">
@@ -174,7 +175,7 @@ export default function DmThread({
             <div key={m.id} className="flex flex-col gap-2">
               {showDay && (
                 <div className="flex justify-center py-1">
-                  <span className="rounded-lg bg-surface px-3 py-1 text-[11px] text-muted shadow-card">
+                  <span className="rounded-lg bg-surface-2 px-3 py-1 text-[11px] font-medium text-muted">
                     {dayLabel(m.createdAt)}
                   </span>
                 </div>
@@ -194,10 +195,10 @@ export default function DmThread({
               ) : (
               <div className={`flex ${mine ? "justify-end" : "justify-start"}`}>
                 <div
-                  className={`max-w-[78%] px-2.5 pb-1.5 pt-1.5 text-[13px] leading-snug text-text shadow-card ${
+                  className={`max-w-[78%] px-3 pb-1.5 pt-1.5 text-[14px] leading-snug text-text ${
                     mine
-                      ? "rounded-[10px_10px_2px_10px] bg-bubble-mine"
-                      : "rounded-[10px_10px_10px_2px] bg-surface"
+                      ? "rounded-[16px_16px_4px_16px] bg-bubble-mine"
+                      : "rounded-[16px_16px_16px_4px] bg-surface-2"
                   }`}
                 >
                   <span className="whitespace-pre-wrap break-words">{m.body}</span>

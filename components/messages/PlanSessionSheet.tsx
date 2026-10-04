@@ -5,9 +5,15 @@
   optional place, and a date + time, then proposes it to the other person via
   createPlan(). The proposal then appears as a PlanCard in the thread. Inputs
   stay text-base so phones don't auto-zoom; colors are theme tokens (rule 1).
+
+  Drawn like the Log session screen (owner, 2026-10-04: "make it white so it's
+  consistent"): the same activity switch, then one white card with a line
+  each for the date, the time and the place — no grey boxes.
 */
 import { useEffect, useState } from "react";
 import Button from "@/components/ui/Button";
+import Segmented from "@/components/ui/Segmented";
+import DetailRow, { detailRowInput } from "@/components/ui/DetailRow";
 import { primaryActivities, verifiedGyms } from "@/lib/onboarding";
 import { createPlan, reschedulePlan } from "@/lib/supabase/sessionPlans";
 import { IconX } from "@/components/icons";
@@ -100,9 +106,20 @@ export default function PlanSessionSheet({
     }
   };
 
-  const inputCls =
-    "w-full rounded-xl border border-border bg-surface-2 px-3 py-2.5 text-base text-text outline-none focus:border-primary placeholder:text-faint";
-  const labelCls = "mb-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted";
+  /*
+    A run doesn't happen in a gym (owner, 2026-10-04: "for running there won't
+    be gyms"), so Running offers no gym names — you type where you're meeting.
+    A gym already picked goes when you switch to it; anything you typed stays.
+  */
+  const offersGyms = activity !== "running";
+  const pickActivity = (a: string) => {
+    setActivity(a);
+    if (a === "running" && verifiedGyms.includes(place)) setPlace("");
+  };
+
+  // A date or time field ignores text-align, so it keeps its own width and
+  // sits on the right of the line like every other answer (as in Log session).
+  const whenInput = "min-w-0 bg-transparent py-3 text-right text-base text-text outline-none";
 
   return (
     <div className="fixed inset-0 z-[60] flex flex-col justify-end">
@@ -118,75 +135,67 @@ export default function PlanSessionSheet({
           <div className="h-1 w-9 rounded-full bg-border" />
         </div>
 
-        <div className="flex items-center justify-between border-b border-border px-4 pb-3">
-          <div className="text-[15px] font-medium text-text">
+        <div className="flex items-center justify-between gap-3 px-4 pb-2 pt-1">
+          <div className="min-w-0 truncate text-base font-semibold text-text">
             {existing ? "Reschedule session" : `Plan a session with ${otherName}`}
           </div>
           <button
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="tap44 press-icon flex h-7 w-7 items-center justify-center rounded-full bg-surface-2 text-muted"
+            className="tap44 press-icon flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-surface-2 text-text"
           >
             <IconX size={14} />
           </button>
         </div>
 
-        <div className="px-4 pb-6 pt-4">
-          <div className={labelCls}>Activity</div>
-          <div className="grid grid-cols-4 gap-1.5">
-            {primaryActivities.map((a) => (
-              <button
-                key={a.key}
-                type="button"
-                onClick={() => setActivity(a.key)}
-                className={`rounded-xl border py-2.5 text-[12px] font-semibold ${
-                  activity === a.key
-                    ? "border-primary bg-primary-tint text-primary"
-                    : "border-border bg-surface text-text"
-                }`}
-              >
-                {a.label}
-              </button>
-            ))}
-          </div>
-
-          <div className={`${labelCls} mt-4`}>Where (optional)</div>
-          <input
-            list="plan-gym-options"
-            value={place}
-            onChange={(e) => setPlace(e.target.value)}
-            className={inputCls}
+        <div className="px-4 pb-6 pt-3">
+          <Segmented
+            size="md"
+            full
+            ariaLabel="Activity"
+            options={primaryActivities.map((a) => ({ key: a.key, label: a.label }))}
+            value={activity}
+            onChange={pickActivity}
           />
-          <datalist id="plan-gym-options">
-            {verifiedGyms.map((g) => (
-              <option key={g} value={g} />
-            ))}
-          </datalist>
 
-          <div className="mt-4 flex gap-2.5">
-            <div className="flex-1">
-              <div className={labelCls}>Date</div>
+          {/* WHEN AND WHERE — one card, a line each. */}
+          <div className="mt-4 overflow-hidden rounded-2xl border border-border bg-surface">
+            <DetailRow label="Date">
               <input
                 type="date"
                 value={date}
                 min={todayIso()}
                 onChange={(e) => setDate(e.target.value)}
-                className={inputCls}
+                className={whenInput}
               />
-            </div>
-            <div className="flex-1">
-              <div className={labelCls}>Time</div>
+            </DetailRow>
+            <DetailRow label="Time">
               <input
                 type="time"
                 value={time}
                 onChange={(e) => setTime(e.target.value)}
-                className={inputCls}
+                className={whenInput}
               />
-            </div>
+            </DetailRow>
+            <DetailRow label="Where">
+              <input
+                list={offersGyms ? "plan-gym-options" : undefined}
+                value={place}
+                onChange={(e) => setPlace(e.target.value)}
+                className={detailRowInput}
+              />
+              {offersGyms && (
+                <datalist id="plan-gym-options">
+                  {verifiedGyms.map((g) => (
+                    <option key={g} value={g} />
+                  ))}
+                </datalist>
+              )}
+            </DetailRow>
           </div>
 
-          {error && <div className="mt-3 text-[12px] text-danger">{error}</div>}
+          {error && <div className="mt-3 px-1 text-[12px] text-danger">{error}</div>}
 
           <Button size="lg" full onClick={propose} disabled={busy || !date || !time} className="mt-5">
             {busy ? "Sending…" : existing ? "Update & resend" : `Send plan to ${otherName}`}
