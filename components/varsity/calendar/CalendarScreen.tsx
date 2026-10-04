@@ -844,9 +844,6 @@ export default function CalendarScreen({
           weeks={(atCurrentMonth ? now.getDate() : new Date(view.y, view.m + 1, 0).getDate()) / 7}
           logs={logs}
           units={units}
-          colorOf={(l) => logColor(l, l.dayKey ? planSessions[l.dayKey] : undefined)}
-          timeOf={(l) => (l.dayKey ? planSessions[l.dayKey]?.time?.trim() : "") || l.period || ""}
-          onOpen={(log) => setOpenLog(log)}
           onClose={() => setStatsFor(null)}
         />
       )}
