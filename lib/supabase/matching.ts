@@ -292,3 +292,44 @@ export async function getPairMatch(
   const rows = data as RpcRow[];
   return rows.length > 0 ? toMatch(rows[0]) : null;
 }
+
+/*
+  WHAT A MATCH CARD SHOWS BESIDES THE SCORE (owner, 2026-10-04): the VARSITY /
+  MENTOR badges and everything they train, not just the main activity. The
+  match RPCs don't carry any of it, so the grid asks for it separately for the
+  ids on screen (db/people_cards_2026-10-04.sql). Empty on any failure — a card
+  without badges is not an error, and the function may not be applied yet.
+*/
+export type PersonCard = {
+  varsity: boolean;
+  mentor: boolean;
+  /** What "Other" is when it is their MAIN activity ("Climbing"). */
+  activityOther: string | null;
+  /** Their extras, in the order they picked them. */
+  otherActivities: { key: string; note: string }[];
+};
+
+export async function peopleCards(ids: string[]): Promise<Record<string, PersonCard>> {
+  if (ids.length === 0) return {};
+  const { data, error } = await createClient().rpc("people_cards", { p_ids: ids });
+  if (error || !data) return {};
+  return Object.fromEntries(
+    (
+      data as {
+        id: string;
+        varsity: boolean;
+        mentor: boolean;
+        activity_other: string | null;
+        other_activities: { key: string; note: string }[] | null;
+      }[]
+    ).map((r) => [
+      r.id,
+      {
+        varsity: !!r.varsity,
+        mentor: !!r.mentor,
+        activityOther: r.activity_other,
+        otherActivities: r.other_activities ?? [],
+      },
+    ]),
+  );
+}

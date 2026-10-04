@@ -86,6 +86,12 @@ export function classYearLabel(classYear: string): string {
   return ["Fr", "So", "Jr", "Sr"][first - i] ?? classYear;
 }
 
+/** The same year as a word, for a Match card: "First-year", "Sophomore", … */
+export function classYearWord(classYear: string): string {
+  const label = classYearLabel(classYear);
+  return ({ Fr: "First-year", So: "Sophomore", Jr: "Junior", Sr: "Senior" } as Record<string, string>)[label] ?? classYear;
+}
+
 /*
   A FIRST-YEAR'S FIRST MONTH. A new first-year opens Match narrowed to their
   own class year for this many days after signing up — the people they will

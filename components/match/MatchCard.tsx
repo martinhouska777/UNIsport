@@ -1,10 +1,12 @@
 "use client";
 
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
-import type { Match } from "@/lib/supabase/matching";
+import type { Match, PersonCard } from "@/lib/supabase/matching";
 import { cardChips, type CardChip, type ReasonRarity } from "@/lib/matchReasons";
-import { classYearLabel } from "@/lib/onboarding";
+import { classYearWord } from "@/lib/onboarding";
+import { markColor } from "@/lib/colorMarks";
 import Button from "@/components/ui/Button";
+import ProfileBadge from "@/components/ProfileBadge";
 import { IconCheck } from "@/components/icons";
 import InitialsAvatar from "@/components/ui/InitialsAvatar";
 import { useAppState } from "@/components/AppState";
@@ -14,9 +16,13 @@ import { teamFor } from "@/lib/cohorts";
   One result card in the Match grid: avatar block, name, an identity line, the reasons this person ranked where they did, and a
   View Profile button. All colors are theme tokens.
 
-  The line under the name is WHO THEY ARE — year, house, what they train. Three
-  facts every member has, so it reads the same on every card and you learn to
-  scan it.
+  Under the name, WHO THEY ARE, in two short lines (owner picked look "B",
+  2026-10-04): "Junior in Dunster" with the house in its own colour, then
+  everything they train — the main activity first, then their extras
+  ("Lifts, Climbing"). VARSITY / MENTOR sit under the photo, the same small
+  pair as on their profile. Badges and extras come from `card`
+  (db/people_cards_2026-10-04.sql); without it the card shows the main
+  activity alone and no badges.
 
   The chips answer two questions at once. What you SHARE comes first, in the
   school's colour with a tick — rarest first (see lib/matchReasons.ts), because
@@ -29,12 +35,15 @@ import { teamFor } from "@/lib/cohorts";
 */
 export default function MatchCard({
   match,
+  card,
   onView,
   rarity,
   chipCount = 14,
   tour,
 }: {
   match: Match;
+  /** Badges + everything they train — fetched by the grid, may be missing. */
+  card?: PersonCard;
   onView?: (m: Match) => void;
   // How common each kind of reason is across the list this card belongs to.
   // Without it the chips fall back to strongest-first.
@@ -50,15 +59,12 @@ export default function MatchCard({
   const { universityKey } = useAppState();
   const houseColors = teamFor(universityKey, match.residence, match.classYear)?.colors ?? null;
 
-  // Year · house · what they train. Anything they never answered drops out
-  // rather than leaving a stray separator.
-  const subtitle = [
-    match.classYear ? classYearLabel(match.classYear) : null,
-    match.residence,
-    activityLabel(match.mainActivity),
-  ]
-    .filter(Boolean)
-    .join(" · ");
+  // "Junior in Dunster" — either half alone when the other was never answered.
+  // The house wears its colour, darkened where it would not read on the card
+  // (Mather's silver, Adams' gold — lib/colorMarks.ts).
+  const year = match.classYear ? classYearWord(match.classYear) : null;
+  const houseInk = markColor(houseColors?.primary);
+  const trains = trainsList(match.mainActivity, card);
   const chips = useMemo(() => cardChips(match, chipCount, rarity), [match, chipCount, rarity]);
 
   /*
@@ -98,18 +104,34 @@ export default function MatchCard({
         and left the top of the card looking like a smudge on the dark theme
         (owner, 2026-09-14).
       */}
-      <div className="flex h-24 items-center justify-center border-b border-border bg-sunken">
+      <div className="flex h-24 flex-col items-center justify-center gap-1.5 border-b border-border bg-sunken">
         <InitialsAvatar name={match.name} size={48} colors={houseColors} />
+        {(card?.varsity || card?.mentor) && (
+          <div className="flex gap-1">
+            {card.varsity && <ProfileBadge kind="varsity" small />}
+            {card.mentor && <ProfileBadge kind="mentor" small />}
+          </div>
+        )}
       </div>
 
       {/* Details */}
       <div className="px-2.5 pb-2.5 pt-2">
-        <div className="truncate text-xs font-medium text-text">
+        <div className="truncate text-[13px] font-semibold text-text">
           {match.name || "Member"}
         </div>
-        {subtitle && (
-          <div className="truncate text-[11px] text-muted">{subtitle}</div>
-        )}
+        {/* Both lines are always there (a blank one holds its place), so every
+            card in the grid stays the same height. */}
+        <div className="truncate text-[11px] text-muted">
+          {year}
+          {year && match.residence && " in "}
+          {match.residence && (
+            <span className={`font-semibold ${houseInk ? "" : "text-text"}`} style={houseInk ? { color: houseInk } : undefined}>
+              {match.residence}
+            </span>
+          )}
+          {!year && !match.residence && "\u00a0"}
+        </div>
+        <div className="truncate text-[11px] text-muted">{trains.join(", ") || "\u00a0"}</div>
 
         {/*
           WHO THEY ARE AND WHAT YOU SHARE — always exactly three rows tall.
@@ -166,11 +188,23 @@ export default function MatchCard({
 }
 
 /*
-  What they train, as a verb, for the identity line. Kept beside the card
-  because it is presentation — lib/onboarding.ts owns the keys themselves.
+  What they train, as words for the card. Kept beside the card because it is
+  presentation — lib/onboarding.ts owns the keys themselves. "Other" is shown as
+  what it actually is ("Climbing"); an "Other" with no name says nothing and is
+  left out.
 */
-const activityLabel = (a: string | null) =>
-  a ? { gym: "Lifts", running: "Runs", cardio: "Cardio", other: "Other" }[a] ?? null : null;
+const ACTIVITY_WORD: Record<string, string> = { gym: "Lifts", running: "Runs", cardio: "Cardio" };
+
+function trainsList(main: string | null, card: PersonCard | undefined): string[] {
+  const out: string[] = [];
+  const add = (key: string | null, note: string | null | undefined) => {
+    const word = key === "other" ? note?.trim() || null : key ? ACTIVITY_WORD[key] ?? null : null;
+    if (word && !out.includes(word)) out.push(word);
+  };
+  add(main, card?.activityOther);
+  card?.otherActivities.forEach((o) => add(o.key, o.note));
+  return out;
+}
 
 function Chip({ c }: { c: CardChip }) {
   return (

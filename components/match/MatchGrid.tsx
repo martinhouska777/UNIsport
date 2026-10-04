@@ -9,7 +9,8 @@
   each card — both cut (owner, 2026-10-04). The chips on the card already say
   what you share.
 */
-import type { Match } from "@/lib/supabase/matching";
+import { useEffect, useState } from "react";
+import { peopleCards, type Match, type PersonCard } from "@/lib/supabase/matching";
 import { reasonRarity } from "@/lib/matchReasons";
 import MatchCard from "@/components/match/MatchCard";
 
@@ -27,6 +28,24 @@ export default function MatchGrid({
   const rarity = reasonRarity(matches);
   // The very first card is the one the tour lights beside the People tab.
   const first = matches[0]?.userId;
+
+  /*
+    Varsity / Mentor and everything they train, for the people on screen
+    (lib/supabase/matching.ts peopleCards). Asked again only when the list of
+    ids changes; until it answers, the cards show the main activity alone.
+  */
+  const idsKey = matches.map((m) => m.userId).join(",");
+  const [cards, setCards] = useState<Record<string, PersonCard>>({});
+  useEffect(() => {
+    let active = true;
+    peopleCards(idsKey ? idsKey.split(",") : []).then((c) => {
+      if (active) setCards(c);
+    });
+    return () => {
+      active = false;
+    };
+  }, [idsKey]);
+
   return (
     <div className="px-3 pb-4">
       <div className="grid grid-cols-2 items-start gap-2">
@@ -34,6 +53,7 @@ export default function MatchGrid({
           <MatchCard
             key={m.userId}
             match={m}
+            card={cards[m.userId]}
             rarity={rarity}
             onView={onView}
             tour={m.userId === first ? "match-first-card" : undefined}
