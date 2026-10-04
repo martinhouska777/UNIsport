@@ -284,16 +284,8 @@ export default function TrainingSettings({
 
         {main === "running" && (
           <div className={`${card} mt-2.5 flex flex-col gap-4`}>
-            <div className="flex flex-wrap gap-1.5">
-              {runningUnits.map((u) => (
-                <Pill
-                  key={u.key}
-                  label={u.label}
-                  selected={unit === u.key}
-                  onClick={() => onSave({ runningUnit: u.key })}
-                />
-              ))}
-            </div>
+            {/* Kilometres / miles moved to Units below (owner, 2026-10-04:
+                "make it Units, put it together"); these two still say it. */}
             <div className="grid grid-cols-2 gap-3">
               <Question label="Usual distance">
                 <TextField
@@ -429,37 +421,36 @@ export default function TrainingSettings({
         </div>
       </Group>
 
-      {/* ── Kilometres or miles, for everyone who isn't a runner (a runner
-             picks it in the running card above). Log session reads it and
-             has no switch of its own (owner, 2026-10-04). ── */}
-      {main !== "running" && (
-        <Group title="Distance">
-          <div className="flex flex-wrap gap-1.5">
-            {runningUnits.map((u) => (
-              <Pill
-                key={u.key}
-                label={u.label}
-                selected={unit === u.key}
-                onClick={() => onSave({ runningUnit: u.key })}
-              />
-            ))}
-          </div>
-        </Group>
-      )}
-
-      {/* ── Kilograms or pounds for the sets in Log session, which has no
-             switch of its own (owner, 2026-10-04). Everyone: anybody can log
+      {/* ── UNITS, together (owner, 2026-10-04: "make it Units and put it
+             together"): the distance and the weights Log session uses — it
+             has no switch of its own. For everyone: anybody can log a run or
              a gym session. ── */}
-      <Group title="Weights">
-        <div className="flex flex-wrap gap-1.5">
-          {liftingUnits.map((u) => (
-            <Pill
-              key={u.key}
-              label={u.label}
-              selected={(answers.weightUnit ?? "kg") === u.key}
-              onClick={() => onSave({ weightUnit: u.key })}
-            />
-          ))}
+      <Group title="Units">
+        <div className={`${card} flex flex-col gap-4`}>
+          <Question label="Distance">
+            <div className="flex flex-wrap gap-1.5">
+              {runningUnits.map((u) => (
+                <Pill
+                  key={u.key}
+                  label={u.label}
+                  selected={unit === u.key}
+                  onClick={() => onSave({ runningUnit: u.key })}
+                />
+              ))}
+            </div>
+          </Question>
+          <Question label="Weights">
+            <div className="flex flex-wrap gap-1.5">
+              {liftingUnits.map((u) => (
+                <Pill
+                  key={u.key}
+                  label={u.label}
+                  selected={(answers.weightUnit ?? "kg") === u.key}
+                  onClick={() => onSave({ weightUnit: u.key })}
+                />
+              ))}
+            </div>
+          </Question>
         </div>
       </Group>
 
