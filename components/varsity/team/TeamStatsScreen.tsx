@@ -27,10 +27,10 @@
       on top. The owner cut two things from this list by name: the word
       "outing" (2026-09-21) and the whole SQUAD group (2026-09-22) — who
       logged out of the roster, and the squad's raw distance and time.
-    • the squad's TRAINING MIX, over the same window — ON ITS OWN TAB since
-      2026-10-01 (owner: "put training mix as a tab… call it team and not
-      squad"). The screen is two tabs, Team and Training mix
-      (lib/varsity/teamStats → teamStatTabs); everything else below is Team.
+    • the squad's TRAINING MIX, over the same window — a card at the very
+      bottom that opens it in a sheet (owner, 2026-10-04: "training mix chci
+      mít dole jako obdélník, na který můžu kliknout, ne jako další tab"). It
+      was a tab of its own from 2026-10-01, beside Team.
     • EVERY PERSON, one row each: what they rowed, how long, and done out of
       planned — "let's say there was something prescribed and then they did
       more or less, so they want to see how each person trained". TAPPING A
@@ -70,9 +70,8 @@ import { useUnits } from "@/components/useUnits";
 import Plot from "@/components/varsity/profile/Plot";
 import Dropdown from "@/components/varsity/profile/Dropdown";
 import DatesSheet, { type Dates } from "@/components/varsity/team/DatesSheet";
-import Segmented from "@/components/ui/Segmented";
 import Avatar from "@/components/messages/Avatar";
-import { IconX, IconCalendar, IconArrowLeft, IconChevronDown } from "@/components/icons";
+import { IconX, IconCalendar, IconArrowLeft, IconChevronDown, IconActivity, IconChevronRight } from "@/components/icons";
 import type { Boat } from "@/lib/varsity/coachLineup";
 import { chartTypes, type ChartType } from "@/lib/varsity/athleteStats";
 import { fetchLineupsFor } from "@/lib/varsity/lineupStore";
@@ -83,6 +82,7 @@ import type { SessionMap } from "@/lib/varsity/coachPlan";
 import { useMembership } from "@/components/varsity/useMembership";
 import { can, fetchSquad } from "@/lib/varsity/membership";
 import { trainingMix, type MixRow } from "@/lib/varsity/trainingMix";
+import Sheet from "@/components/varsity/Sheet";
 import TrainingMixList from "@/components/varsity/profile/TrainingMixList";
 import {
   squadAverage,
@@ -107,7 +107,6 @@ import {
   teamRangeByKey,
   teamRanges,
   teamReport,
-  teamStatTabs,
   toIso,
   trainedBuckets,
   windowAverage,
@@ -117,7 +116,6 @@ import {
   bucketMinutes,
   type TeamBucket,
   type TeamRange,
-  type TeamStatTab,
 } from "@/lib/varsity/teamStats";
 
 /* ONE frozen empty map, shared. A fresh `{}` per render would be a new
@@ -143,7 +141,7 @@ export default function TeamStatsScreen({ onClose }: { onClose: () => void }) {
   const { units } = useUnits();
   const now = useMemo(() => new Date(), []);
 
-  const [tab, setTab] = useState<TeamStatTab>("team");
+  const [mixOpen, setMixOpen] = useState(false);
   const [rangeKey, setRangeKey] = useState(defaultTeamRange);
   /* Two dates the coach chose, or a stretch dragged on the graph. While it is
      set it IS the window. */
@@ -360,9 +358,7 @@ export default function TeamStatsScreen({ onClose }: { onClose: () => void }) {
   return createPortal(
     <ThemeProvider tokens={vTheme.dark} light={vTheme.light}>
       <div className="fixed inset-0 z-[60] flex flex-col bg-background [animation:backdrop-in_0.18s_ease-out]">
-        {/* ── The bar. What you are looking at, the way out, and the two
-            tabs — in the bar, so they stay in reach however far down the
-            Team tab has been read. ── */}
+        {/* ── The bar. What you are looking at, and the way out. ── */}
         <div className="flex-shrink-0 border-b border-border px-3 pb-2.5 pt-[max(0.625rem,env(safe-area-inset-top))]">
           <div className="flex items-center gap-3">
             <button
@@ -392,37 +388,23 @@ export default function TeamStatsScreen({ onClose }: { onClose: () => void }) {
               </button>
             )}
           </div>
-          <div className="mx-auto mt-2.5 w-full max-w-screen-sm">
-            <Segmented
-              size="md"
-              full
-              options={teamStatTabs}
-              value={tab}
-              onChange={setTab}
-              ariaLabel="Team statistics"
-            />
-          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto overscroll-contain pb-[max(2rem,env(safe-area-inset-bottom))]">
           <div className="mx-auto w-full max-w-screen-sm px-3.5">
-            {/* ── The three choices, the athlete's own dropdowns. The measure
-                and the shape are the graph's, so only the Team tab has them;
-                the window is both tabs'. ── */}
+            {/* ── The three choices, the athlete's own dropdowns. ── */}
             <div className="flex flex-wrap items-center gap-2 py-3">
-              {tab === "team" && (
-                <Dropdown
-                  label={metric.label(units)}
-                  options={teamMetrics.map((m) => ({ key: m.key, label: m.label(units) }))}
-                  value={metric.key}
-                  open={openMenu === "metric"}
-                  onOpen={(v) => setOpenMenu(v ? "metric" : null)}
-                  onPick={(k) => {
-                    setMetricKey(k);
-                    setOpenMenu(null);
-                  }}
-                />
-              )}
+              <Dropdown
+                label={metric.label(units)}
+                options={teamMetrics.map((m) => ({ key: m.key, label: m.label(units) }))}
+                value={metric.key}
+                open={openMenu === "metric"}
+                onOpen={(v) => setOpenMenu(v ? "metric" : null)}
+                onPick={(k) => {
+                  setMetricKey(k);
+                  setOpenMenu(null);
+                }}
+              />
               <Dropdown
                 label={range.label}
                 options={rangeOptions}
@@ -435,28 +417,21 @@ export default function TeamStatsScreen({ onClose }: { onClose: () => void }) {
                   else pickRange(k);
                 }}
               />
-              {tab === "team" && (
-                <Dropdown
-                  label={chartTypes.find((c) => c.key === chart)?.label ?? "Columns"}
-                  options={chartTypes.map((c) => ({ key: c.key, label: c.label }))}
-                  value={chart}
-                  open={openMenu === "chart"}
-                  onOpen={(v) => setOpenMenu(v ? "chart" : null)}
-                  onPick={(k) => {
-                    setChart(k as ChartType);
-                    setOpenMenu(null);
-                  }}
-                />
-              )}
+              <Dropdown
+                label={chartTypes.find((c) => c.key === chart)?.label ?? "Columns"}
+                options={chartTypes.map((c) => ({ key: c.key, label: c.label }))}
+                value={chart}
+                open={openMenu === "chart"}
+                onOpen={(v) => setOpenMenu(v ? "chart" : null)}
+                onPick={(k) => {
+                  setChart(k as ChartType);
+                  setOpenMenu(null);
+                }}
+              />
             </div>
 
             {loading ? (
               <p className="py-12 text-center text-[13px] text-muted">Adding up the squad…</p>
-            ) : tab === "mix" ? (
-              /* WHAT ALL THAT TIME WAS, for the team — the same block the
-                 athlete gets, over the same window as the Team tab, so it
-                 carries no window of its own. Alone on its tab. */
-              <TrainingMixList rows={mix} />
             ) : empty ? (
               <p className="px-6 py-12 text-center text-[13px] leading-relaxed text-muted">{metric.empty}</p>
             ) : (
@@ -525,11 +500,36 @@ export default function TeamStatsScreen({ onClose }: { onClose: () => void }) {
                   selected={selected}
                   onPick={(i) => setPicked({ window: windowId, index: i })}
                 />
+
+                {/* THE TRAINING MIX, last — a card to tap, the same row the
+                    athlete's profile opens theirs from. */}
+                <button
+                  type="button"
+                  onClick={() => setMixOpen(true)}
+                  className="mt-5 flex w-full items-center gap-3 rounded-2xl border border-border bg-surface px-3.5 py-3.5 text-left active:bg-surface-2"
+                >
+                  <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[10px] border border-primary-line bg-primary-tint text-primary">
+                    <IconActivity size={18} />
+                  </span>
+                  <span className="min-w-0 flex-1 text-[13px] font-medium text-text">Training mix</span>
+                  <span className="text-muted">
+                    <IconChevronRight size={17} />
+                  </span>
+                </button>
               </>
             )}
           </div>
         </div>
       </div>
+
+      {/* WHAT ALL THAT TIME WAS, for the team — the same block the athlete
+          gets, over the window this screen is on, so it carries none of its
+          own. */}
+      {mixOpen && (
+        <Sheet title="Training mix" onClose={() => setMixOpen(false)}>
+          <TrainingMixList rows={mix} />
+        </Sheet>
+      )}
 
       {picking && (
         <DatesSheet

@@ -47,21 +47,6 @@ const DOW = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 /* ── The tabs ───────────────────────────────────────────────────────────── */
 
-/*
-  THE SCREEN IS TWO TABS (owner, 2026-10-01: "put training mix as a tab… call
-  it team and not squad, I want normal statistics there… a tab where there
-  will just be the training mix, and then down will be person by person").
-  Team is the statistics as they were, Person by person at the foot of them;
-  Training mix is the mix and nothing else. The window — a week, a month, the
-  semester, two dates — is ONE choice across both, so switching tabs reads
-  the same days.
-*/
-export type TeamStatTab = "team" | "mix";
-export const teamStatTabs: { key: TeamStatTab; label: string }[] = [
-  { key: "team", label: "Team" },
-  { key: "mix", label: "Training mix" },
-];
-
 /* ── The window ─────────────────────────────────────────────────────────── */
 
 export type TeamRange = {

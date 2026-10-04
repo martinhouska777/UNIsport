@@ -57,9 +57,10 @@ export default function TrainingMixList({
 
   return (
     <div>
-      {/* WHAT IT IS, and — only where nothing else says it — OVER WHAT. On
-          the coach's Training mix TAB neither is needed (the tab says what it
-          is, the window sits above it), so the line goes. */}
+      {/* WHAT IT IS, and — only where nothing else says it — OVER WHAT. In
+          the coach's Training mix sheet neither is needed (the sheet's title
+          says what it is, the window is the statistics screen's), so the line
+          goes. */}
       {(heading || ownWindow) && (
       <div className="flex items-center justify-between gap-2 pb-2">
         <span className="min-w-0 truncate text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">
