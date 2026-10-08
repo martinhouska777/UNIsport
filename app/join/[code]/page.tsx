@@ -135,9 +135,12 @@ export default function JoinWithCodePage() {
           >
             Sign up with your .edu
           </Link>
+          {/* Filled, not an outline: the bare hairline on the page's grey was
+              hard to see (owner, 2026-10-08) — white with the card shadow, like
+              "Continue with Google" on the sign-in it leads to. */}
           <Link
             href={`/login?next=/join/${code}`}
-            className="mt-3 inline-block w-full rounded-full border border-l-line px-5 py-3 text-sm font-medium text-l-text"
+            className="mt-3 inline-block w-full rounded-full border border-l-line bg-l-surface px-5 py-3 text-sm font-semibold text-l-text shadow-card"
           >
             I already have an account
           </Link>
