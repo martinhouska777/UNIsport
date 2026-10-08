@@ -4,9 +4,11 @@
   Student sign-in (Zone 1). Reached from the landing's "Get started" CTAs.
   Real Supabase auth: email + password (the familiar flow) plus Google. After
   auth, new accounts (no profile yet) go to onboarding, returning ones to the app.
-  Styled in the landing's dark product brand via the `l-*` tokens.
+  Styled in the landing's dark product brand via the `l-*` tokens — except on
+  the way to a team invite (`?next=/join/<code>`), where it wears the team's
+  door instead (components/join/TeamDoor.tsx).
 */
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { instrumentSerif } from "@/components/landing/fonts";
@@ -16,7 +18,12 @@ import { createClient, hasSupabaseEnv } from "@/lib/supabase/client";
 import { VARSITY_HOME } from "@/lib/varsity/theme";
 import { LIVE_UNIVERSITY } from "@/lib/themes";
 import { markSignIn, clearSignIn } from "@/lib/loginIntro";
-import { NEXT_AFTER_SIGN_IN_COOKIE, NEXT_AFTER_SIGN_IN_MAX_AGE } from "@/lib/signInNext";
+import {
+  NEXT_AFTER_SIGN_IN_COOKIE,
+  NEXT_AFTER_SIGN_IN_MAX_AGE,
+  isInvitePath,
+} from "@/lib/signInNext";
+import TeamDoor, { TeamMark } from "@/components/join/TeamDoor";
 import {
   isUniversityEmail,
   universityForEmail,
@@ -49,12 +56,25 @@ function readRememberedEmail(): string | null {
   }
 }
 
-export default function LoginPage() {
+export default function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
   const { ready, loggedIn, studentReady, varsityReady, rollUniversity } = useAppState();
   const router = useRouter();
 
+  /*
+    Read on the SERVER as well (Next hands the page the query), so the first
+    paint is already the right one: the team's door for an invite rather than
+    a blue UNIsport page that turns crimson a moment later, and Sign up already
+    picked for "Get started" rather than Log in flipping over.
+  */
+  const query = use(searchParams);
+  const team = isInvitePath(typeof query.next === "string" ? query.next : null);
+
   const [supabase] = useState(() => (hasSupabaseEnv() ? createClient() : null));
-  const [mode, setMode] = useState<Mode>("login");
+  const [mode, setMode] = useState<Mode>(query.mode === "signup" ? "signup" : "login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmSent, setConfirmSent] = useState(false); // only if email-confirm is ON in Supabase
@@ -88,15 +108,12 @@ export default function LoginPage() {
 
   /*
     "Get started with .edu" is a promise to a NEW student, so every button that
-    says it arrives as /login?mode=signup and the page opens on Sign up. Until
-    2026-09-10 it opened on Log in for everyone — "Welcome back — log in to your
-    account." to a person who has never been here (website review). The bar's
-    "Log in" link still comes in plain and gets the log-in form. Read off the
-    URL like `next` above, so the page stays out of a Suspense boundary.
+    says it arrives as /login?mode=signup and the page opens on Sign up (the
+    `mode` state above). Until 2026-09-10 it opened on Log in for everyone —
+    "Welcome back — log in to your account." to a person who has never been
+    here (website review). The bar's "Log in" link still comes in plain and
+    gets the log-in form.
   */
-  useEffect(() => {
-    if (new URLSearchParams(window.location.search).get("mode") === "signup") setMode("signup");
-  }, []);
 
   // Prefill the email from the last sign-in on this device (password never is).
   useEffect(() => {
@@ -269,17 +286,23 @@ export default function LoginPage() {
   const school =
     LIVE_UNIVERSITY && typedSchool?.key !== LIVE_UNIVERSITY ? undefined : typedSchool;
 
-  return (
+  const page = (
     <div
       className={`${instrumentSerif.variable} flex min-h-dvh flex-col items-center justify-center bg-l-bg px-6 text-center font-sans text-l-text`}
     >
       <div className="w-full max-w-sm">
+        {/* On a team's door the product name steps down and the team's mark
+            sits under it, the same as on the invite this came from. */}
         <Link
           href="/"
           className="mb-8 inline-block"
         >
-          <Wordmark className="text-5xl" />
+          <Wordmark
+            className={team ? "text-2xl" : "text-5xl"}
+            accentClassName={team ? "text-l-varsity" : undefined}
+          />
         </Link>
+        {team && <TeamMark />}
 
         {/* The heading says which door this is — and nothing under it (owner,
             2026-09-19: the "university email… which campus" line is cut). */}
@@ -313,7 +336,7 @@ export default function LoginPage() {
               <button
                 onClick={() => switchMode("login")}
                 className={`tap44 flex-1 rounded-full py-2 transition-colors ${
-                  !isSignup ? "bg-l-accent text-l-bg" : "text-l-text-2"
+                  !isSignup ? "bg-l-accent text-l-accent-ink" : "text-l-text-2"
                 }`}
               >
                 Log in
@@ -321,7 +344,7 @@ export default function LoginPage() {
               <button
                 onClick={() => switchMode("signup")}
                 className={`tap44 flex-1 rounded-full py-2 transition-colors ${
-                  isSignup ? "bg-l-accent text-l-bg" : "text-l-text-2"
+                  isSignup ? "bg-l-accent text-l-accent-ink" : "text-l-text-2"
                 }`}
               >
                 Sign up
@@ -361,7 +384,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full rounded-full bg-l-accent px-5 py-3 text-sm font-semibold text-l-bg transition-opacity hover:opacity-90 disabled:opacity-60"
+                className="w-full rounded-full bg-l-accent px-5 py-3 text-sm font-semibold text-l-accent-ink transition-opacity hover:opacity-90 disabled:opacity-60"
               >
                 {loading ? "Please wait…" : isSignup ? "Create account" : "Log in"}
               </button>
@@ -384,13 +407,18 @@ export default function LoginPage() {
           </div>
         )}
 
-        <p className="mt-4 text-xs text-l-text-2">
-          Varsity athlete?{" "}
-          <Link href="/join" className="tap44 inline-block font-medium text-l-varsity">
-            Join your team →
-          </Link>
-        </p>
+        {/* Already on the way to a team — no need to point at the team door. */}
+        {!team && (
+          <p className="mt-4 text-xs text-l-text-2">
+            Varsity athlete?{" "}
+            <Link href="/join" className="tap44 inline-block font-medium text-l-varsity">
+              Join your team →
+            </Link>
+          </p>
+        )}
       </div>
     </div>
   );
+
+  return team ? <TeamDoor>{page}</TeamDoor> : page;
 }

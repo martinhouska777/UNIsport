@@ -99,7 +99,7 @@ export default function JoinWithCodePage() {
   const appHome = !loggedIn ? "/" : studentReady ? "/match" : "/varsity/waiting";
 
   return (
-    <JoinShell badge="Team invite">
+    <JoinShell team>
       {/* 1. Still looking the code up */}
       {!preview && <p className="text-sm text-l-text-2">Checking this invite…</p>}
 
@@ -139,7 +139,7 @@ export default function JoinWithCodePage() {
           </p>
           <Link
             href={`/login?mode=signup&next=/join/${code}`}
-            className="mt-8 inline-block w-full rounded-full bg-l-varsity-glow px-5 py-3 text-sm font-semibold text-l-text"
+            className="mt-8 inline-block w-full rounded-full bg-l-varsity-glow px-5 py-3 text-sm font-semibold text-l-varsity-ink"
           >
             Sign up to join
           </Link>
@@ -179,7 +179,7 @@ export default function JoinWithCodePage() {
             type="button"
             onClick={join}
             disabled={busy}
-            className="mt-6 w-full rounded-full bg-l-varsity-glow px-5 py-3 text-sm font-semibold text-l-text disabled:opacity-60"
+            className="mt-6 w-full rounded-full bg-l-varsity-glow px-5 py-3 text-sm font-semibold text-l-varsity-ink disabled:opacity-60"
           >
             {busy ? "Sending…" : preview.autoApprove ? "Join the team" : "Ask to join"}
           </button>
@@ -213,7 +213,7 @@ export default function JoinWithCodePage() {
           </p>
           <Link
             href={VARSITY_HOME}
-            className="mt-8 inline-block w-full rounded-full bg-l-varsity-glow px-5 py-3 text-sm font-semibold text-l-text"
+            className="mt-8 inline-block w-full rounded-full bg-l-varsity-glow px-5 py-3 text-sm font-semibold text-l-varsity-ink"
           >
             Open Varsity Mode
           </Link>

@@ -15,7 +15,9 @@
   through, so they get the public landing page instead.
 
   Zone 1 styling (`l-*` tokens): a stranger can land here before signing in, so
-  neutral brand only — no university colors.
+  neutral brand only — no university colors. EXCEPT a team invite (`team`):
+  the link already says whose team it is, so it wears that team's Varsity
+  colours and mark (components/join/TeamDoor.tsx).
 */
 import type { ReactNode } from "react";
 import Link from "next/link";
@@ -24,6 +26,7 @@ import { instrumentSerif } from "@/components/landing/fonts";
 import Wordmark from "@/components/landing/Wordmark";
 import { useAppState } from "@/components/AppState";
 import { IconArrowLeft } from "@/components/icons";
+import TeamDoor, { TeamMark } from "@/components/join/TeamDoor";
 
 /* The invite screens are a varsity door, so they wear the gold; the waitlist
    is the product's own front door and wears the brand blue, like the landing
@@ -40,6 +43,7 @@ export default function JoinShell({
   badge,
   accent = "varsity",
   markClassName = "text-2xl",
+  team = false,
   children,
 }: {
   /** Optional: the invite screens wear one, the waitlist does not. */
@@ -47,6 +51,8 @@ export default function JoinShell({
   accent?: keyof typeof ACCENTS;
   /** Size of the wordmark — the waitlist is the product's own door and wears it large. */
   markClassName?: string;
+  /** A team invite: the team's colours, and its rowing mark where the badge would be. */
+  team?: boolean;
   children: ReactNode;
 }) {
   const tone = ACCENTS[accent];
@@ -60,7 +66,7 @@ export default function JoinShell({
     else router.replace(loggedIn ? "/settings" : "/");
   };
 
-  return (
+  const page = (
     <div
       className={`${instrumentSerif.variable} relative flex min-h-dvh flex-col items-center justify-center bg-l-bg px-6 text-center font-sans text-l-text`}
     >
@@ -91,7 +97,8 @@ export default function JoinShell({
 
         {/* On its own line under the wordmark: a short badge used to slide up
             beside the logo, which read as one strange word. */}
-        {badge && (
+        {team && <TeamMark />}
+        {badge && !team && (
           <div className="mb-5 flex justify-center">
             <span className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 font-mono text-[11px] font-medium uppercase tracking-wider ${tone.chip}`}>
               {badge}
@@ -103,4 +110,6 @@ export default function JoinShell({
       </div>
     </div>
   );
+
+  return team ? <TeamDoor>{page}</TeamDoor> : page;
 }

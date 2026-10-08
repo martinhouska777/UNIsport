@@ -481,6 +481,31 @@
 /* No "follow the machine" block any more: light is the main look (owner,
    2026-09-14), so until the visitor presses Dark the wrapper simply says
    "light" and these tokens keep their light values. */
+/* THE TEAM DOOR (components/join/TeamDoor.tsx). A team invite and the sign-in
+   it leads to wear the team's Varsity Mode colours (owner, 2026-10-08: "when
+   you click the link … it already has the varsity rowing"). Those pages keep
+   their landing classes; this points the landing variables at the app theme
+   that ThemeProvider writes on the SAME element, so nothing in them is
+   rewritten and no colour is typed here. Every variable a page uses is listed
+   on its own: one left out would keep the value :root worked out for it. */
+.team-door {
+  --color-l-bg: var(--background);
+  --color-l-bg-elevated: var(--surface);
+  --color-l-surface: var(--surface);
+  --color-l-line: var(--border);
+  --color-l-line-hover: var(--border);
+  --color-l-text: var(--text);
+  --color-l-text-2: var(--text-2);
+  --color-l-text-3: var(--text-3);
+  --color-l-placeholder: var(--muted);
+  --color-l-accent: var(--primary);
+  --color-l-accent-ink: var(--primary-contrast);
+  --color-l-varsity: var(--primary-ink);
+  --color-l-varsity-glow: var(--primary);
+  --color-l-varsity-ink: var(--primary-contrast);
+  --color-l-success: var(--success);
+  --color-l-danger: var(--danger);
+}
 /* The display face is a plain utility, not a theme alias: next/font puts
    --font-instrument-serif on the landing's root <div>, not on :root, so an
    alias emitted at :root would resolve to nothing. This reads the variable

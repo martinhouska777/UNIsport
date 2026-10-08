@@ -15,3 +15,9 @@
 */
 export const NEXT_AFTER_SIGN_IN_COOKIE = "unisport_next";
 export const NEXT_AFTER_SIGN_IN_MAX_AGE = 600; // seconds
+
+/* A sign-in on its way to a team invite (`?next=/join/<code>`) — the sign-in
+   page then wears the team's door (components/join/TeamDoor.tsx). */
+export function isInvitePath(next: string | null | undefined): boolean {
+  return !!next && /^\/join\/[A-Za-z0-9]+$/.test(next);
+}
