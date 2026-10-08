@@ -25,6 +25,7 @@ import {
   type InvitePreview,
 } from "@/lib/varsity/invites";
 import { VARSITY_HOME } from "@/lib/varsity/theme";
+import { clearMembershipCache } from "@/lib/varsity/membership";
 
 /* Drop the code this device parked for the trip through sign-in. */
 function forgetParkedCode() {
@@ -68,12 +69,24 @@ export default function JoinWithCodePage() {
     };
   }, [code]);
 
+  // A good link, signed in, but no varsity profile yet: set one up first. The
+  // setup screen comes back here with the parked code when it's saved.
+  const needsSetup = !!preview?.valid && ready && loggedIn && !varsityReady;
+  useEffect(() => {
+    if (needsSetup) router.replace("/varsity/setup");
+  }, [needsSetup, router]);
+
   const join = useCallback(async () => {
     setBusy(true);
     const r = await redeemInvite(code);
     setBusy(false);
     setResult(r.ok ? { status: r.status } : { reason: r.reason });
-    if (r.ok) forgetParkedCode();
+    if (r.ok) {
+      forgetParkedCode();
+      // The "no team" this tab may already hold is now wrong — without this,
+      // Settings and the mode switcher keep offering "Join a team" until reload.
+      clearMembershipCache();
+    }
   }, [code]);
 
   const teamName = preview?.teamName ?? "your team";
@@ -107,12 +120,15 @@ export default function JoinWithCodePage() {
         </>
       )}
 
-      {/* 3. Good code, but we don't know who you are yet */}
+      {/* 3. Good code, but we don't know who you are yet. Most people a link
+             reaches have no account, so Sign up leads (the page opens on the
+             sign-up form); the ones who do have one get their own button,
+             the same pair the housemate invite on /join offers. */}
       {preview?.valid && ready && !loggedIn && (
         <>
           <h1 className="font-display text-3xl text-l-text">Join {teamName}</h1>
           <p className="mt-3 text-sm leading-relaxed text-l-text-2">
-            Sign in with your university account to ask your captain for a place on the squad.
+            Sign up with your university email to ask for a place on the team.
             {preview.emailDomain && (
               <>
                 {" "}
@@ -121,35 +137,30 @@ export default function JoinWithCodePage() {
               </>
             )}
           </p>
-          <button
-            type="button"
-            onClick={() => router.push(`/login?next=/join/${code}`)}
-            className="mt-8 w-full rounded-full bg-l-varsity-glow px-5 py-3 text-sm font-semibold text-l-text"
+          <Link
+            href={`/login?mode=signup&next=/join/${code}`}
+            className="mt-8 inline-block w-full rounded-full bg-l-varsity-glow px-5 py-3 text-sm font-semibold text-l-text"
           >
-            Sign in to join
-          </button>
+            Sign up to join
+          </Link>
+          <Link
+            href={`/login?next=/join/${code}`}
+            className="mt-3 inline-block w-full rounded-full border border-l-line px-5 py-3 text-sm font-medium text-l-text"
+          >
+            I already have an account
+          </Link>
         </>
       )}
 
-      {/* 4. Signed in, but we don't know their name yet.
-             Two questions on the varsity setup screen — NOT the nine-step
-             student onboarding, which has nothing to do with rowing. It has to
-             happen before the request goes in, or the captain gets a queue of
-             "Unnamed" people and can't tell who to approve. */}
+      {/* 4. Signed in, but we don't know their name yet → straight to the
+             varsity setup (the effect above), which brings them back here.
+             NOT the nine-step student onboarding, which has nothing to do with
+             rowing. It has to happen before the request goes in, or the
+             captain gets a queue of "Unnamed" people. There used to be a
+             "Nearly there" screen in between with one button; it was a tap
+             that told them nothing they wouldn't see on the next screen. */}
       {preview?.valid && ready && loggedIn && !varsityReady && (
-        <>
-          <h1 className="font-display text-3xl text-l-text">Nearly there</h1>
-          <p className="mt-3 text-sm leading-relaxed text-l-text-2">
-            Two quick questions so {teamName} knows who&apos;s asking, then you can send
-            your request.
-          </p>
-          <Link
-            href="/varsity/setup"
-            className="mt-8 inline-block w-full rounded-full bg-l-varsity-glow px-5 py-3 text-sm font-semibold text-l-text"
-          >
-            Set up my profile
-          </Link>
-        </>
+        <p className="text-sm text-l-text-2">Checking this invite…</p>
       )}
 
       {/* 5. Ready to ask — the button that puts you in the queue */}

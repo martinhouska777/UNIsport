@@ -46,6 +46,28 @@ export default function VarsityWaitingPage() {
   }, [ready, loggedIn, loading, failed, isMember, membership, router]);
 
   /*
+    Ask again on its own, so being let in opens the team without a tap: when
+    the app comes back to the front (they went to the group chat to chase the
+    captain, or put the phone down) and every 20 seconds while it is on screen.
+    Not while hidden — a phone in a pocket shouldn't keep asking. "Check again"
+    stays for anyone who wants it now.
+  */
+  useEffect(() => {
+    if (!isPending) return;
+    const again = () => {
+      if (document.visibilityState === "visible") reload();
+    };
+    const timer = window.setInterval(again, 20_000);
+    document.addEventListener("visibilitychange", again);
+    window.addEventListener("focus", again);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", again);
+      window.removeEventListener("focus", again);
+    };
+  }, [isPending, reload]);
+
+  /*
     Still checking, or on the way somewhere else. NEVER `null`: that painted a
     blank WHITE page — even in dark mode, since nothing had set the varsity
     theme yet — until the check came back (audit, 2026-09-27). The same wait

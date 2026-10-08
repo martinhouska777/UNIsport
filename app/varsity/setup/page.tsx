@@ -47,6 +47,22 @@ import type { Side } from "@/lib/varsity/coachLineup";
 import { saveFailureDetail, type SaveFailure } from "@/lib/saveFailure";
 import Segmented from "@/components/ui/Segmented";
 
+/*
+  Where setup leads. Back to the invite that started this, if there was one —
+  the captain's queue should show a name, not "Unnamed", so the request is only
+  made after this screen. With no parked code (a returning athlete re-doing
+  setup) straight to Varsity Mode.
+*/
+function afterSetup(): string {
+  let parked: string | null = null;
+  try {
+    parked = localStorage.getItem(PENDING_INVITE_KEY);
+  } catch {
+    /* private browsing — fall through to the home screen */
+  }
+  return parked ? `/join/${parked}` : VARSITY_HOME;
+}
+
 // Digits only, so nobody can save "about 82" as a weight.
 const digits = (v: string) => v.replace(/[^\d]/g, "");
 const decimal = (v: string) => v.replace(/[^\d.]/g, "");
@@ -76,8 +92,12 @@ export default function VarsitySetupPage() {
   useEffect(() => {
     if (!ready) return;
     if (!loggedIn) router.replace("/");
-    // Already done — don't make anyone re-answer it.
-    else if (varsityReady) router.replace(VARSITY_HOME);
+    // Already done — don't make anyone re-answer it. Same destination as
+    // finish() below: saving flips varsityReady, so this effect fires right
+    // after finish() has navigated, and it used to win with Varsity home —
+    // dropping a new rower on the empty "type your code" page instead of back
+    // on their invite.
+    else if (varsityReady) router.replace(afterSetup());
   }, [ready, loggedIn, varsityReady, router]);
 
   /* Still checking, or on the way out: the varsity theme's own wait rather
@@ -121,19 +141,7 @@ export default function VarsitySetupPage() {
       setSaving(false);
       return;
     }
-    /*
-      Back to the invite that started this, if there was one — the captain's
-      queue should show a name, not "Unnamed", so the request is only made
-      after this screen. With no parked code (a returning athlete re-doing
-      setup) go straight to Varsity Mode.
-    */
-    let parked: string | null = null;
-    try {
-      parked = localStorage.getItem(PENDING_INVITE_KEY);
-    } catch {
-      /* private browsing — fall through to the home screen */
-    }
-    router.replace(parked ? `/join/${parked}` : VARSITY_HOME);
+    router.replace(afterSetup());
   };
 
   return (

@@ -16,6 +16,7 @@ import { createClient, hasSupabaseEnv } from "@/lib/supabase/client";
 import { VARSITY_HOME } from "@/lib/varsity/theme";
 import { LIVE_UNIVERSITY } from "@/lib/themes";
 import { markSignIn, clearSignIn } from "@/lib/loginIntro";
+import { NEXT_AFTER_SIGN_IN_COOKIE, NEXT_AFTER_SIGN_IN_MAX_AGE } from "@/lib/signInNext";
 import {
   isUniversityEmail,
   universityForEmail,
@@ -225,12 +226,22 @@ export default function LoginPage() {
       to start, which is the only way we are still here to do it.
     */
     onSignedIn();
+    /*
+      Came from an invite (?next=/join/<code>)? Google's round trip would drop
+      it and land a new rower in the student onboarding, so leave it for
+      /auth/callback in a short cookie (lib/signInNext.ts says why not the URL).
+    */
+    const next = new URLSearchParams(window.location.search).get("next");
+    if (next && next.startsWith("/") && !next.startsWith("//")) {
+      document.cookie = `${NEXT_AFTER_SIGN_IN_COOKIE}=${encodeURIComponent(next)}; Max-Age=${NEXT_AFTER_SIGN_IN_MAX_AGE}; Path=/; SameSite=Lax`;
+    }
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: { redirectTo: `${window.location.origin}/auth/callback` },
     });
     if (error) {
       clearSignIn();
+      document.cookie = `${NEXT_AFTER_SIGN_IN_COOKIE}=; Max-Age=0; Path=/`;
       setError(error.message);
     }
   };

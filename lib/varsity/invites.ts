@@ -23,12 +23,14 @@ export type InvitePreset = {
 
 export const invitePresets: InvitePreset[] = [
   {
+    // Key stays "squad" (it is only an id); what the coach reads is "group"
+    // (owner, 2026-10-02: "don't name it squad").
     key: "squad",
-    title: "Invite the squad",
-    blurb: "One link for the team chat. Expires in 7 days, up to 45 people, each one approved by you.",
+    title: "Invite a group",
+    blurb: "One link for the group chat. Expires in 7 days, up to 45 people, each one approved by you.",
     maxUses: 45,
     days: 7,
-    label: "Squad link",
+    label: "Group link",
     needsEmail: false,
   },
   {

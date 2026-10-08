@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { isUniversityEmail } from "@/lib/universityEmail";
+import { NEXT_AFTER_SIGN_IN_COOKIE } from "@/lib/signInNext";
 
 /*
   Auth callback for Google (and PKCE magic links: ?code=) and email-confirm
@@ -19,7 +20,17 @@ export async function GET(request: NextRequest) {
   const code = searchParams.get("code");
   const tokenHash = searchParams.get("token_hash");
   const type = searchParams.get("type") as EmailOtpType | null;
-  const next = searchParams.get("next");
+  // A Google sign-in from an invite leaves its `next` in a cookie instead of
+  // the URL (lib/signInNext.ts). The URL wins when both are there.
+  const nextCookie = request.cookies.get(NEXT_AFTER_SIGN_IN_COOKIE)?.value;
+  let next = searchParams.get("next");
+  if (!next && nextCookie) {
+    try {
+      next = decodeURIComponent(nextCookie);
+    } catch {
+      next = null; // mangled — ignore it rather than fail the sign-in
+    }
+  }
 
   const failure = NextResponse.redirect(`${origin}/?auth_error=1`);
   if (!code && !(tokenHash && type)) return failure;
@@ -107,5 +118,8 @@ export async function GET(request: NextRequest) {
 
   const response = NextResponse.redirect(`${origin}${destination}`);
   pending.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
+  // Used once. (A refused or failed sign-in keeps it, so trying again still
+  // lands on the same invite.)
+  if (nextCookie) response.cookies.delete(NEXT_AFTER_SIGN_IN_COOKIE);
   return response;
 }
