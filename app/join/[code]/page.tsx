@@ -123,25 +123,17 @@ export default function JoinWithCodePage() {
       {/* 3. Good code, but we don't know who you are yet. Most people a link
              reaches have no account, so Sign up leads (the page opens on the
              sign-up form); the ones who do have one get their own button,
-             the same pair the housemate invite on /join offers. */}
+             the same pair the housemate invite on /join offers.
+             Heading and two buttons, nothing between (owner, 2026-10-08:
+             "delete the sentence above") — the .edu is said on the button. */}
       {preview?.valid && ready && !loggedIn && (
         <>
           <h1 className="font-display text-3xl text-l-text">Join {teamName}</h1>
-          <p className="mt-3 text-sm leading-relaxed text-l-text-2">
-            Sign up with your university email to ask for a place on the team.
-            {preview.emailDomain && (
-              <>
-                {" "}
-                This team only accepts{" "}
-                <span className="text-l-text">@{preview.emailDomain}</span> addresses.
-              </>
-            )}
-          </p>
           <Link
             href={`/login?mode=signup&next=/join/${code}`}
             className="mt-8 inline-block w-full rounded-full bg-l-varsity-glow px-5 py-3 text-sm font-semibold text-l-varsity-ink"
           >
-            Sign up to join
+            Sign up with your .edu
           </Link>
           <Link
             href={`/login?next=/join/${code}`}
