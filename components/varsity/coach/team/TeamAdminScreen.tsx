@@ -54,6 +54,7 @@ import {
 import {
   IconBulb,
   IconCheck,
+  IconChevronDown,
   IconChevronRight,
   IconCopy,
   IconPalette,
@@ -529,6 +530,9 @@ export default function TeamAdminScreen({
               // A coach can open anyone to see their training; a captain
               // cannot (the database would refuse), so gets no arrow.
               const href = can.readTraining(role) ? `/varsity/coach/athlete/${m.userId}` : null;
+              // The role picker at the end of the row says the role, so the
+              // line under the name only says it where there is no picker.
+              const picker = can.changeRoles(role) && m.userId !== userId;
               // The role leads the line under the name (a coach or captain in
               // the school colour) — as a pill beside the name it left a phone
               // about 70px for the name itself.
@@ -536,10 +540,12 @@ export default function TeamAdminScreen({
                 <>
                   <span className="block truncate text-[15px] text-text">{m.name}</span>
                   <span className="mt-0.5 block truncate text-[13px] text-muted">
-                    <span className={m.role === "athlete" ? "" : "font-semibold text-primary"}>
-                      {roleLabel[m.role]}
-                    </span>
-                    {m.email ? ` · ${m.email}` : ""}
+                    {!picker && (
+                      <span className={m.role === "athlete" ? "" : "font-semibold text-primary"}>
+                        {roleLabel[m.role]}
+                      </span>
+                    )}
+                    {m.email ? `${picker ? "" : " · "}${m.email}` : ""}
                   </span>
                 </>
               );
@@ -555,16 +561,31 @@ export default function TeamAdminScreen({
                     )}
                     {/* Only a coach can hand out roles — a captain can never
                         create another plan-builder, which is what keeps a
-                        leaked link cheap. */}
-                    {can.changeRoles(role) && m.role !== "coach" && (
-                      <button
-                        type="button"
-                        onClick={() => promote(m.userId, m.role === "captain" ? "athlete" : "captain")}
-                        disabled={busy === m.userId}
-                        className="flex-shrink-0 rounded-full border border-border bg-surface-2 px-2.5 py-1 text-[11px] font-medium text-text disabled:opacity-50"
-                      >
-                        {m.role === "captain" ? "Make athlete" : "Make captain"}
-                      </button>
+                        leaked link cheap. All three, so a coach can make
+                        another coach (owner, 2026-10-08: the captain gets the
+                        console to try out) and take it back; never on your
+                        own row, so nobody demotes themselves by accident.
+                        The pill is drawn; the phone's own picker opens from
+                        a see-through <select> laid over it at 16px, so iOS
+                        doesn't zoom in on tap. */}
+                    {picker && (
+                      <span className="relative flex flex-shrink-0 items-center gap-1 rounded-full border border-border bg-surface-2 px-2.5 py-1 text-[11px] font-medium text-text">
+                        {roleLabel[m.role]}
+                        <IconChevronDown size={11} />
+                        <select
+                          value={m.role}
+                          onChange={(e) => promote(m.userId, e.target.value as VarsityRole)}
+                          disabled={busy === m.userId}
+                          aria-label={`Role for ${m.name}`}
+                          className="absolute inset-0 cursor-pointer appearance-none rounded-full text-base opacity-0 disabled:cursor-default"
+                        >
+                          {(Object.keys(roleLabel) as VarsityRole[]).map((r) => (
+                            <option key={r} value={r}>
+                              {roleLabel[r]}
+                            </option>
+                          ))}
+                        </select>
+                      </span>
                     )}
                     {/* The arrow at the END of the row (it floated mid-row,
                         beside the name); the name opens the same page. */}
