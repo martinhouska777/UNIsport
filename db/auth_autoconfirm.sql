@@ -1,4 +1,10 @@
 -- ============================================================================
+-- RETIRED 2026-10-10 — DO NOT RE-RUN. New accounts now confirm their address
+-- with the 6-digit code from their email (app/login/page.tsx). The trigger was
+-- dropped on the live project with:
+--   drop trigger if exists trg_auto_confirm_email on auth.users;
+-- Running this file again would let every sign-up skip the code.
+-- ============================================================================
 -- UNIsport — auto-confirm new sign-ups (skip the email-confirmation step)
 -- ----------------------------------------------------------------------------
 -- For sharing the app, we want anyone with the link to sign up and start using
