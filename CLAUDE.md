@@ -18,6 +18,7 @@ A white-label university fitness PWA. These rules apply to EVERYTHING in this re
   One exception (owner, 2026-10-08): a team invite (`/join/<code>`) and the sign-in
   reached from it (`/login?next=/join/<code>`) wear that team's Varsity look and
   rowing mark — the link already says whose team it is (`components/join/TeamDoor.tsx`).
+  The invite link's preview picture does too (`public/og-team.png`, 2026-10-11).
 - **Zone 2 (post-login):** a single university's theme, loaded at RUNTIME from data.
 - Themes live as DATA (see `lib/themes.ts`). Adding a new school later = adding a data
   entry, NOT writing new code or new components.
