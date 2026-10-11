@@ -149,6 +149,8 @@ export default function WorkoutDetail({
   const erg = cat === "erg";
   const piece = erg ? ergPiece(current) : null;
   const noteText = erg ? ergNote(current.note).own : current.note.trim();
+  // An erg's or a bike's photo is the monitor it was scanned from.
+  const fromMonitor = logFieldsFor(cat).photo === "scan";
 
   // Same-category logs, newest first, fetched once when Compare first opens
   // (for an erg session, narrowed to the same piece below).
@@ -230,14 +232,14 @@ export default function WorkoutDetail({
           {photoPath && failedPhoto !== photoPath && photoUrl !== null && (
             <div className="mt-5">
               <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-                {erg ? "The monitor" : "Photo"}
+                {fromMonitor ? "The monitor" : "Photo"}
               </div>
               {photoUrl ? (
                 // A signed, short-lived storage url can't go through next/image's optimiser.
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={photoUrl}
-                  alt={erg ? "Erg monitor" : "Session photo"}
+                  alt={fromMonitor ? "Monitor" : "Session photo"}
                   onError={() => setFailedPhoto(photoPath)}
                   className="w-full rounded-2xl border border-border bg-surface-2"
                 />

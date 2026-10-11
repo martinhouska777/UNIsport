@@ -74,18 +74,25 @@ export const logCategoryMeta: Record<LogCategory, { label: string; color: string
   exactly these rows; a saved log's split is labelled from here.
     metres  whether it asks for a distance
     split   the split row's label, or null for none
-    photo   "scan" = the erg's monitor scan is the photo, "add" = a plain photo
-            can be added, null = no photo (weights: "not lift")
+    photo   "scan" = the monitor scan is the photo, "add" = a plain photo can be
+            added, null = no photo (weights: "not lift")
+    scan    the editor's scan button, on the kinds with a monitor that can be
+            read (owner, 2026-10-11: "bike and erg have scanning", water not)
   Anything not listed (a log saved under an old category) asks what "other" does.
 */
-export type LogFields = { metres: boolean; split: string | null; photo: "scan" | "add" | null };
+export type LogFields = {
+  metres: boolean;
+  split: string | null;
+  photo: "scan" | "add" | null;
+  scan: string | null;
+};
 export const logFields: Partial<Record<LogCategory, LogFields>> = {
-  erg: { metres: true, split: "Split /500m", photo: "scan" },
-  bike: { metres: true, split: "Split /1000m", photo: "add" },
-  run: { metres: true, split: "Pace /km", photo: "add" },
-  water: { metres: true, split: null, photo: "add" },
-  weights: { metres: false, split: null, photo: null },
-  other: { metres: true, split: null, photo: "add" },
+  erg: { metres: true, split: "Split /500m", photo: "scan", scan: "Scan C2 / RP3 monitor" },
+  bike: { metres: true, split: "Split /1000m", photo: "scan", scan: "Scan BikeErg monitor" },
+  run: { metres: true, split: "Pace /km", photo: "add", scan: null },
+  water: { metres: true, split: null, photo: "add", scan: null },
+  weights: { metres: false, split: null, photo: null, scan: null },
+  other: { metres: true, split: null, photo: "add", scan: null },
 };
 export const logFieldsFor = (category: string | null | undefined): LogFields =>
   logFields[(category ?? "other") as LogCategory] ?? (logFields.other as LogFields);

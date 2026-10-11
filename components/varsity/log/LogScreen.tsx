@@ -4,9 +4,10 @@
   Varsity LOG screen — where the athlete logs training.
   Connected to the coach's plan: today's PRESCRIBED sessions are listed first,
   each loggable in one tap (result + how it felt + note). Below that, "extra
-  training" the athlete adds themselves, logged the normal manual way. A
-  prominent "Scan C2 / RP3 monitor" button is a placeholder for the photo
-  auto-read coming later.
+  training" the athlete adds themselves, logged the normal manual way. The
+  monitor scan lives INSIDE a session: tap the workout you did (or Add extra
+  session), and an erg or bike session has its Scan button there (owner,
+  2026-10-11).
 
   Logs are private per-athlete (lib/varsity/logStore.ts). The editor is a
   full-screen sheet portalled to <body> (same pattern as the plan/notes editors,
@@ -75,7 +76,6 @@ import {
   IconArrowLeft,
   IconClock,
   IconX,
-  IconChevronRight,
 } from "@/components/icons";
 import { markColor } from "@/lib/colorMarks";
 import KindTag from "@/components/varsity/KindTag";
@@ -113,16 +113,9 @@ function SectionLabel({ children, hint }: { children: React.ReactNode; hint?: st
 }
 
 /* ─────────────────────────  editor (portal)  ───────────────────────── */
-/*
-  `scanFile` is a monitor photo already taken: the screen's own "Scan" button
-  opens the camera FIRST (on the athlete's tap, which is the only moment a
-  phone will open it) and hands the photo to the editor, which reads it the
-  moment it mounts. So one tap on the tab = camera, and the numbers land in
-  the right session.
-*/
 type EditorState =
-  | { mode: "plan"; period: Period; dayKey: string; session: Session; existing?: LogEntry; scanFile?: File }
-  | { mode: "extra"; existing?: LogEntry; scanFile?: File };
+  | { mode: "plan"; period: Period; dayKey: string; session: Session; existing?: LogEntry }
+  | { mode: "extra"; existing?: LogEntry };
 
 function LogEditor({
   state,
@@ -221,10 +214,9 @@ function LogEditor({
     setEffort(defaults.effort);
   };
 
-  // C2/RP3 photo scan (erg only) → fills the fields via Claude vision.
+  // Monitor photo scan (erg and bike, `fields.scan`) → fills the fields via Claude vision.
   const fileRef = useRef<HTMLInputElement>(null);
-  // Already reading when the editor opened with a photo in hand (tab's Scan button).
-  const [scanning, setScanning] = useState(!!state.scanFile);
+  const [scanning, setScanning] = useState(false);
   const [scanMsg, setScanMsg] = useState<string | null>(null);
   // A read that filled the form: the button becomes "Scan again", and a sure
   // read puts a green "Done" under it (an unsure one shows its warning instead).
@@ -306,11 +298,8 @@ function LogEditor({
     };
   }, [teamWorkout, athleteId]);
 
-  // Stable (only setters and the editor's mode inside), so the mount-time scan
-  // below can list it as a dependency honestly.
   const isExtra = state.mode === "extra";
-  // What a finished scan does to the form. Always reached from a `.then`, so
-  // it is a callback wherever it runs — including from the mount-time read.
+  // What a finished scan does to the form. Always reached from a `.then`.
   const applyScan = useCallback(
     ({ result, error, image }: ScanResult) => {
       setScanning(false);
@@ -338,9 +327,13 @@ function LogEditor({
       if (result.totalMinutes != null) setMinutes(String(Math.round(result.totalMinutes)));
       if (result.totalMetres != null) setMetres(String(result.totalMetres));
       if (result.splitPer500) setSplit(result.splitPer500);
+      // The BikeErg paces per 1000 m and the reader returns no rowing split for
+      // it (ergRead.ts), so the bike's split is worked out from time and metres.
+      else if (category === "bike" && result.totalMinutes != null && result.totalMetres)
+        setSplit(minutesToClock((result.totalMinutes * 1000) / result.totalMetres));
       // An extra session that came straight off a monitor photo has no title
       // yet; give it the honest one so Save isn't held up by an empty field.
-      if (isExtra) setTitle((prev) => prev.trim() || "Erg");
+      if (isExtra) setTitle((prev) => prev.trim() || (catMeta[category]?.label ?? "Erg"));
       // The minutes field is whole-number, so keep the exact time + rate + watts in the note.
       const bits: string[] = [];
       if (result.totalMinutes != null) bits.push(minutesToClock(result.totalMinutes));
@@ -352,7 +345,7 @@ function LogEditor({
       // keeps its warning instead: that is something the rower has to act on.
       setScanMsg(result.confident ? null : "Read it, but I wasn't fully sure — please double-check.");
     },
-    [isExtra],
+    [isExtra, category],
   );
   // The in-editor camera button: mark the read as under way, then read.
   const handleScan = (file: File | undefined) => {
@@ -362,19 +355,6 @@ function LogEditor({
     setScanFilled(false);
     void scanErgPhoto(file).then(applyScan);
   };
-
-  // A photo taken BEFORE the editor opened (the tab's Scan button) is read the
-  // moment the editor mounts. `scanning` already starts true for it (above), so
-  // the effect only starts the upload and lets the form be filled in the
-  // callback when it comes back. Once per file: React's dev double-run of effects
-  // used to send the photo twice (two paid reads, and the note filled in twice).
-  const scanFile = state.scanFile;
-  const readFile = useRef<File | null>(null);
-  useEffect(() => {
-    if (!scanFile || readFile.current === scanFile) return;
-    readFile.current = scanFile;
-    void scanErgPhoto(scanFile).then(applyScan);
-  }, [scanFile, applyScan]);
 
   /*
     THE SAME LOOK AS THE STUDENT "LOG SESSION" (owner, 2026-10-01: "make it
@@ -618,7 +598,7 @@ function LogEditor({
             </>
           )}
 
-          {category === "erg" && (
+          {fields.scan && (
             <>
               <input
                 ref={fileRef}
@@ -639,7 +619,7 @@ function LogEditor({
                 <span className="text-primary">
                   <IconCamera size={17} />
                 </span>
-                {scanning ? "Reading photo…" : scanFilled ? "Scan again" : "Scan C2 / RP3 monitor"}
+                {scanning ? "Reading photo…" : scanFilled ? "Scan again" : fields.scan}
               </button>
               {scanFilled && !scanning && !scanMsg && (
                 <p className="mt-1.5 flex items-center gap-1 text-[11px] font-semibold text-success">
@@ -911,67 +891,6 @@ function OffRow({ session, period, color }: { session: Session; period: string; 
   );
 }
 
-/*
-  "WHICH WORKOUT WAS THIS?" — asked after the tab's Scan button has the photo
-  (owner, 2026-10-11): the day's erg sessions from the plan, a session already
-  logged marked so, and Extra session last. Closing it drops the photo.
-*/
-type ScanTarget = {
-  dayKey: string;
-  label: string;
-  period: string;
-  time: string;
-  logged: boolean;
-  editor: EditorState;
-};
-function WhichWorkoutSheet({
-  targets,
-  onPick,
-  onClose,
-}: {
-  targets: ScanTarget[];
-  onPick: (target: EditorState) => void;
-  onClose: () => void;
-}) {
-  return (
-    <Sheet title="Which workout was this?" onClose={onClose}>
-      <div className="flex flex-col gap-2">
-        {targets.map((t) => (
-          <button
-            key={t.dayKey}
-            type="button"
-            onClick={() => onPick(t.editor)}
-            className="flex w-full items-center gap-3 rounded-2xl border border-border bg-surface-2 px-3.5 py-3 text-left active:bg-surface"
-          >
-            <Dot color={catMeta.erg.color} />
-            <div className="min-w-0 flex-1">
-              <div className="text-[14px] font-semibold text-text">{t.label}</div>
-              <div className="mt-0.5 flex items-center gap-1 text-[11px] text-muted">
-                <IconClock size={11} /> {t.period} · {t.time}
-              </div>
-            </div>
-            {t.logged && (
-              <span className="flex flex-shrink-0 items-center gap-1 text-[11px] font-semibold text-success">
-                <IconCheckCircle size={14} /> Logged
-              </span>
-            )}
-            <IconChevronRight size={16} className="flex-shrink-0 text-muted" />
-          </button>
-        ))}
-        <button
-          type="button"
-          onClick={() => onPick({ mode: "extra" })}
-          className="flex w-full items-center gap-3 rounded-2xl border border-border bg-surface-2 px-3.5 py-3 text-left active:bg-surface"
-        >
-          <IconPlus size={14} className="flex-shrink-0 text-muted" />
-          <div className="min-w-0 flex-1 text-[14px] font-semibold text-text">Extra session</div>
-          <IconChevronRight size={16} className="flex-shrink-0 text-muted" />
-        </button>
-      </div>
-    </Sheet>
-  );
-}
-
 function ExtraRow({ log, onEdit }: { log: LogEntry; onEdit: () => void }) {
   const meta = catMeta[log.category ?? "other"] ?? catMeta.other;
   return (
@@ -1234,28 +1153,6 @@ function LogScreenInner() {
   );
   const [editor, setEditor] = useState<EditorState | null>(null);
 
-  /*
-    THE TAB'S OWN SCAN BUTTON. It used to open an untitled EXTRA session with
-    the keyboard up and the real camera button a scroll below — and the result
-    never reached the prescribed slot, the team board, or the calendar's colour.
-
-    Now the camera opens on the tap itself (a phone only opens it inside a user
-    gesture, so the file input lives HERE, not in the editor) and the photo is
-    handed to the editor for the RIGHT session.
-
-    PHOTO FIRST, THEN "WHICH WORKOUT WAS THIS?" (owner, 2026-10-11: "we want to
-    scan it and then log it, and say what the workout was compared to what we
-    did from the plan"). It used to guess — straight into the day's one erg
-    session, or Extra when the plan had none — and the rower couldn't tell
-    where the photo had gone. Now the camera always opens first, and the rower
-    picks: the day's erg sessions, or Extra session. Only a day with no erg in
-    the plan skips the question, because Extra is then the only answer (the
-    editor's title says it). Each erg session's own Scan button is unchanged.
-  */
-  const scanInputRef = useRef<HTMLInputElement>(null);
-  // The photo taken, waiting for its answer to "Which workout was this?".
-  const [pendingScan, setPendingScan] = useState<File | null>(null);
-
   const reloadLogs = async () => {
     if (userId) setLogs(await fetchLogsInRange(userId, rangeFrom, rangeTo));
   };
@@ -1337,46 +1234,6 @@ function LogScreenInner() {
   };
 
   /*
-    Where a monitor photo can go on this day: every prescribed ERG session,
-    each as the editor state that would log it (an existing log is edited, not
-    doubled). Water, weights and flex are not scannable — a C2 screen belongs
-    to an erg session — so they are not offered.
-  */
-  const ergTargets = useMemo(
-    () =>
-      prescribed
-        .filter((p) => p.session.category === "erg")
-        .map((p) => ({
-          dayKey: p.dayKey,
-          label: p.session.description.trim() || sessionLabel(p.session),
-          period: p.period,
-          time: p.session.time,
-          logged: !!planLogByKey[p.dayKey],
-          editor: {
-            mode: "plan" as const,
-            period: p.period,
-            dayKey: p.dayKey,
-            session: p.session,
-            existing: planLogByKey[p.dayKey],
-          },
-        })),
-    [prescribed, planLogByKey],
-  );
-  // The scan button's photo (above): no erg in the plan → Extra; else ask.
-  const onScanPicked = (file: File | undefined) => {
-    // Let the same input fire again for the next photo.
-    if (scanInputRef.current) scanInputRef.current.value = "";
-    if (!file) return;
-    if (ergTargets.length === 0) setEditor({ mode: "extra", scanFile: file });
-    else setPendingScan(file);
-  };
-  const scanInto = (target: EditorState) => {
-    const file = pendingScan;
-    setPendingScan(null);
-    if (file) setEditor({ ...target, scanFile: file });
-  };
-
-  /*
     Per-day dots for the strip: ONE PER SESSION, in the order they happen, so
     the chip says which of the day's sessions are done. A prescribed session is
     matched to its log by the plan slot key (not by counting), because logging
@@ -1432,25 +1289,6 @@ function LogScreenInner() {
             );
           })}
         </div>
-
-        {/* Monitor photo first → "Which workout was this?" → that session's
-            editor, numbers filled in. */}
-        <input
-          ref={scanInputRef}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={(e) => onScanPicked(e.target.files?.[0])}
-        />
-        <button
-          type="button"
-          disabled={loading}
-          onClick={() => scanInputRef.current?.click()}
-          data-tour="varsity-log-scan"
-          className="mt-4 flex w-full items-center justify-center gap-2.5 rounded-2xl bg-primary-live py-3.5 text-[14px] font-semibold text-primary-contrast shadow-md transition-transform duration-150 active:scale-[0.98] disabled:opacity-60"
-        >
-          <IconCamera size={20} /> Scan C2 / RP3 monitor
-        </button>
 
         {/* prescribed plan for the selected day */}
         <div className="mt-6" data-tour="varsity-log-today">
@@ -1509,16 +1347,6 @@ function LogScreenInner() {
         {/* …and under the plus, how the day actually felt. Today only. */}
         {isToday && userId && <CheckInRow userId={userId} iso={selectedIso} />}
       </div>
-
-      {/* The photo is taken: which workout is it? The day's erg sessions from
-          the plan, then Extra session. Closing the sheet drops the photo. */}
-      {pendingScan && (
-        <WhichWorkoutSheet
-          targets={ergTargets}
-          onPick={scanInto}
-          onClose={() => setPendingScan(null)}
-        />
-      )}
 
       {activeEditor && userId && (
         <LogEditor

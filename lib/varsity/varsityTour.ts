@@ -108,10 +108,9 @@ const steps: TourStep[] = [
   */
   {
     press: "varsity-log",
-    anchor: "varsity-log-scan",
-    alsoAnchor: "varsity-log-today",
+    anchor: "varsity-log-today",
     title: "Log a session",
-    body: "Log today’s session, or scan the erg monitor and the numbers fill themselves in.",
+    body: "Tap the session you did. On the erg or the bike, scan the monitor and the numbers fill themselves in.",
   },
 
   {
