@@ -8,7 +8,7 @@ import { social, views, type LandingView } from "@/lib/landingCopy";
   The link card: what a pasted link shows in a group chat, on X, in Slack.
   The app spreads through group chats (the varsity story says so), and until
   2026-08-18 a pasted link rendered as bare text. The image is public/og.png,
-  drawn by scripts/landing/make-og.mjs. A view gets its own title
+  a screenshot of the landing made by scripts/landing/make-og.mjs. A view gets its own title
   ("UNIsport for coaches") and canonical address; the description and the
   card image are the page's.
 */
@@ -29,13 +29,13 @@ export function landingMetadata(view: LandingView = "all"): Metadata {
       siteName: "UNIsport",
       type: "website",
       locale: "en_US",
-      images: [{ url: "/og.png", width: 1200, height: 630, alt: social.imageAlt }],
+      images: [{ url: social.image, width: 1200, height: 630, alt: social.imageAlt }],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      images: ["/og.png"],
+      images: [social.image],
     },
   };
 }

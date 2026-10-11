@@ -109,12 +109,18 @@ export const hero = {
 /* ─────────────────── THE LINK CARD (title tag, OG, X) ─────────────────── */
 
 /* What a pasted link shows before anyone taps it — the browser tab title,
-   the card in a group chat. The image (public/og.png) is drawn by
-   scripts/landing/make-og.mjs from the same headline and pill. */
+   the card in a group chat. The image (public/og.png) is a screenshot of the
+   landing's first screen, made by scripts/landing/make-og.mjs. */
 export const social = {
   title: `UNIsport — ${hero.headline.join(" ")}`,
   description: "Find the gym. Find someone to go with. Free for students.",
-  imageAlt: "UNIsport — Your campus. Your gym. Your people. The Gyms screen in a phone beside the headline.",
+  /* Change the ?v= every time og.png is remade. WhatsApp, iMessage and Google
+     remember a link's picture by its ADDRESS, so a new picture at the old
+     address went on showing the old one (2026-10-11: the dark September card,
+     long after the site went light). */
+  image: "/og.png?v=2026-10-11",
+  imageAlt:
+    "UNIsport — Your campus. Your gym. Your people. The landing's first screen: the headline, the Student, Varsity athlete and Coach doors, and the Gyms and Match screens in two phones.",
 };
 
 /* ─────────────────────────── THE TOP BAR ─────────────────────────── */

@@ -23,13 +23,13 @@ export const metadata: Metadata = {
     siteName: "UNIsport",
     type: "website",
     locale: "en_US",
-    images: [{ url: "/og.png", width: 1200, height: 630, alt: social.imageAlt }],
+    images: [{ url: social.image, width: 1200, height: 630, alt: social.imageAlt }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Join the UNIsport waitlist",
     description: waitlist.body,
-    images: ["/og.png"],
+    images: [social.image],
   },
 };
 

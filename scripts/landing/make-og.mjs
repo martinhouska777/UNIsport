@@ -1,65 +1,73 @@
 // Renders the social card (public/og.png, 1200×630) — what a pasted link
-// shows in iMessage / WhatsApp / Slack / X. Real headless Chrome, so the
-// same faces the page uses (Instrument Serif, Geist from Google Fonts) and
-// the real Gyms capture inside the landing's phone. Re-run after changing
-// the hero headline or the pill.
+// shows in iMessage / WhatsApp / Slack / X, and the picture Google puts beside
+// a search result.
 //
-//   node make-og.mjs
+// It is a SCREENSHOT OF THE REAL LANDING, not a drawing of it. Until
+// 2026-10-11 this file drew its own card in the landing's first, dark look —
+// and when the landing went light the card stayed dark, so every shared link
+// showed a website that no longer existed (owner: "it shows you the preview of
+// the old website, which we don't have anymore"). A screenshot can't drift.
+//
+// Re-run after the landing's first screen changes, then commit public/og.png:
+//
+//   node scripts/landing/make-og.mjs                       # the live site
+//   node scripts/landing/make-og.mjs http://localhost:3000 # a local build
 import puppeteer from "puppeteer-core";
 import sharp from "sharp";
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-const OUT = path.resolve("../../public/og.png");
-const shot = fs.readFileSync(path.resolve("../../public/landing/01-gyms.webp")).toString("base64");
+const HERE = path.dirname(fileURLToPath(import.meta.url));
+const OUT = path.resolve(HERE, "../../public/og.png");
+const SITE = process.argv[2] ?? "https://getunisport.com";
 
-// The landing's own tokens (app/globals.css → @theme static, l-*). Copied
-// here because this file is plain Node; keep them in step by hand.
-const T = { bg: "#0a0a0a", elevated: "#111111", line: "#2a2a2a", text: "#f5f5f5", text2: "#888888", accent: "#4a9eff", accentDim: "rgba(74,158,255,0.1)", accentSoft: "rgba(74,158,255,0.2)" };
+// The page is laid out at 1600×840 (the card's own 1.9 : 1, so the hero sits
+// as it does on a laptop), then cut to the first screen without the top bar
+// and the side margins: headline, the three doors, the phones and the shields.
+const VIEW = { width: 1600, height: 840 };
+const CLIP = { x: 150, y: 105, width: 1300, height: 682 };
 
-const html = `<!doctype html><html><head><meta charset="utf-8">
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@500&display=block" rel="stylesheet">
-<style>
-  *{box-sizing:border-box;margin:0}
-  html,body{width:1200px;height:630px;background:${T.bg};overflow:hidden}
-  body{font-family:Geist,system-ui,sans-serif;color:${T.text};position:relative}
-  .grid{position:absolute;inset:0;background-image:linear-gradient(${T.line}22 1px,transparent 1px),linear-gradient(90deg,${T.line}22 1px,transparent 1px);background-size:48px 48px}
-  .glow{position:absolute;left:-200px;top:-200px;width:900px;height:900px;background:radial-gradient(circle,${T.accentDim} 0%,transparent 60%)}
-  .wrap{position:absolute;inset:0;display:flex;align-items:center;padding:0 0 0 88px}
-  .copy{width:660px}
-  .mark{font-family:'Instrument Serif',serif;font-style:italic;font-size:34px;letter-spacing:-0.01em}
-  .mark b{font-weight:400;color:${T.accent}}
-  .pill{display:inline-flex;align-items:center;gap:9px;margin-top:38px;padding:8px 14px;border-radius:999px;border:1px solid ${T.accentSoft};background:${T.accentDim};color:${T.accent};font-family:'Geist Mono',monospace;font-size:14px;letter-spacing:.12em;text-transform:uppercase}
-  .pill i{width:7px;height:7px;border-radius:50%;background:${T.accent};box-shadow:0 0 10px ${T.accent}}
-  h1{font-family:'Instrument Serif',serif;font-weight:400;font-size:96px;line-height:.98;letter-spacing:-0.02em;margin-top:22px}
-  h1 em{color:${T.accent}}
-  p{margin-top:24px;font-size:22px;line-height:1.45;color:${T.text2};max-width:600px;letter-spacing:-0.01em}
-  .phone{position:absolute;right:96px;top:70px;width:300px;border-radius:38px;border:1px solid ${T.line};background:${T.elevated};padding:8px;box-shadow:0 30px 80px rgba(0,0,0,.6)}
-  .screen{border-radius:30px;overflow:hidden;background:#fff}
-  .bar{display:flex;align-items:center;justify-content:space-between;padding:10px 18px 6px;font-family:'Geist Mono',monospace;font-size:10px;color:#16150f;background:#fff}
-  .island{width:70px;height:18px;border-radius:999px;background:#161616;border:1px solid #222}
-  .screen img{display:block;width:100%;height:auto}
-</style></head><body>
-<div class="grid"></div><div class="glow"></div>
-<div class="wrap"><div class="copy">
-  <div class="mark">UNI<b>sport</b></div>
-  <div class="pill"><i></i>Free for students</div>
-  <h1>Your campus.<br>Your gym.<br><em>Your people.</em></h1>
-  <p>Every gym on campus, training partners ranked by real fit, and a Varsity Mode for teams.</p>
-</div></div>
-<div class="phone"><div class="screen">
-  <div class="bar"><span>9:41</span><span class="island"></span><span style="color:#9b968c">5G</span></div>
-  <img src="data:image/webp;base64,${shot}" width="900" height="1480">
-</div></div>
-</body></html>`;
-
-const browser = await puppeteer.launch({ executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe", headless: "new", args: ["--disable-gpu", "--no-first-run"] });
+const browser = await puppeteer.launch({
+  executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe",
+  headless: "new",
+  args: ["--disable-gpu", "--no-first-run"],
+});
 const page = await browser.newPage();
-await page.setViewport({ width: 1200, height: 630, deviceScaleFactor: 2 });
-await page.setContent(html, { waitUntil: "networkidle0" });
+// One CSS pixel = one pixel, so CLIP is in the screenshot's own pixels. The
+// 1300-wide cut is shrunk to 1200, so it is still sharp.
+await page.setViewport({ ...VIEW, deviceScaleFactor: 1 });
+// Light, and still: the school cycle and the entrance motion hold their first
+// frame, so the card is Harvard's crimson every time it is made.
+await page.emulateMediaFeatures([
+  { name: "prefers-reduced-motion", value: "reduce" },
+  { name: "prefers-color-scheme", value: "light" },
+]);
+await page.goto(SITE, { waitUntil: "networkidle0" });
 await page.evaluate(() => document.fonts.ready);
-await new Promise((r) => setTimeout(r, 500));
+// The two phones hold one screen per school, stacked, and only the shown one
+// fades in once it has loaded — they arrive late, and were
+// shot blank without this. Wait until both phones show a loaded screen.
+await page.waitForFunction(
+  () => {
+    const shown = [...document.images].filter(
+      (img) =>
+        img.complete && img.naturalWidth > 0 && getComputedStyle(img).opacity === "1",
+    );
+    const has = (name) => shown.some((img) => (img.currentSrc || img.src).includes(name));
+    return has("closers%2Fgyms-") && has("closers%2Fmatch-");
+  },
+  { timeout: 30_000 },
+);
+await new Promise((r) => setTimeout(r, 2500));
+// The whole window, cut afterwards: asking Chrome for a `clip` re-lays the page
+// out for the shot, and the tilted back phone then came out blank.
 const png = await page.screenshot({ type: "png" });
 await browser.close();
-await sharp(png).resize({ width: 1200, height: 630 }).png({ compressionLevel: 9 }).toFile(OUT);
-console.log("wrote", OUT, fs.statSync(OUT).size, "bytes");
+
+await sharp(png)
+  .extract({ left: CLIP.x, top: CLIP.y, width: CLIP.width, height: CLIP.height })
+  .resize({ width: 1200, height: 630 })
+  .png({ compressionLevel: 9 })
+  .toFile(OUT);
+console.log("wrote", OUT, fs.statSync(OUT).size, "bytes from", SITE);
