@@ -90,7 +90,7 @@ export default function GymCheckInPrompt({
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-end justify-center bg-background/70 p-4 backdrop-blur-sm sm:items-center">
+    <div className="fixed inset-0 z-[60] flex items-end justify-center bg-background/70 p-4 backdrop-blur-sm sm:items-center lg:items-start lg:pt-16">
       <div className="w-full max-w-sm rounded-3xl border border-border bg-surface p-5">
         <div className="text-[15px] font-semibold text-text">Nice work at {gymName}</div>
 

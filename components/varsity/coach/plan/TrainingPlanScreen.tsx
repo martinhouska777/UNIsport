@@ -742,7 +742,7 @@ export default function TrainingPlanScreen({
       ? createPortal(
           <ThemeProvider tokens={vTheme.dark} light={vTheme.light}>
             <div
-              className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 px-6"
+              className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 px-6 lg:items-start lg:pt-16"
               onClick={() => setConfirm(null)}
             >
               <div
