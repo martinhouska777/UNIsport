@@ -160,7 +160,7 @@ export default function PrivacyPolicyPage() {
           Anthropic, who read the numbers off the screen and return them to the app. When you save
           the session, we keep the photo with it, so you and your coach can open the screen the
           numbers came off. If the workout is a team workout, a copy is also kept with your result,
-          so it can be opened from your squad&apos;s results. Deleting the session deletes its
+          so it can be opened from your team&apos;s results. Deleting the session deletes its
           photo.
         </p>
         <p>

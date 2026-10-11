@@ -529,7 +529,7 @@ export const cues = {
   And one beat that is written but cannot be shot yet — the TEAMMATE beat (a
   different thing from V5's squad board, which ships):
 
-      head: "See how the squad is training."
+      head: "See how the team is training."
       sub:  "92% consistency, 19 hours, five extra sessions — every teammate's
              month, and where yours sits next to it."
 
@@ -1244,7 +1244,7 @@ export const coach = {
       body: [
         { text: "Flag a session as a ranked/team workout, and after each athlete logs it, " },
         { text: "it shows itself as a list with rankings and filters", bold: true },
-        { text: ", ranked by split, time, watts or watts per kilo. Also look at the squad average and compare to previous workouts." },
+        { text: ", ranked by split, time, watts or watts per kilo. Also look at the team average and compare to previous workouts." },
       ],
       /* ITS OWN COACH FRAME since 2026-09-17 (owner: reshoot the coach
          screenshots). It used to borrow 15-varsity-board.webp — the right
@@ -1252,7 +1252,7 @@ export const coach = {
          is the console's own Workouts tab: every session the squad has been
          set, each with how many have logged it. */
       shot: "coach-6-workouts.webp",
-      alt: "The console's Workouts tab: every team workout with the date, the session and how many of the squad have logged it",
+      alt: "The console's Workouts tab: every team workout with the date, the session and how many of the team have logged it",
     },
     {
       n: "6",
@@ -1266,7 +1266,7 @@ export const coach = {
          pencil in each row of the TEAM tab (2026-09-17), so the picture is
          the squad list the coach writes them from. */
       shot: "coach-5-notes.webp",
-      alt: "The Team tab: the whole squad with each rower's side, where the coach taps a row to write that athlete's technical note",
+      alt: "The Team tab: the whole team with each rower's side, where the coach taps a row to write that athlete's technical note",
     },
   ] as CoachStep[],
 
@@ -1298,7 +1298,7 @@ export const coach = {
   cta: {
     label: "Bring it to your team",
     mailSubject: "The Coach's Console for my team",
-    mailBody: "Hi Martin,\n\nI coach ______ at ______ and I'd like to run the squad on UNIsport.\n\n",
+    mailBody: "Hi Martin,\n\nI coach ______ at ______ and I'd like to run the team on UNIsport.\n\n",
   },
 };
 

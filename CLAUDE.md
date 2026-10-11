@@ -72,5 +72,14 @@ A white-label university fitness PWA. These rules apply to EVERYTHING in this re
 - **New permanent rule** → add it to THIS file (`CLAUDE.md`).
 - **A one-off task** → just describe it in chat.
 
+## 9. No explaining text, no dots between words (owner, 2026-10-11)
+- No line under a button, title or field saying what it does, what just happened
+  or how to use the screen. Confirmations are a word and a tick ("✓ Uploaded").
+  Empty screens say only what is empty ("No favourites yet.").
+- No captions repeating what is on screen ("3 selected", "of 26", "Top 12").
+- Never join words with a middle dot "·". Never write "squad" — say "team".
+- Kept: a warning before something is deleted for good, an error you can act on.
+- The full rule is global: `C:\Users\marti\.claude\CLAUDE.md`.
+
 <!-- The note below is from the Next.js scaffolder and is worth keeping. -->
 @AGENTS.md

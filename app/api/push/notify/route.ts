@@ -155,10 +155,10 @@ export async function POST(request: Request) {
   const who = (senderName as string) || "Someone";
 
   /* ── What it says ──
-     The varsity notifications are titled with the SQUAD, not the coach: on a
+     The varsity notifications are titled with the TEAM, not the coach: on a
      lock screen "Harvard Rowing" is what tells you which part of your life this
      is, and the coach's name is already the only person who could have sent it. */
-  let team = "Your squad";
+  let team = "Your team";
   if (isTeamKind(kind) || isJoinKind(kind)) {
     const { data: membership } = await supabase.rpc("varsity_my_membership");
     const row = Array.isArray(membership) ? membership[0] : membership;
@@ -228,7 +228,7 @@ export async function POST(request: Request) {
     },
     join_approved: {
       title: team,
-      body: "You're in. Welcome to the squad.",
+      body: "You're in. Welcome to the team.",
       url: "/varsity/home",
     },
   }[kind];
