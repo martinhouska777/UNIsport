@@ -32,6 +32,8 @@ A white-label university fitness PWA. These rules apply to EVERYTHING in this re
 ## 4. Build in small slices
 - After each slice: STOP, explain in plain English what was built and how to look at
   it in the browser, and WAIT for the owner's review before continuing.
+- Narrowed 2026-09-27: once the owner has given the direction for a list of changes, do the
+  whole list, then report. Stop before a new feature or a new look (`NO-SLOP.md` 19).
 
 ## 5. Do not add features that weren't asked for
 - The product owner does not read code and reviews by using the running app.
@@ -70,6 +72,8 @@ A white-label university fitness PWA. These rules apply to EVERYTHING in this re
   Mockups are for layout/spacing/hierarchy ONLY; their hardcoded colors are never copied —
   everything maps to theme variables (rule 1).
 - **New permanent rule** → add it to THIS file (`CLAUDE.md`).
+- **A correction to how something looks, reads or behaves** → a line in `NO-SLOP.md`, the
+  same day, in the same commit as the fix (rule 10).
 - **A one-off task** → just describe it in chat.
 
 ## 9. No explaining text, no dots between words (owner, 2026-10-11)
@@ -80,6 +84,14 @@ A white-label university fitness PWA. These rules apply to EVERYTHING in this re
 - Never join words with a middle dot "·". Never write "squad" — say "team".
 - Kept: a warning before something is deleted for good, an error you can act on.
 - The full rule is global: `C:\Users\marti\.claude\CLAUDE.md`.
+
+## 10. The "AI slop" list: loaded below, add to it every time
+- `NO-SLOP.md` is everything the owner has seen, called out and had changed (2026-10-11,
+  built from every chat since 12 Sep). It loads with this file. Don't build any of it again.
+- Every correction the owner gives about how something looks, reads or behaves goes into it
+  the same day, in the same commit as the fix: the rule, the owner's words, the date.
+
+@NO-SLOP.md
 
 <!-- The note below is from the Next.js scaffolder and is worth keeping. -->
 @AGENTS.md
