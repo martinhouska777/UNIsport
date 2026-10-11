@@ -27,7 +27,7 @@ export default function VisibilityToggle({
       className={`tap44 flex h-7 w-7 items-center justify-center rounded-full border transition-colors ${
         visible
           ? "border-success-line bg-success-tint text-success"
-          : "border-border bg-surface-2 text-muted"
+          : "border-border bg-surface text-muted"
       }`}
     >
       {visible ? <IconEye size={14} /> : <IconEyeOff size={14} />}

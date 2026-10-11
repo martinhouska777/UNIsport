@@ -21,7 +21,7 @@ import { honorCodeFor } from "@/lib/honorCode";
 
 function Rate({ points, what }: { points: number; what: string }) {
   return (
-    <div className="flex items-center gap-3 rounded-2xl border border-border bg-surface-2 px-3.5 py-2.5">
+    <div className="flex items-center gap-3 rounded-2xl border border-border bg-surface px-3.5 py-2.5">
       <span className="flex h-9 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-primary-tint text-[14px] font-semibold text-primary">
         {points}
       </span>

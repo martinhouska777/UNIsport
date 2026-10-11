@@ -174,7 +174,7 @@ function FilterTab({
           ? "border-text bg-text text-background"
           : set
             ? "border-primary bg-primary-tint text-primary"
-            : "border-border bg-surface-2 text-muted"
+            : "border-border bg-surface text-muted"
       }`}
     >
       {label}
@@ -205,7 +205,7 @@ function MineButton({
       className={`tap44 mb-2 rounded-full border px-3 py-1.5 text-[12px] ${
         active
           ? "border-primary bg-primary-tint text-primary"
-          : "border-border bg-surface-2 text-muted"
+          : "border-border bg-surface text-muted"
       }`}
     >
       {label}

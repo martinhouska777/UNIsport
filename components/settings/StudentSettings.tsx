@@ -177,7 +177,7 @@ export default function StudentSettings() {
                 await resetOnboarding();
                 router.replace("/onboarding");
               }}
-              className="w-full rounded-full border border-border bg-surface-2 px-5 py-2.5 text-sm font-medium text-text"
+              className="w-full rounded-full border border-border bg-surface px-5 py-2.5 text-sm font-medium text-text"
             >
               Replay onboarding (dev)
             </button>

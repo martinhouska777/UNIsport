@@ -73,7 +73,7 @@ export default function PersonalRecords({
               type="button"
               onClick={done}
               aria-label="Done editing personal records"
-              className="tap44 flex h-7 w-7 items-center justify-center rounded-full border border-border bg-surface-2 text-muted transition-colors"
+              className="tap44 flex h-7 w-7 items-center justify-center rounded-full border border-border bg-surface text-muted transition-colors"
             >
               <IconCheck size={14} />
             </button>
@@ -102,7 +102,7 @@ export default function PersonalRecords({
                 aria-label={`Record ${i + 1} name`}
                 placeholder="Lift"
                 maxLength={28}
-                className="min-w-0 flex-1 rounded-lg border border-border bg-surface-2 px-2.5 py-2 text-base text-text focus:border-primary focus:outline-none"
+                className="min-w-0 flex-1 rounded-lg border border-border bg-surface px-2.5 py-2 text-base text-text focus:border-primary focus:outline-none"
               />
               <input
                 value={pr.value}
@@ -110,7 +110,7 @@ export default function PersonalRecords({
                 aria-label={`Record ${i + 1} value`}
                 placeholder="Weight × reps"
                 maxLength={28}
-                className="min-w-0 flex-1 rounded-lg border border-border bg-surface-2 px-2.5 py-2 text-base text-text focus:border-primary focus:outline-none"
+                className="min-w-0 flex-1 rounded-lg border border-border bg-surface px-2.5 py-2 text-base text-text focus:border-primary focus:outline-none"
               />
               <button
                 type="button"

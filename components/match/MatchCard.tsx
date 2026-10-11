@@ -232,7 +232,7 @@ function Chip({ c }: { c: CardChip }) {
     <span
       title={c.full}
       className={`flex max-w-full flex-shrink-0 items-center gap-0.5 rounded-md border px-1.5 py-0.5 text-[11px] leading-tight ${
-        c.shared ? "border-primary-line bg-primary-tint text-primary" : "border-border bg-surface-2 text-muted"
+        c.shared ? "border-primary-line bg-primary-tint text-primary" : "border-border bg-surface text-muted"
       }`}
     >
       {c.shared && (

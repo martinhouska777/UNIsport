@@ -51,7 +51,7 @@ export default function GoingLine({
   return (
     <Link
       href={boardHref(gymName)}
-      className="tap44 flex items-center justify-between gap-2 rounded-xl border border-border bg-surface-2 px-3 py-2.5 text-[13px]"
+      className="tap44 flex items-center justify-between gap-2 rounded-xl border border-border bg-surface px-3 py-2.5 text-[13px]"
     >
       <span className="flex min-w-0 items-center gap-2">
         <span className="text-primary">
