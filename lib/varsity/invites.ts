@@ -72,6 +72,23 @@ export function inviteUrl(code: string): string {
   return `${origin}/join/${code}`;
 }
 
+/*
+  What the coach actually sends: the link AND the code, and where the code goes.
+  A link opens in the phone's browser, not in the installed app where the rower
+  is already signed in — so someone with an account types the code in the app
+  instead (owner, 2026-10-11: "when you send the link, you send the code there
+  as well … I just need to copy part of the link"). The code box takes the whole
+  message pasted, too: it finds the code in the link.
+*/
+export function inviteMessage(teamName: string, code: string): string {
+  return [
+    `Join ${teamName} on UNIsport`,
+    inviteUrl(code),
+    "",
+    `Already on UNIsport? Settings → Join a varsity team → code ${code}`,
+  ].join("\n");
+}
+
 // Where a code is parked when someone taps a link before signing in, so it
 // survives the trip through sign-in / onboarding.
 export const PENDING_INVITE_KEY = "unisport.pendingInvite";

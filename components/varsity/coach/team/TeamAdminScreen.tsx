@@ -35,7 +35,7 @@ import Button from "@/components/ui/Button";
 import {
   createInvite,
   inviteState,
-  inviteUrl,
+  inviteMessage,
   invitePresets,
   listInvites,
   revokeInvite,
@@ -122,7 +122,7 @@ export default function TeamAdminScreen({
   const [error, setError] = useState<string | null>(null);
   // The link just made — shown big, with copy + share, because that is the
   // whole point of the screen.
-  const [fresh, setFresh] = useState<string | null>(null);
+  const [fresh, setFresh] = useState<string | null>(null); // the new link's code
   const [copied, setCopied] = useState(false);
   const [emailFor, setEmailFor] = useState<string | null>(null); // personal-link email prompt
   const [emailValue, setEmailValue] = useState("");
@@ -199,15 +199,15 @@ export default function TeamAdminScreen({
       setError(err ?? "Could not create the link");
       return;
     }
-    setFresh(inviteUrl(code));
+    setFresh(code);
     setEmailFor(null);
     setEmailValue("");
     reload();
   };
 
-  const copy = async (url: string) => {
+  const copy = async (text: string) => {
     try {
-      await navigator.clipboard.writeText(url);
+      await navigator.clipboard.writeText(text);
       setCopied(true);
       setTimeout(() => setCopied(false), 1600);
     } catch {
@@ -215,21 +215,19 @@ export default function TeamAdminScreen({
     }
   };
 
-  // The WhatsApp / email hand-off: the phone's own share sheet.
-  const share = async (url: string) => {
+  // The WhatsApp / email hand-off: the phone's own share sheet. The link sits
+  // inside the message (inviteMessage), so it isn't passed again as `url` —
+  // WhatsApp would print it twice.
+  const share = async (message: string) => {
     if (typeof navigator !== "undefined" && "share" in navigator) {
       try {
-        await navigator.share({
-          title: `Join ${membership.teamName}`,
-          text: `Join ${membership.teamName} on UNIsport`,
-          url,
-        });
+        await navigator.share({ title: `Join ${membership.teamName}`, text: message });
         return;
       } catch {
         /* cancelled — fall back to the clipboard */
       }
     }
-    copy(url);
+    copy(message);
   };
 
   const decide = async (userId: string, status: "approved" | "removed") => {
@@ -388,8 +386,8 @@ export default function TeamAdminScreen({
             <>
               <button
                 type="button"
-                onClick={() => copy(inviteUrl(i.code))}
-                aria-label="Copy this link"
+                onClick={() => copy(inviteMessage(membership.teamName, i.code))}
+                aria-label="Copy this invite"
                 className="tap44 press-icon flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border border-border bg-surface-2 text-muted"
               >
                 <IconCopy size={13} />
@@ -470,15 +468,22 @@ export default function TeamAdminScreen({
                 <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-accent">
                   Ready to send
                 </div>
-                <div className="mt-1.5 break-all rounded-lg border border-border bg-surface-2 px-2.5 py-2 font-mono text-[12px] text-text">
-                  {fresh}
+                {/* Exactly what goes out: the link, and the code for anyone
+                    already signed in to the app. */}
+                <div className="mt-1.5 whitespace-pre-line break-all rounded-lg border border-border bg-surface-2 px-2.5 py-2 font-mono text-[12px] text-text">
+                  {inviteMessage(membership.teamName, fresh)}
                 </div>
                 <div className="mt-2.5 flex items-center gap-2">
-                  <Button variant="secondary" size="md" className="flex-1" onClick={() => copy(fresh)}>
+                  <Button
+                    variant="secondary"
+                    size="md"
+                    className="flex-1"
+                    onClick={() => copy(inviteMessage(membership.teamName, fresh))}
+                  >
                     {copied ? <IconCheck size={14} /> : <IconCopy size={14} />}
                     {copied ? "Copied" : "Copy"}
                   </Button>
-                  <Button size="md" className="flex-1" onClick={() => share(fresh)}>
+                  <Button size="md" className="flex-1" onClick={() => share(inviteMessage(membership.teamName, fresh))}>
                     <IconSend size={14} />
                     Send
                   </Button>
