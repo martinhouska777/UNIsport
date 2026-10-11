@@ -1482,15 +1482,15 @@ export default function TrainingPlanScreen({
 
           {/* RANKED WORKOUT — the switch that gives this session a shared
               board, every one of which is ranked (owner, 2026-10-11: "make it
-              like ranked workout"). It was "Team workout". */}
+              like ranked workout", then "just put the ranked workout in the
+              rectangle"). No heading over it; the words are in the switch. */}
           {configCanBoard(cfg, cat) && (
             <>
-              <div className={labelCls}>Ranked workout</div>
               <button
                 type="button"
                 data-tour="coach-plan-team"
                 onClick={() => setForm((f) => ({ ...f, teamWorkout: !f.teamWorkout }))}
-                className={`flex w-full items-center gap-3 rounded-xl border px-3.5 py-3 text-left ${
+                className={`mt-4 flex w-full items-center gap-3 rounded-xl border px-3.5 py-3 text-left ${
                   form.teamWorkout ? "border-primary bg-primary-tint" : "border-border bg-surface"
                 }`}
               >
@@ -1499,7 +1499,7 @@ export default function TrainingPlanScreen({
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block text-[12px] font-semibold text-text">
-                    Rank the squad&apos;s results
+                    Ranked workout
                   </span>
                 </span>
                 {/* The app's one switch (onboarding/controls Toggle), drawn
@@ -1555,27 +1555,6 @@ export default function TrainingPlanScreen({
                   );
                 })}
               </div>
-              {form.repeat === "weekly" &&
-                (() => {
-                  /* Say exactly what is about to be written, and what it is
-                     about to write OVER — a count the coach can check against
-                     the weeks list before pressing Done. */
-                  const targets = weeklyTargets(editor.date, editor.period);
-                  const others = targets.filter((k) => k !== sessionKey(editor.date, editor.period));
-                  const replaced = others.filter((k) => !!sessions[k]).length;
-                  return (
-                    <p className="mt-1.5 text-[11px] leading-relaxed text-muted">
-                      Puts this on every {weekday} {editor.period} from this week to the end of the
-                      block — {others.length} more {others.length === 1 ? "week" : "weeks"}
-                      {replaced > 0 && (
-                        <>
-                          , <span className="text-warn">{replaced} already set</span> and replaced
-                        </>
-                      )}
-                      . Earlier weeks are left alone.
-                    </p>
-                  );
-                })()}
               </div>
             </>
           )}

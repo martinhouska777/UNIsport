@@ -150,7 +150,7 @@ const steps: TourStep[] = [
     anchor: "coach-plan-team",
     group: "editor",
     title: "Ranked workout",
-    body: "Everyone logs their result, and the squad is ranked on one board under Workouts.",
+    body: "Everyone logs their result, and they are ranked on one board under Workouts.",
   },
   {
     press: "coach-plan-repeat-weekly",

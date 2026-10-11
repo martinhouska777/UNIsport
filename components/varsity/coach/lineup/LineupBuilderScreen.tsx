@@ -1998,10 +1998,14 @@ function Builder({
                 build one anyway. You may; that was never in doubt, and it does
                 not need a paragraph. Nothing blocks (the owner's rule). */}
             <div className="min-w-0 flex-1">
+              {/* ONE LINE (owner, 2026-10-11: "We ordered it 3 × 25 UT2, so we
+                  don't need to write it there again"). The coach's own words
+                  when there are any; only a session with none falls back to
+                  its type, "Off (no water session)". The line under it that
+                  repeated the type ("Erg · UT2 (no water session)") is gone. */}
               <div className="text-[13px] font-semibold text-text">
                 {planSaysTwice ? planLabel : planContext.title}
               </div>
-              {!planSaysTwice && <div className="mt-0.5 text-[11px] text-muted">{planLabel}</div>}
             </div>
             {/* Next to the workout — see repeatChip. */}
             {repeatChip}
