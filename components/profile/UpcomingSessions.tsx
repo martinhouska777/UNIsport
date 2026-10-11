@@ -23,6 +23,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Button from "@/components/ui/Button";
+import AddToCalendar from "@/components/AddToCalendar";
 import {
   confirmPlan,
   listPlansToConfirm,
@@ -90,6 +91,8 @@ export default function UpcomingSessions({
   const [reload, setReload] = useState(0); // bumped after an answer
   const [busy, setBusy] = useState<string | null>(null); // the plan being answered
   const [error, setError] = useState<string | null>(null);
+  // When the list came in — a session already under way gets no Add to calendar.
+  const [loadedAt, setLoadedAt] = useState(0);
   // The walk's example session, once you've accepted it (lib/tourExample.ts).
   const example = useTourExample();
 
@@ -102,6 +105,7 @@ export default function UpcomingSessions({
       if (!active) return;
       setPlans(up);
       setToConfirm(due);
+      setLoadedAt(Date.now());
     });
     return () => {
       active = false;
@@ -194,6 +198,12 @@ export default function UpcomingSessions({
                 className="overflow-hidden rounded-2xl border border-border bg-surface shadow-card"
               >
                 <PlanRow plan={p} onOpen={() => open(p)} />
+                {/* The walk's example has no real session behind it. */}
+                {!isTourExample(p.planId) && new Date(p.scheduledAt).getTime() > loadedAt && (
+                  <div className="px-3.5 pb-3">
+                    <AddToCalendar plan={p} />
+                  </div>
+                )}
               </div>
             ))}
           </div>
