@@ -19,6 +19,7 @@ import { logPhotoUrl } from "@/lib/varsity/ergPhotos";
 import { ergNote, ergPiece, type ErgPiece } from "@/lib/varsity/ergLog";
 import { formatMetrics } from "@/lib/varsity/logParse";
 import { logCategoryLabel } from "@/lib/varsity/athleteProfile";
+import { logFieldsFor } from "@/lib/varsity/coachPlan";
 import { IconArrowLeft, IconClock, IconChevronDown, IconChevronRight } from "@/components/icons";
 import { markColor } from "@/lib/colorMarks";
 
@@ -139,7 +140,9 @@ export default function WorkoutDetail({
   const tiles: { label: string; value: string }[] = [];
   if (current.metres != null) tiles.push({ label: "Metres", value: current.metres.toLocaleString() });
   if (current.minutes != null) tiles.push({ label: "Minutes", value: String(current.minutes) });
-  if (current.split) tiles.push({ label: "Split /500m", value: current.split });
+  // Labelled the way its kind asks for it (a bike's split is per 1000 m, a run's
+  // a pace per km); an older log of a kind that no longer asks keeps "Split".
+  if (current.split) tiles.push({ label: logFieldsFor(cat).split ?? "Split", value: current.split });
 
   // An erg session is compared only with the same piece (ergLog.ts), and its
   // note shows only what the rower wrote — the scanner's numbers are above.
@@ -222,18 +225,19 @@ export default function WorkoutDetail({
           )}
 
           {/* The monitor it was scanned from — the numbers above can be checked
-              against it. Hidden when the photo can't be opened. */}
+              against it — or, on any other kind, the photo the rower added.
+              Hidden when the photo can't be opened. */}
           {photoPath && failedPhoto !== photoPath && photoUrl !== null && (
             <div className="mt-5">
               <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-                The monitor
+                {erg ? "The monitor" : "Photo"}
               </div>
               {photoUrl ? (
                 // A signed, short-lived storage url can't go through next/image's optimiser.
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={photoUrl}
-                  alt="Erg monitor"
+                  alt={erg ? "Erg monitor" : "Session photo"}
                   onError={() => setFailedPhoto(photoPath)}
                   className="w-full rounded-2xl border border-border bg-surface-2"
                 />

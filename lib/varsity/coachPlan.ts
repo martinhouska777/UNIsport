@@ -67,6 +67,29 @@ export const logCategoryMeta: Record<LogCategory, { label: string; color: string
   other: { label: "Other", color: "var(--faint)" },
 };
 
+/*
+  WHAT EACH KIND OF SESSION ASKS WHEN IT IS LOGGED (owner, 2026-10-11: "you
+  didn't customize it — why is on bike 500m split when you do 1k split on C2,
+  and why is there split for lift and metres"). The Log session editor draws
+  exactly these rows; a saved log's split is labelled from here.
+    metres  whether it asks for a distance
+    split   the split row's label, or null for none
+    photo   "scan" = the erg's monitor scan is the photo, "add" = a plain photo
+            can be added, null = no photo (weights: "not lift")
+  Anything not listed (a log saved under an old category) asks what "other" does.
+*/
+export type LogFields = { metres: boolean; split: string | null; photo: "scan" | "add" | null };
+export const logFields: Partial<Record<LogCategory, LogFields>> = {
+  erg: { metres: true, split: "Split /500m", photo: "scan" },
+  bike: { metres: true, split: "Split /1000m", photo: "add" },
+  run: { metres: true, split: "Pace /km", photo: "add" },
+  water: { metres: true, split: null, photo: "add" },
+  weights: { metres: false, split: null, photo: null },
+  other: { metres: true, split: null, photo: "add" },
+};
+export const logFieldsFor = (category: string | null | undefined): LogFields =>
+  logFields[(category ?? "other") as LogCategory] ?? (logFields.other as LogFields);
+
 /* ── Intensities (Water + Erg only) ── */
 export type Intensity = "UT2" | "UT1" | "hard";
 export const intensities: Intensity[] = ["UT2", "UT1", "hard"];

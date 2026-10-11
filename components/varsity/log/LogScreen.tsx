@@ -27,13 +27,14 @@ import { prescribedForDay } from "@/lib/varsity/athleteHome";
 import {
   sessionLabel,
   logCategoryMeta,
+  logFieldsFor,
   toISO,
   type Session,
   type Period,
 } from "@/lib/varsity/coachPlan";
 import { estimateForSession } from "@/lib/varsity/logParse";
 import { loggedLine } from "@/lib/varsity/loggedLine";
-import { scanErgPhoto, minutesToClock } from "@/lib/varsity/ergScan";
+import { scanErgPhoto, minutesToClock, fileToDataUrl } from "@/lib/varsity/ergScan";
 import { deriveSplitSec, deriveTotalSec } from "@/lib/varsity/ergMath";
 import { fetchAthleteProfile, fetchCheckIns, saveCheckIn } from "@/lib/varsity/athleteProfile";
 import {
@@ -47,7 +48,7 @@ import {
   type CheckIn,
 } from "@/lib/varsity/checkIn";
 import { shareResult, unshareResult, intervalsFromScan } from "@/lib/varsity/resultsStore";
-import { uploadErgPhoto } from "@/lib/varsity/ergPhotos";
+import { uploadErgPhoto, logPhotoUrl } from "@/lib/varsity/ergPhotos";
 import type { ErgScanInterval, ScanResult } from "@/lib/varsity/ergScan";
 import {
   fetchLogsInRange,
@@ -56,6 +57,7 @@ import {
   updateLog,
   deleteLog,
   attachLogPhoto,
+  detachLogPhoto,
   loadPendingDraft,
   keepPendingDraft,
   clearPendingDraft,
@@ -72,6 +74,7 @@ import {
   IconCheckCircle,
   IconArrowLeft,
   IconClock,
+  IconX,
 } from "@/components/icons";
 import { markColor } from "@/lib/colorMarks";
 import KindTag from "@/components/varsity/KindTag";
@@ -176,6 +179,10 @@ function LogEditor({
   const start = restored ? fieldsOf(restored) : defaults;
   const [title, setTitle] = useState(start.title);
   const [category, setCategory] = useState<string>(start.category);
+  /* WHAT THIS KIND OF SESSION ASKS, from data (coachPlan → logFields): water is
+     Minutes and Metres, weights is Minutes, a bike's split is per 1000 m, a
+     run's is a pace per km (owner, 2026-10-11). */
+  const fields = logFieldsFor(category);
   const [minutes, setMinutes] = useState<string>(start.minutes);
   const [metres, setMetres] = useState<string>(start.metres);
   const [split, setSplit] = useState<string>(start.split);
@@ -235,6 +242,42 @@ function LogEditor({
     intervals: ErgScanInterval[];
     image: string | null;
   }>({ strokeRate: null, watts: null, monitor: null, intervals: [], image: null });
+
+  /*
+    A PLAIN PHOTO, on every kind of session where one makes sense (owner,
+    2026-10-11: "bike, erg, run — everywhere that it makes sense, not lift").
+    The erg's photo is its monitor scan; the rest add one here. One per
+    session: it is kept the way a scan's photo is (log-photos, attached on
+    SAVE), so it opens from the session for the rower and their coach.
+  */
+  const photoRef = useRef<HTMLInputElement>(null);
+  const [photo, setPhoto] = useState<string | null>(null); // a new one, not yet saved
+  const [photoBusy, setPhotoBusy] = useState(false);
+  const [dropPhoto, setDropPhoto] = useState(false); // the saved one, taken off
+  const savedPhotoPath = fields.photo === "add" && !dropPhoto ? (existing?.photoPath ?? null) : null;
+  const [savedPhoto, setSavedPhoto] = useState<{ path: string; url: string | null } | null>(null);
+  useEffect(() => {
+    if (!savedPhotoPath) return;
+    let active = true;
+    logPhotoUrl(savedPhotoPath).then((url) => active && setSavedPhoto({ path: savedPhotoPath, url }));
+    return () => {
+      active = false;
+    };
+  }, [savedPhotoPath]);
+  const shownPhoto =
+    photo ?? (savedPhotoPath && savedPhoto?.path === savedPhotoPath ? savedPhoto.url : null);
+  const pickPhoto = (file: File | undefined) => {
+    if (!file) return;
+    setPhotoBusy(true);
+    fileToDataUrl(file)
+      .then(setPhoto)
+      .catch((e) => console.error("photo:", e))
+      .finally(() => setPhotoBusy(false));
+  };
+  const removePhoto = () => {
+    setPhoto(null);
+    if (existing?.photoPath) setDropPhoto(true);
+  };
 
   /*
     TEAM WORKOUT: the coach flagged this session, so saving it also puts the
@@ -368,9 +411,6 @@ function LogEditor({
   );
 
   const valid = state.mode === "plan" || title.trim().length > 0;
-  // A water session is Minutes and Metres only — no split per 500 m (owner,
-  // 2026-10-11: "for water workouts, we don't need split in 500").
-  const showSplit = category !== "water";
 
   // The form as a record, exactly what Save sends and what a failed save parks.
   const currentDraft = (): LogDraft => ({
@@ -381,9 +421,10 @@ function LogEditor({
     title: title.trim() || (state.mode === "plan" ? sessionLabel(state.session) : "Extra session"),
     category,
     minutes: minutes.trim() ? Number(minutes) : null,
-    metres: metres.trim() ? Number(metres) : null,
-    // A split that isn't asked isn't kept (a water log, or a type switched to water).
-    split: showSplit ? split.trim() || null : null,
+    // A row that isn't asked isn't kept (weights has no metres, water no split,
+    // and a type switched over drops what the new type doesn't ask).
+    metres: fields.metres && metres.trim() ? Number(metres) : null,
+    split: fields.split ? split.trim() || null : null,
     effort,
     note: note.trim(),
   });
@@ -421,8 +462,16 @@ function LogEditor({
     // A scanned session keeps its photo, for the rower and their coach to open
     // from the session. Uploaded on SAVE, not on scan, so an abandoned edit never
     // leaves an orphan image behind. Runs alongside the board below.
-    const keepPhoto =
-      scanned.image && res.id ? attachLogPhoto(athleteId, res.id, scanned.image) : Promise.resolve();
+    // A plain photo (every other kind but weights) goes the same way; one taken
+    // off comes off the saved session too.
+    const image = fields.photo === "scan" ? scanned.image : fields.photo === "add" ? photo : null;
+    const keepPhoto = !res.id
+      ? Promise.resolve()
+      : image
+        ? attachLogPhoto(athleteId, res.id, image)
+        : dropPhoto && existing?.photoPath
+          ? detachLogPhoto(athleteId, res.id)
+          : Promise.resolve();
 
     // Team workout → also put this on the squad board. The split is stored in
     // seconds so the board can rank without re-parsing text, and the time is
@@ -617,16 +666,18 @@ function LogEditor({
                 className={detailRowInput}
               />
             </DetailRow>
-            <DetailRow label="Metres">
-              <input
-                value={metres}
-                onChange={(e) => setMetres(e.target.value.replace(/[^\d]/g, ""))}
-                inputMode="numeric"
-                className={detailRowInput}
-              />
-            </DetailRow>
-            {showSplit && (
-              <DetailRow label="Split /500m">
+            {fields.metres && (
+              <DetailRow label="Metres">
+                <input
+                  value={metres}
+                  onChange={(e) => setMetres(e.target.value.replace(/[^\d]/g, ""))}
+                  inputMode="numeric"
+                  className={detailRowInput}
+                />
+              </DetailRow>
+            )}
+            {fields.split && (
+              <DetailRow label={fields.split}>
                 <input
                   value={split}
                   onChange={(e) => setSplit(e.target.value)}
@@ -677,6 +728,51 @@ function LogEditor({
               className={`${inputCls} resize-none overflow-hidden leading-snug`}
             />
           </label>
+
+          {/* One photo, the student Log session's tile: a dashed plus until
+              there is one, then the picture with an × to take it off. */}
+          {fields.photo === "add" && (
+            <>
+              <div className={labelCls}>Photo</div>
+              <input
+                ref={photoRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  pickPhoto(e.target.files?.[0]);
+                  e.target.value = ""; // the same file can be picked again
+                }}
+              />
+              <div className="grid grid-cols-4 gap-2">
+                {shownPhoto ? (
+                  <div className="relative aspect-square overflow-hidden rounded-xl border border-border bg-surface-2">
+                    {/* A data URL or a signed storage url — neither goes through next/image. */}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={shownPhoto} alt="Session photo" className="h-full w-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={removePhoto}
+                      aria-label="Remove photo"
+                      className="tap44 press-icon absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-background/80 text-text backdrop-blur hover:text-danger"
+                    >
+                      <IconX size={11} />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => photoRef.current?.click()}
+                    disabled={photoBusy}
+                    aria-label="Add photo"
+                    className="flex aspect-square items-center justify-center rounded-xl border border-dashed border-border bg-surface text-muted active:text-primary disabled:opacity-50"
+                  >
+                    <IconPlus size={20} />
+                  </button>
+                )}
+              </div>
+            </>
+          )}
         </div>
       </div>
 

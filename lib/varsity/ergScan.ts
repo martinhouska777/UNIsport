@@ -32,7 +32,8 @@ export type ErgScan = {
 export type ScanResult = { result?: ErgScan; error?: string; image?: string };
 
 // Shrink a photo to a JPEG data URL (long edge ≤ maxEdge) before upload.
-async function fileToDataUrl(file: File, maxEdge = 1600): Promise<string> {
+// Also what a plain session photo goes through (the Log session's "Photo").
+export async function fileToDataUrl(file: File, maxEdge = 1600): Promise<string> {
   const bitmap = await createImageBitmap(file);
   const scale = Math.min(1, maxEdge / Math.max(bitmap.width, bitmap.height));
   const w = Math.round(bitmap.width * scale);

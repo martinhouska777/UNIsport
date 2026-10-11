@@ -362,6 +362,15 @@ export async function attachLogPhoto(athleteId: string, logId: string, dataUrl: 
   if (error) console.error("attachLogPhoto:", error.message);
 }
 
+/* Take a log's photo off: the file, and the row's pointer to it. */
+export async function detachLogPhoto(athleteId: string, logId: string): Promise<void> {
+  if (!hasSupabaseEnv()) return;
+  await deleteLogPhoto(athleteId, logId);
+  const supabase = createClient();
+  const { error } = await supabase.from("varsity_logs").update({ photo_path: null }).eq("id", logId);
+  if (error) console.error("detachLogPhoto:", error.message);
+}
+
 /* ── Delete a log ── */
 export async function deleteLog(athleteId: string, id: string): Promise<{ error?: string }> {
   if (!hasSupabaseEnv()) {
