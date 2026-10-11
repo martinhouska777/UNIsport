@@ -444,7 +444,8 @@ export default function LeaderboardsPage() {
   };
 
   const [tab, setTab] = useState<TabKey>("rankings");
-  const [period, setPeriod] = useState<Period>("month");
+  // Opens on This semester (owner, 2026-10-11); This month is one arrow left.
+  const [period, setPeriod] = useState<Period>("semester");
   const [competition, setCompetition] = useState<CompetitionKey>("houses");
   /*
     Which number a team board is ranked on. Per member opens first — it is the
