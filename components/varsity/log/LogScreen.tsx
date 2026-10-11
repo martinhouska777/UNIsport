@@ -13,7 +13,7 @@
   so its Save bar stays pinned). Colors are theme tokens; the per-category dot is
   a content color applied via inline style (rule-1 exception).
 */
-import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Button, { buttonClass } from "@/components/ui/Button";
 import Sheet from "@/components/varsity/Sheet";
@@ -180,6 +180,16 @@ function LogEditor({
   const [metres, setMetres] = useState<string>(start.metres);
   const [split, setSplit] = useState<string>(start.split);
   const [note, setNote] = useState(start.note);
+  // One line until there's more to show, then as tall as the text — so a
+  // scanned "18:42 · r24 · 250W" or a note opened to edit is never cut off.
+  const noteRef = useRef<HTMLTextAreaElement>(null);
+  useLayoutEffect(() => {
+    const el = noteRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    // + the border: the box is border-box, scrollHeight stops inside it.
+    el.style.height = `${el.scrollHeight + el.offsetHeight - el.clientHeight}px`;
+  }, [note]);
   // How hard it felt, 1–5; null until tapped, and a second tap clears it.
   const [effort, setEffort] = useState<number | null>(start.effort);
   const [busy, setBusy] = useState(false);
@@ -229,8 +239,9 @@ function LogEditor({
   /*
     TEAM WORKOUT: the coach flagged this session, so saving it also puts the
     result on the squad's board (lib/varsity/resultsStore.ts). The athlete's own
-    log stays private either way — this is the one piece that is shared, and the
-    editor says so out loud rather than doing it silently.
+    log stays private either way — this is the one piece that is shared. The
+    editor no longer spells that out (owner, 2026-10-11); the Log tab's
+    "Team board" tag on the session is what says it.
   */
   const teamWorkout = state.mode === "plan" && !!state.session.teamWorkout;
   // Name and body weight for the board row, read once so Save stays instant.
@@ -357,6 +368,9 @@ function LogEditor({
   );
 
   const valid = state.mode === "plan" || title.trim().length > 0;
+  // A water session is Minutes and Metres only — no split per 500 m (owner,
+  // 2026-10-11: "for water workouts, we don't need split in 500").
+  const showSplit = category !== "water";
 
   // The form as a record, exactly what Save sends and what a failed save parks.
   const currentDraft = (): LogDraft => ({
@@ -368,7 +382,8 @@ function LogEditor({
     category,
     minutes: minutes.trim() ? Number(minutes) : null,
     metres: metres.trim() ? Number(metres) : null,
-    split: split.trim() || null,
+    // A split that isn't asked isn't kept (a water log, or a type switched to water).
+    split: showSplit ? split.trim() || null : null,
     effort,
     note: note.trim(),
   });
@@ -525,18 +540,8 @@ function LogEditor({
                   <IconClock size={12} /> {state.session.time}
                   {state.session.location && ` · ${state.session.location}`}
                 </div>
-                {teamWorkout && (
-                  <div className="mt-2.5 flex items-start gap-2 border-t border-border pt-2.5">
-                    <span className="mt-px text-primary">
-                      <IconTrophy size={13} />
-                    </span>
-                    <p className="text-[11px] leading-relaxed text-muted">
-                      <span className="font-semibold text-text">Team workout.</span> What you save
-                      here also goes on the squad&rsquo;s board for this session. The rest of your log
-                      stays private.
-                    </p>
-                  </div>
-                )}
+                {/* No "Team workout" line here any more (owner, 2026-10-11:
+                    "just the log session … cross that"). */}
               </div>
               {/* The coach said "train how you like" — this is where it gets a name,
                   and the name is what the calendar counts it as. */}
@@ -592,12 +597,6 @@ function LogEditor({
                 </p>
               )}
               {scanMsg && <p className="mt-1.5 text-[11px] text-muted">{scanMsg}</p>}
-              {teamWorkout && (
-                <p className="mt-1.5 text-[11px] leading-relaxed text-muted">
-                  On a team workout the photo is kept with your result, so anyone can check the
-                  screen it came off — and any splits on it become your interval breakdown.
-                </p>
-              )}
             </>
           )}
 
@@ -626,13 +625,15 @@ function LogEditor({
                 className={detailRowInput}
               />
             </DetailRow>
-            <DetailRow label="Split /500m">
-              <input
-                value={split}
-                onChange={(e) => setSplit(e.target.value)}
-                className={detailRowInput}
-              />
-            </DetailRow>
+            {showSplit && (
+              <DetailRow label="Split /500m">
+                <input
+                  value={split}
+                  onChange={(e) => setSplit(e.target.value)}
+                  className={detailRowInput}
+                />
+              </DetailRow>
+            )}
           </div>
 
           {/* Five taps, no typing. The words come from data (logStore →
@@ -662,15 +663,18 @@ function LogEditor({
             })}
           </div>
 
-          {/* A few lines, like the student "How did it go?" — a scan writes
-              the exact time, rate and watts in here. */}
+          {/* ONE line that grows as you write, like the student "How did it
+              go?" (owner, 2026-10-11: "the note could be smaller, now it's a
+              really big field"). A scan writes the exact time, rate and watts
+              in here; the box grows to show them (noteRef above). */}
           <label className="block">
             <span className={`${labelCls} block`}>Note</span>
             <textarea
+              ref={noteRef}
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              rows={3}
-              className={`${inputCls} resize-none leading-snug`}
+              rows={1}
+              className={`${inputCls} resize-none overflow-hidden leading-snug`}
             />
           </label>
         </div>
