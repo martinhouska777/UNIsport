@@ -35,11 +35,28 @@ import { universities, type University } from "@/lib/themes";
 */
 export const EXTRA_DOMAINS: string[] = [];
 
+/*
+  Personal inboxes let through FOR TESTING — the owner has no university inbox
+  to test the sign-up code and the onboarding with (2026-10-10). Gmail delivers
+  name+anything@gmail.com to name@gmail.com, so "martinhouska777+test2@gmail.com"
+  lands in the same inbox and is still a brand-new account to the app: every
+  +variant of an address here is let in too. Empty this list before launch.
+*/
+export const TEST_INBOXES: string[] = ["martinhouska777@gmail.com"];
+
 /** The domain part of an address, lower case — "" if it isn't shaped like an email. */
 function domainOf(email: string): string {
   const at = email.trim().toLowerCase().lastIndexOf("@");
   if (at < 1) return "";
   return email.trim().toLowerCase().slice(at + 1);
+}
+
+/** The address with any "+tag" dropped from the name part, lower case. */
+function withoutPlusTag(email: string): string {
+  const address = email.trim().toLowerCase();
+  const at = address.lastIndexOf("@");
+  if (at < 1) return address;
+  return address.slice(0, at).split("+")[0] + address.slice(at);
 }
 
 /**
@@ -53,6 +70,7 @@ export function isUniversityEmail(email: string): boolean {
   const domain = domainOf(email);
   if (!domain) return false;
   if (domain === "edu" || domain.endsWith(".edu")) return true;
+  if (TEST_INBOXES.includes(withoutPlusTag(email))) return true;
   return EXTRA_DOMAINS.some((d) => domain === d || domain.endsWith(`.${d}`));
 }
 

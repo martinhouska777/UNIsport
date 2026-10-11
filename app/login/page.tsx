@@ -32,6 +32,34 @@ import {
 
 type Mode = "login" | "signup";
 
+/*
+  Which screen of the sign-in is showing. "form" is the usual email + password;
+  the others are the codes the app emails (a code, not a link: a phone's mail
+  app opens links in another browser than the installed app, and university
+  mail scanners can use up a one-time link before the student ever taps it):
+    verify — the code that confirms a NEW account's address
+    forgot — which address to send a password-reset code to
+    reset  — that code, plus the new password
+*/
+type Step = "form" | "verify" | "forgot" | "reset";
+
+// Mirrors two Supabase dashboard settings (Authentication → Sign In / Providers
+// → Email): "Email OTP Length" and the SMTP "minimum interval per user".
+const CODE_LENGTH = 6;
+const RESEND_SECONDS = 60;
+
+const FIELD =
+  "w-full rounded-full border border-l-line bg-l-surface px-5 py-3 text-base text-l-text placeholder:text-l-placeholder focus:border-(--color-l-accent) focus:outline-none";
+const PRIMARY =
+  "w-full rounded-full bg-l-accent px-5 py-3 text-sm font-semibold text-l-accent-ink transition-opacity hover:opacity-90 disabled:opacity-60";
+
+/** What to say when Supabase turns a code down. */
+function codeError(message: string): string {
+  return /expired|invalid/i.test(message)
+    ? "That code is wrong or has expired. Check it, or send a new one."
+    : message;
+}
+
 // The EMAIL of the last successful login, kept only in this browser so the form
 // can prefill it. Never the password: anything in localStorage is readable by
 // any script running on the page, so a single injected script would hand over
@@ -77,12 +105,30 @@ export default function LoginPage({
   const [mode, setMode] = useState<Mode>(query.mode === "signup" ? "signup" : "login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmSent, setConfirmSent] = useState(false); // only if email-confirm is ON in Supabase
+  const [step, setStep] = useState<Step>("form");
+  const [code, setCode] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [resendIn, setResendIn] = useState(0); // seconds until "Send a new code" works again
+  /*
+    A reset code SIGNS THE PERSON IN the moment it is accepted, before the new
+    password is saved. Without this the redirect below would carry them into
+    the app at that instant and the new password would never be set.
+  */
+  const [settingPassword, setSettingPassword] = useState(false);
+  // The reset code is spent once accepted: if saving the password then fails
+  // (too short, same as the old one), the retry must not send the code again.
+  const [codeAccepted, setCodeAccepted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!ready || !loggedIn) return;
+    if (resendIn <= 0) return;
+    const t = setTimeout(() => setResendIn((s) => s - 1), 1000);
+    return () => clearTimeout(t);
+  }, [resendIn]);
+
+  useEffect(() => {
+    if (!ready || !loggedIn || settingPassword) return;
     /*
       An invite link sends people here as /login?next=/join/<code> so they land
       back on the invite once they're signed in. Read straight off the URL
@@ -104,7 +150,7 @@ export default function LoginPage({
     else if (studentReady) router.replace("/match");
     else if (varsityReady) router.replace(VARSITY_HOME);
     else router.replace("/onboarding");
-  }, [ready, loggedIn, studentReady, varsityReady, router]);
+  }, [ready, loggedIn, studentReady, varsityReady, router, settingPassword]);
 
   /*
     "Get started with .edu" is a promise to a NEW student, so every button that
@@ -164,11 +210,11 @@ export default function LoginPage({
         return;
       }
       /*
-        emailRedirectTo: where the "verify your email" link lands. Today every
-        account is auto-confirmed (db/auth_autoconfirm.sql) so no mail goes
-        out; the day verification is switched on, the link comes back through
-        /auth/callback (which already handles it) instead of Supabase's
-        default page.
+        With "Confirm email" on in Supabase this creates the account WITHOUT a
+        session and emails a code ({{ .Token }} in the "Confirm signup"
+        template), which the verify step below takes. emailRedirectTo is only
+        for a template that still carries a link: it comes back through
+        /auth/callback instead of Supabase's default page.
       */
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -187,8 +233,7 @@ export default function LoginPage({
       // Supabase hides "this email already has an account" (to stop people probing
       // who's registered): it returns success with NO session and an EMPTY
       // identities list. Detect that and point them to Log in — otherwise they'd
-      // get stuck on a "check your email" screen for a mail that never arrives
-      // (this project has email auto-confirm ON, so no confirmation mail is sent).
+      // wait on the code screen for a mail that never arrives.
       const alreadyRegistered =
         !data.session && !!data.user && (data.user.identities?.length ?? 0) === 0;
       if (alreadyRegistered) {
@@ -196,19 +241,13 @@ export default function LoginPage({
         return;
       }
 
-      // A real new account with no session: accounts are auto-confirmed at the
-      // database level (db/auth_autoconfirm.sql), so the account is usable right
-      // away — log them straight in. Only if that genuinely fails do we fall
-      // back to the "check your email" screen.
-      if (!data.session) {
-        const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
-        if (signInErr) setConfirmSent(true);
-        else onSignedIn();
-        // success → the redirect effect handles routing
-      } else {
+      if (data.session) {
+        // "Confirm email" is off in Supabase: the account works straight away.
         onSignedIn();
+      } else {
+        openCodeStep("verify");
       }
-      // Otherwise a session already exists → the redirect effect handles it.
+      // A session → the redirect effect handles routing.
     } else {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       setLoading(false);
@@ -216,7 +255,13 @@ export default function LoginPage({
         if (/invalid login credentials/i.test(error.message)) {
           setError("Wrong email or password. New here? Switch to “Sign up”.");
         } else if (/email not confirmed/i.test(error.message)) {
-          setError("Please confirm your email first — check your inbox for the link.");
+          /*
+            Signed up but never typed the code (closed the app, lost the
+            mail): send a fresh one and take them to the code box, rather
+            than a dead end.
+          */
+          await supabase.auth.resend({ type: "signup", email });
+          openCodeStep("verify");
         } else {
           setError(error.message);
         }
@@ -226,12 +271,100 @@ export default function LoginPage({
       // university (components/SchoolIntro.tsx), then remember the email (only)
       // so this device prefills it next time; the redirect effect does the rest.
       onSignedIn();
-      try {
-        localStorage.setItem(REMEMBER_KEY, JSON.stringify({ email }));
-      } catch {
-        /* storage unavailable (e.g. private mode) — the prefill just won't appear */
-      }
+      rememberEmail();
     }
+  };
+
+  const rememberEmail = () => {
+    try {
+      localStorage.setItem(REMEMBER_KEY, JSON.stringify({ email }));
+    } catch {
+      /* storage unavailable (e.g. private mode) — the prefill just won't appear */
+    }
+  };
+
+  // A code has just been emailed: show its box, empty, with "Send a new code"
+  // resting for as long as Supabase would refuse another one anyway.
+  const openCodeStep = (next: "verify" | "reset") => {
+    setStep(next);
+    setCode("");
+    setNewPassword("");
+    setCodeAccepted(false);
+    setError(null);
+    setResendIn(RESEND_SECONDS);
+  };
+
+  const resendCode = async () => {
+    if (!supabase || resendIn > 0) return;
+    setError(null);
+    const { error } =
+      step === "verify"
+        ? await supabase.auth.resend({ type: "signup", email })
+        : await supabase.auth.resetPasswordForEmail(email);
+    if (error) setError(error.message);
+    else setResendIn(RESEND_SECONDS);
+  };
+
+  // The sign-up code. Accepting it confirms the address AND signs them in, so
+  // the redirect effect then carries them on (to onboarding, or to `?next=`).
+  const verifySignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!supabase) return;
+    setLoading(true);
+    setError(null);
+    const { error } = await supabase.auth.verifyOtp({ email, token: code, type: "signup" });
+    setLoading(false);
+    if (error) {
+      setError(codeError(error.message));
+      return;
+    }
+    onSignedIn();
+    rememberEmail();
+  };
+
+  const sendResetCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!supabase) return;
+    setLoading(true);
+    setError(null);
+    // Answers the same whether or not the address has an account (Supabase
+    // won't say who is registered), so the code step always follows.
+    const { error } = await supabase.auth.resetPasswordForEmail(email);
+    setLoading(false);
+    if (error) {
+      setError(error.message);
+      return;
+    }
+    openCodeStep("reset");
+  };
+
+  const resetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!supabase) return;
+    setLoading(true);
+    setError(null);
+    setSettingPassword(true);
+    if (!codeAccepted) {
+      const { error } = await supabase.auth.verifyOtp({ email, token: code, type: "recovery" });
+      if (error) {
+        setLoading(false);
+        setSettingPassword(false);
+        setError(codeError(error.message));
+        return;
+      }
+      setCodeAccepted(true);
+    }
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    setLoading(false);
+    if (error) {
+      // Signed in by the code but the password wasn't taken: stay here so
+      // they can choose another one.
+      setError(error.message);
+      return;
+    }
+    onSignedIn();
+    rememberEmail();
+    setSettingPassword(false); // → the redirect effect takes them in
   };
 
   const signInWithGoogle = async () => {
@@ -266,7 +399,15 @@ export default function LoginPage({
   const switchMode = (m: Mode) => {
     setMode(m);
     setError(null);
-    setConfirmSent(false);
+    setStep("form");
+  };
+
+  // Back out of a code screen. Past an accepted reset code they are already
+  // signed in, so letting go of the hold carries them into the app.
+  const backToForm = () => {
+    setStep("form");
+    setError(null);
+    setSettingPassword(false);
   };
 
   const isSignup = mode === "signup";
@@ -307,23 +448,104 @@ export default function LoginPage({
         {/* The heading says which door this is — and nothing under it (owner,
             2026-09-19: the "university email… which campus" line is cut). */}
         <h1 className="font-display text-3xl text-l-text">
-          {isSignup ? "Create your account" : "Welcome back"}
+          {step === "verify"
+            ? "Check your email"
+            : step !== "form"
+              ? "Reset your password"
+              : isSignup
+                ? "Create your account"
+                : "Welcome back"}
         </h1>
 
         {!hasSupabaseEnv() ? (
           <p className="mt-8 rounded-xl border border-l-line bg-l-surface px-4 py-3 text-sm text-l-text-2">
             Sign-in isn&apos;t configured in this environment yet.
           </p>
-        ) : confirmSent ? (
-          <div className="mt-8 rounded-xl border border-l-line bg-l-surface px-4 py-5">
-            <p className="text-sm text-l-text">Confirm your email</p>
-            <p className="mt-1 text-xs text-l-text-2">
-              We sent a confirmation link to <span className="text-l-text">{email}</span>. Open it to
-              activate your account, then come back and log in.
-            </p>
-            <button onClick={() => switchMode("login")} className="mt-4 text-xs font-medium text-l-accent">
-              Back to log in
+        ) : step === "forgot" ? (
+          <div className="mt-7">
+            <form onSubmit={sendResetCode} className="flex flex-col gap-2.5">
+              <input
+                type="email"
+                required
+                autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@university.edu"
+                aria-label="Email"
+                className={FIELD}
+              />
+              <button type="submit" disabled={loading} className={PRIMARY}>
+                {loading ? "Please wait…" : "Send code"}
+              </button>
+            </form>
+            {error && <p className="mt-3 text-xs text-l-danger">{error}</p>}
+            <button
+              type="button"
+              onClick={backToForm}
+              className="tap44 mt-4 text-xs font-medium text-l-text-2"
+            >
+              Back
             </button>
+          </div>
+        ) : step !== "form" ? (
+          <div className="mt-7">
+            <p className="mb-4 text-sm text-l-text-2">
+              Code sent to <span className="text-l-text">{email}</span>
+            </p>
+            <form
+              onSubmit={step === "verify" ? verifySignUp : resetPassword}
+              className="flex flex-col gap-2.5"
+            >
+              {/* Spent once accepted — a failed new password only asks for
+                  another password. */}
+              {!codeAccepted && (
+                <input
+                  required
+                  autoFocus
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  pattern={`\\d{${CODE_LENGTH}}`}
+                  value={code}
+                  // Digits only, so a code pasted as "123 456" still fits.
+                  onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, CODE_LENGTH))}
+                  placeholder={`${CODE_LENGTH}-digit code`}
+                  aria-label="Code from the email"
+                  className="w-full rounded-full border border-l-line bg-l-surface px-5 py-3 text-center text-xl font-semibold tracking-[0.3em] text-l-text placeholder:text-base placeholder:font-normal placeholder:tracking-normal placeholder:text-l-placeholder focus:border-(--color-l-accent) focus:outline-none"
+                />
+              )}
+              {step === "reset" && (
+                <input
+                  type="password"
+                  required
+                  minLength={6}
+                  autoComplete="new-password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="New password (6+ characters)"
+                  aria-label="New password"
+                  className={FIELD}
+                />
+              )}
+              <button type="submit" disabled={loading} className={PRIMARY}>
+                {loading ? "Please wait…" : step === "verify" ? "Confirm" : "Set new password"}
+              </button>
+            </form>
+            {error && <p className="mt-3 text-xs text-l-danger">{error}</p>}
+            <div className="mt-4 flex items-center justify-center gap-6 text-xs font-medium">
+              {!codeAccepted && (
+                <button
+                  type="button"
+                  onClick={resendCode}
+                  disabled={resendIn > 0}
+                  className="tap44 text-l-accent disabled:text-l-text-2"
+                >
+                  {resendIn > 0 ? `Send a new code (${resendIn}s)` : "Send a new code"}
+                </button>
+              )}
+              <button type="button" onClick={backToForm} className="tap44 text-l-text-2">
+                Back
+              </button>
+            </div>
           </div>
         ) : (
           <div className="mt-7">
@@ -361,7 +583,7 @@ export default function LoginPage({
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@university.edu"
                 aria-label="Email"
-                className="w-full rounded-full border border-l-line bg-l-surface px-5 py-3 text-base text-l-text placeholder:text-l-placeholder focus:border-(--color-l-accent) focus:outline-none"
+                className={FIELD}
               />
               {/* Recognised the address → say so, so nobody wonders whether
                   the app knows where they study. */}
@@ -379,12 +601,24 @@ export default function LoginPage({
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder={isSignup ? "Choose a password (6+ characters)" : "Password"}
                 aria-label="Password"
-                className="w-full rounded-full border border-l-line bg-l-surface px-5 py-3 text-base text-l-text placeholder:text-l-placeholder focus:border-(--color-l-accent) focus:outline-none"
+                className={FIELD}
               />
+              {!isSignup && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStep("forgot");
+                    setError(null);
+                  }}
+                  className="tap44 -mt-0.5 self-end px-5 text-xs font-medium text-l-text-2"
+                >
+                  Forgot password?
+                </button>
+              )}
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full rounded-full bg-l-accent px-5 py-3 text-sm font-semibold text-l-accent-ink transition-opacity hover:opacity-90 disabled:opacity-60"
+                className={PRIMARY}
               >
                 {loading ? "Please wait…" : isSignup ? "Create account" : "Log in"}
               </button>
@@ -408,7 +642,7 @@ export default function LoginPage({
         )}
 
         {/* Already on the way to a team — no need to point at the team door. */}
-        {!team && (
+        {!team && step === "form" && (
           <p className="mt-4 text-xs text-l-text-2">
             Varsity athlete?{" "}
             <Link href="/join" className="tap44 inline-block font-medium text-l-varsity">
