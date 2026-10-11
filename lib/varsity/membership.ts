@@ -168,6 +168,31 @@ export type MembershipAnswer = {
 let cache: { userId: string; answer: MembershipAnswer } | null = null;
 let inFlight: { userId: string; promise: Promise<MembershipAnswer> } | null = null;
 
+/*
+  Asks are numbered as they start, and the cache remembers which one it holds.
+  Two can overlap (the app coming back to the front fires two events), and an
+  older reply landing last must not put back the answer a newer one replaced —
+  "waiting" over "let in".
+*/
+let asksStarted = 0;
+let cachedFromAsk = 0;
+
+/*
+  Every screen holding an answer hears about a newer one, whoever asked for it.
+  Without this each screen kept the answer it mounted with: the coach let a
+  rower in, the waiting screen found out, and the bottom bar, Settings and the
+  mode switcher still said "waiting" until the app was reloaded.
+*/
+type Listener = (userId: string, answer: MembershipAnswer) => void;
+const listeners = new Set<Listener>();
+
+export function onMembershipAnswer(listener: Listener): () => void {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+}
+
 /** The answer we already hold for this account, or null if we hold none. */
 export function peekMembership(userId: string | null): MembershipAnswer | null {
   return userId && cache?.userId === userId ? cache.answer : null;
@@ -177,16 +202,22 @@ export function peekMembership(userId: string | null): MembershipAnswer | null {
 export function clearMembershipCache() {
   cache = null;
   inFlight = null;
+  cachedFromAsk = ++asksStarted; // anything already on its way is now out of date
 }
 
 const RETRY_DELAYS_MS = [300, 900]; // two more tries before giving up
 
 async function ask(userId: string): Promise<MembershipAnswer> {
+  const mine = ++asksStarted;
   for (let attempt = 0; ; attempt++) {
     try {
       const membership = await fetchMyMembership(userId);
-      cache = { userId, answer: { membership, failed: false } };
-      return cache.answer;
+      const answer = { membership, failed: false };
+      if (mine < cachedFromAsk) return peekMembership(userId) ?? answer;
+      cache = { userId, answer };
+      cachedFromAsk = mine;
+      listeners.forEach((listener) => listener(userId, answer));
+      return answer;
     } catch (e) {
       if (attempt >= RETRY_DELAYS_MS.length) {
         console.error("membership lookup failed:", e);
@@ -210,4 +241,12 @@ export function loadMembership(userId: string, force = false): Promise<Membershi
   });
   inFlight = { userId, promise };
   return promise;
+}
+
+/** Ask the database again unless a question is already on its way — for the
+    screens that re-check a "waiting" answer, so ten of them opening at once
+    still send one request. */
+export function refreshMembership(userId: string): Promise<MembershipAnswer> {
+  if (inFlight?.userId === userId) return inFlight.promise;
+  return loadMembership(userId, true);
 }

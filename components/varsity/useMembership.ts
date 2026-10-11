@@ -22,7 +22,9 @@ import { useCallback, useEffect, useState } from "react";
 import { useAppState } from "@/components/AppState";
 import {
   loadMembership,
+  onMembershipAnswer,
   peekMembership,
+  refreshMembership,
   type MembershipAnswer,
 } from "@/lib/varsity/membership";
 
@@ -59,6 +61,33 @@ export function useMembership() {
       active = false;
     };
   }, [ready, userId]);
+
+  // A newer answer, fetched by any screen, replaces the one we hold.
+  useEffect(() => {
+    if (!userId) return;
+    return onMembershipAnswer((who, answer) => {
+      if (who === userId) setState({ userId, answer });
+    });
+  }, [userId]);
+
+  /*
+    Waiting to be let in. The coach's yes lands in the database, not in this
+    app, so a held "waiting" is asked again whenever a screen that shows it
+    opens, and whenever the app comes back to the front. Someone with the
+    student side never sits on the waiting screen (the invite sends them to
+    Match) — without this, the switcher and Settings said "waiting" until the
+    app was reloaded, long after they were in.
+  */
+  const waiting = state.answer?.membership?.status === "pending";
+  useEffect(() => {
+    if (!ready || !userId || !waiting) return;
+    void refreshMembership(userId);
+    const onShow = () => {
+      if (document.visibilityState === "visible") void refreshMembership(userId);
+    };
+    document.addEventListener("visibilitychange", onShow);
+    return () => document.removeEventListener("visibilitychange", onShow);
+  }, [ready, userId, waiting]);
 
   /* Ask the database again — the waiting screen polls with this while it waits
      to be approved, and the squad admin calls it after changing someone. It
