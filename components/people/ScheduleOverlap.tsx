@@ -97,12 +97,9 @@ export default function ScheduleOverlap({
       {mine === null ? (
         <p className="text-[13px] text-muted">—</p>
       ) : !iHave ? (
-        <p className="text-[13px] leading-relaxed text-muted">
-          Add your own free time to see the hours you share.{" "}
-          <Link href="/settings/training" className="font-semibold text-primary">
-            Set your hours
-          </Link>
-        </p>
+        <Link href="/settings/training" className="text-[13px] font-semibold text-primary">
+          Set your hours
+        </Link>
       ) : shared.length === 0 ? (
         <p className="text-[13px] text-muted">No hours in common.</p>
       ) : (

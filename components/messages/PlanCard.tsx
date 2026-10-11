@@ -185,7 +185,7 @@ export default function PlanCard({
         )}
 
         {plan.status === "proposed" && mine && (
-          <div className="text-[11px] text-muted">Waiting for {otherName} to accept…</div>
+          <div className="text-[11px] text-muted">Waiting for {otherName}</div>
         )}
 
         {plan.status === "accepted" && !isPast && (
@@ -228,7 +228,7 @@ export default function PlanCard({
           <div className="text-[11px] text-muted">
             {myAnswer === "yes"
               ? theirAnswer === null
-                ? `You confirmed. Waiting for ${otherName} to confirm…`
+                ? `Waiting for ${otherName}`
                 : ""
               : "You marked this as a no-show."}
           </div>

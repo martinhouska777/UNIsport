@@ -72,8 +72,7 @@ export default function PartnersSheet({
 
         {partners.length === 0 ? (
           <div className="px-6 py-12 text-center text-[12px] leading-relaxed text-muted">
-            No training partners yet. Log a session and pick who you trained with —
-            every new person you work out with shows up here.
+            No training partners yet.
           </div>
         ) : (
           <div className="flex flex-col divide-y divide-border pb-6">

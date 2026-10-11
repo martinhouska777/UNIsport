@@ -543,7 +543,7 @@ export default function BuddyBoard({
           {timeSearch
             ? "No sessions posted for then yet."
             : filters.gym && boardFilterCount(filters) === 1
-            ? `Nobody has posted for ${filters.gym} yet. Be the first — post above and it shows on that gym's card.`
+            ? `Nobody has posted for ${filters.gym} yet.`
             : anyFilter
               ? "No posts match those filters yet."
               : "No open posts yet."}
@@ -554,8 +554,7 @@ export default function BuddyBoard({
           {/* Nothing at the hour asked, so the rest of that day instead. */}
           {found?.widened && timeSearch?.hour != null && (
             <p className="text-[12px] text-muted">
-              Nothing at {sessionTimeLabel(timeSearch.hour)} — here&apos;s the rest of{" "}
-              {dateLabel(timeSearch.date)}.
+              Nothing at {sessionTimeLabel(timeSearch.hour)}
             </p>
           )}
           {shown.map((p) => (

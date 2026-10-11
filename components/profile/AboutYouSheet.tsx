@@ -119,12 +119,7 @@ export default function AboutYouSheet({
           </div>
 
           <div className="flex items-center justify-between border-b border-border px-4 pb-3">
-            <div>
-              <div className="text-[15px] font-medium text-text">About you</div>
-              <div className="mt-0.5 text-[11px] text-muted">
-                What other people see on your profile
-              </div>
-            </div>
+            <div className="text-[15px] font-medium text-text">About you</div>
             <button
               type="button"
               onClick={onClose}
@@ -140,18 +135,7 @@ export default function AboutYouSheet({
           {/* Interests first — it's the line somebody else matches with you on,
               and the first thing the block on the page shows. */}
           <div>
-            <div className="flex items-baseline justify-between gap-2">
-              <FieldLabel>Interests</FieldLabel>
-              <span
-                className={`mb-2 text-[11px] tabular-nums ${
-                  enough ? "text-success" : "text-muted"
-                }`}
-              >
-                {enough
-                  ? `${draft.interests.length} picked`
-                  : `pick ${MIN_INTERESTS - draft.interests.length} more`}
-              </span>
-            </div>
+            <FieldLabel>Interests</FieldLabel>
             <div className="flex flex-wrap gap-1.5">
               {interestOptions.map((i) => (
                 <Pill
@@ -271,13 +255,6 @@ export default function AboutYouSheet({
               ariaLabel="Country"
             />
           </div>
-
-          {/* The rest of your answers still live in Settings — say so, so the
-              shorter sheet doesn't read as a missing feature. */}
-          <p className="text-[11px] leading-relaxed text-muted">
-            Your activity, gyms, who you train with and mentorship are in
-            Settings → Edit your answers.
-          </p>
         </div>
 
         <div className="flex gap-2.5 border-t border-border bg-surface px-4 py-3">

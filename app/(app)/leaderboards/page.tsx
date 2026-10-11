@@ -186,8 +186,6 @@ const PERIODS: { key: Period; label: string; note: string }[] = [
 
 const GROUP_BOARDS: CompetitionKey[] = ["houses", "dorms", "years"];
 
-const plural = (n: number, noun: string) => `${n} ${noun}${n === 1 ? "" : "s"}`;
-
 /* ─────────────────────────  pieces  ───────────────────────── */
 
 /* The top three wear an actual medal (components/leaderboards/Medal.tsx) rather
@@ -746,8 +744,7 @@ export default function LeaderboardsPage() {
                         <MetricSwitch value={metric} onPick={setMetric} />
                       </div>
                       <div className="mt-2 rounded-xl border border-dashed border-border bg-surface px-4 py-6 text-center text-[12px] text-muted">
-                        Nobody has logged a session this period. The first one puts a{" "}
-                        {groupKind === "year" ? "year" : "house"} on the podium.
+                        Nobody has logged a session this period.
                       </div>
                     </div>
                   )}
@@ -787,11 +784,6 @@ export default function LeaderboardsPage() {
                     ))}
                   </div>
                 )}
-                <div className="mt-2.5 px-0.5 text-[11px] text-muted">
-                  {competition === "partners"
-                    ? `${plural(people[0].score, "partner")} leads`
-                    : `Top ${people.length}`}
-                </div>
               </>
             )}
           </div>

@@ -220,12 +220,12 @@ export const primaryActivities: ActivityOption[] = [
   someone doing cardio isn't asked at all. "Advanced" means nothing on a
   cross-trainer, and a wrong answer would feed matching.
 */
-export type ExperienceLevel = { key: "beginner" | "intermediate" | "advanced"; name: string; desc: string };
+export type ExperienceLevel = { key: "beginner" | "intermediate" | "advanced"; name: string };
 
 export const experienceLevels: ExperienceLevel[] = [
-  { key: "beginner", name: "Beginner", desc: "New to it, learning the basics." },
-  { key: "intermediate", name: "Intermediate", desc: "Consistent for 1–3 years, know your numbers." },
-  { key: "advanced", name: "Advanced", desc: "3+ years, structured programming." },
+  { key: "beginner", name: "Beginner" },
+  { key: "intermediate", name: "Intermediate" },
+  { key: "advanced", name: "Advanced" },
 ];
 
 /*

@@ -646,10 +646,6 @@ export default function ProfilePage() {
             className="w-full rounded-xl border border-border bg-surface px-3.5 py-3 text-left active:bg-surface-2"
           >
             <div className="text-[13px] font-semibold text-text">Log your first session</div>
-            <p className="mt-0.5 text-[11px] leading-relaxed text-muted">
-              Your calendar, your partners and the people who follow you all start
-              here. About ten seconds.
-            </p>
           </button>
         ) : (
           /* ONE GREY BAR (option 3 of the owner's previews): the ranks on the

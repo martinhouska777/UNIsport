@@ -21,7 +21,6 @@ import { IconArrowLeft, IconChevronRight } from "@/components/icons";
 import { EventLine } from "@/components/leaderboards/WeekEventLine";
 import {
   byCloseness,
-  eventDone,
   monthEndsLabel,
   monthStartIso,
   monthlyEvents,
@@ -37,7 +36,7 @@ const PREVIEW = 2;
 
 type WindowKey = "week" | "month";
 
-/* One window's card: its name, how many are done, and the closest two. */
+/* One window's card: its name and the closest two. */
 function WindowCard({
   title,
   ends,
@@ -52,7 +51,6 @@ function WindowCard({
   onOpen: () => void;
 }) {
   const ordered = counts ? byCloseness(events, counts) : events;
-  const done = counts ? events.filter((e) => eventDone(e, counts)).length : 0;
 
   return (
     <button
@@ -61,12 +59,7 @@ function WindowCard({
       className="w-full overflow-hidden rounded-2xl border border-border bg-surface text-left active:bg-surface-2"
     >
       <div className="flex items-center gap-2 border-b border-border px-3.5 py-2.5">
-        <div className="min-w-0 flex-1">
-          <div className="text-[14px] font-semibold text-text">{title}</div>
-          <div className="text-[11px] text-muted">
-            {counts ? `${done} of ${events.length} done` : `${events.length} challenges`} · {ends}
-          </div>
-        </div>
+        <div className="min-w-0 flex-1 text-[14px] font-semibold text-text">{title}</div>
         <span className="flex flex-shrink-0 items-center gap-0.5 text-[12px] font-medium text-primary">
           See all
           <IconChevronRight size={14} />

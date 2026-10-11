@@ -219,13 +219,6 @@ function MatchScreen() {
               />
             )}
           </div>
-          {/* Said out loud while the first-month default is on, so a narrowed
-              list never reads as "this is everyone". */}
-          {chosen === null && isNewFirstYear && (
-            <p className="px-4 pb-2 text-[11px] text-muted">
-              Showing your class year first while you&apos;re new. Tap the chip to see everyone.
-            </p>
-          )}
           {/* For the app walk (components/tour/TourOverlay): the first person
               is still coming while the list loads — and is not coming at all
               on an empty or failed list, so the walk doesn't sit for seconds
@@ -239,8 +232,8 @@ function MatchScreen() {
           {!browseErr && browse && browse.length === 0 && (
             <Status>
               {activeFilterCount(filters) > 0
-                ? "Nobody matches those filters yet. Try clearing one."
-                : "Nobody else at your school has finished signing up yet. Everyone who does shows up here."}
+                ? "Nobody matches those filters yet."
+                : "Nobody else at your school has finished signing up yet."}
               {/* An empty Match tab has exactly one fix, and this is it. */}
               {activeFilterCount(filters) === 0 && (
                 <div className="mx-auto mt-4 max-w-xs">

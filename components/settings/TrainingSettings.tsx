@@ -179,7 +179,6 @@ export default function TrainingSettings({
     });
   };
   const freeDays = weekDays.filter((d) => hoursOfDay(schedule[d.key]).size > 0);
-  const freeHours = freeDays.reduce((n, d) => n + hoursOfDay(schedule[d.key]).size, 0);
 
   // ---- the main activity --------------------------------------------------
   // Your main thing can't also be one of your extras.
@@ -556,13 +555,7 @@ export default function TrainingSettings({
                   );
                 })}
               </div>
-              <p className="mt-3 text-[12px] text-muted">
-                {freeDays.length === 0
-                  ? "Not set"
-                  : `${freeDays.map((d) => d.label.slice(0, 3)).join(", ")} · ${freeHours} ${
-                      freeHours === 1 ? "hour" : "hours"
-                    } a week`}
-              </p>
+              {freeDays.length === 0 && <p className="mt-3 text-[12px] text-muted">Not set</p>}
             </button>
           )}
         </div>

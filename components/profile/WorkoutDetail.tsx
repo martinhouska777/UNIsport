@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 import Button, { buttonClass } from "@/components/ui/Button";
 import {
   activityLabel,
-  isQuickLog,
   logMuscles,
   metricsSummary,
   partnerStatusLine,
@@ -90,14 +89,6 @@ export default function WorkoutDetail({
                 {m}
               </span>
             ))}
-          </div>
-        )}
-
-        {/* A quick log has no sets table to show, so say so rather than leaving
-            a gap where one would be. */}
-        {isQuickLog(log) && (
-          <div className="mb-4 text-[12px] text-muted">
-            Logged as a quick session — no exercises written down.
           </div>
         )}
 

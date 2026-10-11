@@ -61,17 +61,7 @@ export default function SessionSheet({
 
         {/* Date header */}
         <div className="flex items-center justify-between border-b border-border px-4 pb-3">
-          <div>
-            <div className="text-[15px] font-medium text-text">{dateLabel}</div>
-            <div className="mt-0.5 text-[11px] text-muted">
-              {[
-                logs.length > 0 && `${logs.length} session${logs.length === 1 ? "" : "s"} logged`,
-                plans.length > 0 && `${plans.length} planned`,
-              ]
-                .filter(Boolean)
-                .join(" · ")}
-            </div>
-          </div>
+          <div className="text-[15px] font-medium text-text">{dateLabel}</div>
           <button
             type="button"
             onClick={onClose}

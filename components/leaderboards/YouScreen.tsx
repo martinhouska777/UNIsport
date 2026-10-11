@@ -61,7 +61,7 @@ const ordinal = (n: number): string => {
 
 const plural = (n: number, noun: string) => `${n} ${noun}${n === 1 ? "" : "s"}`;
 
-/* One rank, written the way people say it out loud: "4th" big, "of 26" under.
+/* One rank, written the way people say it out loud: "4th", nothing under it.
    A rank the database could not work out says "—" rather than pretending to
    be first. The tile wears a colour: the campus one the school's, the house
    one its house's (passed in as `wash`, content data applied inline). */
@@ -69,13 +69,11 @@ function RankTile({
   label,
   icon,
   rank,
-  total,
   wash,
 }: {
   label: string;
   icon: ReactNode;
   rank: number | null;
-  total: number;
   /** A house's own colour. Without one the tile takes the school's. */
   wash?: string | null;
 }) {
@@ -89,7 +87,6 @@ function RankTile({
       <div className="mt-1 text-[22px] font-semibold leading-none text-text">
         {rank ? ordinal(rank) : "—"}
       </div>
-      <div className="mt-1 text-[10px] text-muted">{rank ? `of ${total}` : "not yet"}</div>
     </div>
   );
 }
@@ -241,7 +238,6 @@ export default function YouScreen({
                  same crest the Profile strip uses (owner, 2026-09-15). */
               icon={<UniversityCrest size={28} />}
               rank={standing?.campusRank ?? null}
-              total={standing?.campusTotal ?? 0}
             />
             <RankTile
               label={standing?.residence ? `In ${residenceLabel(standing.residence)}` : "In your house"}
@@ -255,7 +251,6 @@ export default function YouScreen({
                 )
               }
               rank={standing?.houseRankIn ?? null}
-              total={standing?.houseActives ?? 0}
               wash={crest?.primary}
             />
           </div>

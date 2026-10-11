@@ -165,7 +165,7 @@ export default function DmThread({
         {error && <div className="py-10 text-center text-sm text-muted">{error}</div>}
         {shown?.length === 0 && !error && (
           <div className="py-10 text-center text-[12px] text-muted">
-            Say hi — this is the start of your conversation.
+            No messages yet.
           </div>
         )}
         {shown?.map((m, i) => {

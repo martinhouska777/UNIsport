@@ -275,7 +275,7 @@ function DirectList({
   if (list.length === 0) {
     return (
       <div className="px-6 py-16 text-center text-sm text-muted">
-        No conversations yet. Open someone’s profile from Match and tap Message to say hi.
+        No conversations yet.
       </div>
     );
   }
@@ -369,16 +369,15 @@ function CommunityList({
   const joined = list.filter((c) => c.joined);
   const discover = list.filter((c) => !c.joined);
 
-  // With no channels at all this used to render an empty box under an
-  // unexplained tab. Say what the tab is for instead.
+  // With no channels at all this used to render an empty box under the tab;
+  // it says what is empty, nothing more (owner, 2026-10-11).
   if (list.length === 0 && searching) {
     return <div className="px-6 py-16 text-center text-sm text-muted">No channels match.</div>;
   }
   if (list.length === 0) {
     return (
       <div className="px-6 py-16 text-center text-sm text-muted">
-        No channels yet. Community is where campus-wide chats live — they’ll
-        appear here as they open.
+        No channels yet.
       </div>
     );
   }

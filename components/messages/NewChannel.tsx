@@ -24,7 +24,6 @@ import { useAppState } from "@/components/AppState";
 import { SkeletonRows } from "@/components/ui/Skeleton";
 import Avatar from "./Avatar";
 import { createChannel, findChannelPeople, type ChannelPerson } from "@/lib/supabase/messages";
-import { getUniversity } from "@/lib/themes";
 import { residenceLabel } from "@/lib/onboarding";
 import {
   IconArrowLeft,
@@ -45,7 +44,6 @@ export default function NewChannel({
   onCreated: (channel: { channelId: string; name: string; isPrivate: boolean }) => void;
 }) {
   const { universityKey } = useAppState();
-  const school = getUniversity(universityKey)?.shortName ?? "your school";
   const [step, setStep] = useState<"details" | "members">("details");
   const [name, setName] = useState("");
   const [isPrivate, setIsPrivate] = useState(false);
@@ -127,14 +125,12 @@ export default function NewChannel({
           <Choice
             icon={<IconGlobe size={18} />}
             title="Public"
-            sub={`Anyone at ${school} can find and join`}
             on={!isPrivate}
             onPick={() => setIsPrivate(false)}
           />
           <Choice
             icon={<IconLock size={18} />}
             title="Private"
-            sub="Only people you add"
             on={isPrivate}
             onPick={() => setIsPrivate(true)}
             divided
@@ -200,11 +196,7 @@ export function AddMembers({
 
   return (
     <div className="relative flex h-full min-h-0 flex-col">
-      <Header
-        title={title}
-        sub={picked.length ? `${picked.length} selected` : undefined}
-        onBack={onBack}
-      />
+      <Header title={title} onBack={onBack} />
       <div className="bg-surface px-3 pb-2 pt-2">
         <div className="flex items-center gap-2 rounded-full border border-border bg-surface-2 px-3 text-muted">
           <IconSearch size={14} />
@@ -247,7 +239,7 @@ export function AddMembers({
           <SkeletonRows count={6} />
         ) : shown.length === 0 ? (
           <div className="px-6 py-14 text-center text-sm text-muted">
-            {typed ? "No one by that name." : "Search for anyone by name."}
+            {typed && "No one by that name."}
           </div>
         ) : (
           <>
@@ -295,16 +287,13 @@ export function AddMembers({
   );
 }
 
-function Header({ title, sub, onBack }: { title: string; sub?: string; onBack: () => void }) {
+function Header({ title, onBack }: { title: string; onBack: () => void }) {
   return (
     <div className="flex items-center gap-3 border-b border-border bg-surface px-3 py-2.5">
       <button type="button" onClick={onBack} aria-label="Back" className="tap44 text-muted">
         <IconArrowLeft size={18} />
       </button>
-      <div className="min-w-0">
-        <h1 className="text-[14px] font-medium leading-tight text-text">{title}</h1>
-        {sub && <div className="text-[11px] text-muted">{sub}</div>}
-      </div>
+      <h1 className="min-w-0 text-[14px] font-medium leading-tight text-text">{title}</h1>
     </div>
   );
 }
@@ -312,14 +301,12 @@ function Header({ title, sub, onBack }: { title: string; sub?: string; onBack: (
 function Choice({
   icon,
   title,
-  sub,
   on,
   onPick,
   divided = false,
 }: {
   icon: ReactNode;
   title: string;
-  sub: string;
   on: boolean;
   onPick: () => void;
   divided?: boolean;
@@ -335,10 +322,7 @@ function Choice({
       }`}
     >
       <span className="text-muted">{icon}</span>
-      <span className="min-w-0 flex-1">
-        <span className="block text-[14px] font-medium text-text">{title}</span>
-        <span className="block text-[12px] text-muted">{sub}</span>
-      </span>
+      <span className="min-w-0 flex-1 text-[14px] font-medium text-text">{title}</span>
       <span
         className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${
           on ? "border-primary" : "border-border"

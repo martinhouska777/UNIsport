@@ -185,7 +185,7 @@ export default function ChannelThread({
         {error && <div className="py-10 text-center text-sm text-muted">{error}</div>}
         {messages?.length === 0 && !error && (
           <div className="py-10 text-center text-[12px] text-muted">
-            No messages yet — start the conversation.
+            No messages yet.
           </div>
         )}
         {messages?.map((m, i) => {
@@ -228,9 +228,8 @@ export default function ChannelThread({
       {joined ? (
         <Composer placeholder={`Message # ${name}...`} onSend={send} />
       ) : (
-        <div className="flex items-center justify-between gap-3 border-t border-border bg-surface px-3.5 py-3">
-          <span className="text-[12px] text-muted">Join # {name} to post a message.</span>
-          <Button size="sm" onClick={join} disabled={joining} className="shrink-0">
+        <div className="border-t border-border bg-surface px-3.5 py-3">
+          <Button size="md" full onClick={join} disabled={joining}>
             {joining ? "Joining…" : "Join"}
           </Button>
         </div>

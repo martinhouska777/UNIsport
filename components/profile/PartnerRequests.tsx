@@ -28,7 +28,6 @@ import {
   respondPartnerRequest,
   type PartnerRequest,
 } from "@/lib/supabase/workouts";
-import { sessionPoints } from "@/lib/points";
 
 // "today" / "yesterday" / "Tue 9 Sep" — when the session they say you shared was.
 function dayWord(iso: string): string {
@@ -93,7 +92,7 @@ export default function PartnerRequests({ onChanged }: { onChanged?: () => void 
     // The window closed while the card sat here: the tag is now marked
     // expired, and that is an answer, not a failure.
     if (res.status === "expired") {
-      setError("Too late — that one has already counted as solo.");
+      setError("Counted as solo");
       return;
     }
     onChanged?.();
@@ -112,8 +111,7 @@ export default function PartnerRequests({ onChanged }: { onChanged?: () => void 
                 </div>
                 <div className="mt-0.5 text-[11px] text-muted">
                   {activityLabel(r.activity)}
-                  {r.gym ? ` at ${r.gym}` : ""} · Yes logs it for you too and you both get{" "}
-                  {sessionPoints.partner}–{sessionPoints.newPartner} pts
+                  {r.gym ? ` at ${r.gym}` : ""}
                 </div>
               </div>
             </div>

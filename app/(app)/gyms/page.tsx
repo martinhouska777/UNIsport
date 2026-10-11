@@ -355,7 +355,7 @@ export default function GymsPage() {
         {nothing && (
           <div className="py-16 text-center text-sm text-muted lg:col-span-full">
             {filter === "fav" && q === ""
-              ? "No favourites yet. Tap the heart on a gym to save it here."
+              ? "No favourites yet."
               : `No gyms match “${query}”.`}
           </div>
         )}

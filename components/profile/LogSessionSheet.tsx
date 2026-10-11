@@ -19,7 +19,6 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Button from "@/components/ui/Button";
 import { primaryActivities, cardioTypes, verifiedGyms } from "@/lib/onboarding";
 import {
-  partnerStatusLine,
   saveWorkout,
   updateWorkout,
   type DistanceUnit,
@@ -38,7 +37,6 @@ import { getGymByName } from "@/lib/gyms";
 import { fileToDataUrl } from "@/lib/image";
 import { notifyPartnerTag } from "@/lib/push/client";
 import { confirmPlan } from "@/lib/supabase/sessionPlans";
-import { PARTNER_CONFIRM_HOURS, sessionPoints } from "@/lib/points";
 import { IconArrowLeft, IconCheck, IconChevronRight, IconPlus, IconTrash, IconX } from "@/components/icons";
 import Segmented from "@/components/ui/Segmented";
 import DetailRow, { detailRowInput as rowInput } from "@/components/ui/DetailRow";
@@ -631,20 +629,6 @@ export default function LogSessionSheet({
               )}
             </button>
           </div>
-          {/* Said before the save, because it changes what the save does: the
-              multiplier is not yours to take, it is theirs to confirm. Not on
-              a planned session — the plan is what asks them. The same partner
-              kept on an edit already has an answer (or is still being asked),
-              and that answer is said in the detail screen's words — "has
-              confirmed" only when they actually did. */}
-          {partnerId && !plan && (
-            <p className="mt-1.5 px-1 text-[11px] leading-snug text-muted">
-              {existing && existing.partnerId === partnerId
-                ? (partnerStatusLine(existing) ?? `${partner} has confirmed this session.`)
-                : `${partner} will be asked to confirm. Once they say yes it counts for both of you (${sessionPoints.partner}–${sessionPoints.newPartner} pts each) and lands on their calendar too. No answer in ${PARTNER_CONFIRM_HOURS}h and it counts as solo.`}
-            </p>
-          )}
-
           {/* THE NOTE, asked as a question (owner, 2026-09-27: "name it how did
               it go"). One line that grows as you write (noteRef above). */}
           <label className="block">

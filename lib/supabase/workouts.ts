@@ -452,21 +452,20 @@ export async function expirePartnerTags(): Promise<number> {
 }
 
 /*
-  Where the partner tag stands, in the logger's words. A pending tag scores as
+  Where the partner tag stands, in two or three words (owner, 2026-10-11: no
+  sentence) — "Waiting for Sam", "Counted as solo". A pending tag scores as
   solo, and the screen says so rather than letting the name imply the points
   are in. Null for a confirmed tag (or a legacy one) — the name on its own is
-  the normal state. Shared by the workout detail and the edit sheet, so the
-  two never describe the same session differently.
+  the normal state.
 */
 export function partnerStatusLine(log: WorkoutLog): string | null {
   if (!log.partnerId) return null;
   switch (log.partnerStatus) {
     case "pending":
-      return `Waiting for ${log.partner} to confirm · counts as solo until then`;
+      return `Waiting for ${log.partner}`;
     case "declined":
-      return `${log.partner} said they weren’t there · counted as solo`;
     case "expired":
-      return `${log.partner} didn’t confirm within ${PARTNER_CONFIRM_HOURS}h · counted as solo`;
+      return "Counted as solo";
     default:
       return null;
   }

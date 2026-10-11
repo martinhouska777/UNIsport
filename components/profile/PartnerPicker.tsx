@@ -126,7 +126,7 @@ export default function PartnerPicker({
           ) : results.length === 0 ? (
             <div className="px-2 py-10 text-center text-[12px] text-muted">
               {people.length === 0
-                ? "No connections yet. Match with or message someone, then they'll show up here as a training partner."
+                ? "No connections yet."
                 : "No one matches that search."}
             </div>
           ) : (

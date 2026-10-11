@@ -42,7 +42,6 @@ import {
   runningExperiences,
   verifiedGyms,
   MAX_TOP_GYMS,
-  weekDays,
   concentrations,
   countries,
   languageOptions,
@@ -457,7 +456,6 @@ export default function OnboardingFlow() {
                           }`}
                         >
                           <div className="text-[13px] font-medium text-text">{lvl.name}</div>
-                          <div className="text-[11px] text-muted">{lvl.desc}</div>
                         </button>
                       );
                     })}
@@ -768,9 +766,6 @@ export default function OnboardingFlow() {
             return { ...prev, trainingSchedule: next };
           });
 
-        const chosenDays = weekDays.filter((d) => hoursOfDay(schedule[d.key]).size > 0);
-        const totalHours = chosenDays.reduce((n, d) => n + hoursOfDay(schedule[d.key]).size, 0);
-
         return (
           <div className="flex flex-col gap-2.5">
             {/* The one line the owner asked to keep (2026-09-22). It is not an
@@ -784,15 +779,6 @@ export default function OnboardingFlow() {
             <div className="rounded-2xl border border-border bg-surface p-3">
               <WeekHourGrid schedule={schedule} onSet={setHour} />
             </div>
-            {/* What you have picked, added up — not an instruction. Nothing
-                at all until there is something to add up. */}
-            {chosenDays.length > 0 && (
-              <p className="px-1 text-[12px] text-muted">
-                {`${chosenDays.map((d) => d.label.slice(0, 3)).join(", ")} · ${totalHours} ${
-                  totalHours === 1 ? "hour" : "hours"
-                } a week`}
-              </p>
-            )}
           </div>
         );
       }
@@ -870,19 +856,8 @@ export default function OnboardingFlow() {
             </div>
 
             <div>
-              <div className="mb-2 flex items-baseline justify-between gap-2">
+              <div className="mb-2">
                 <FieldLabel required>Interests outside training</FieldLabel>
-                {/* The floor, and how far off it you are — said as a count, so
-                    the disabled Continue button is never a mystery. */}
-                <span
-                  className={`mb-2 text-[11px] tabular-nums ${
-                    profile.interests.length >= MIN_INTERESTS ? "text-success" : "text-muted"
-                  }`}
-                >
-                  {profile.interests.length >= MIN_INTERESTS
-                    ? `${profile.interests.length} picked`
-                    : `pick ${MIN_INTERESTS - profile.interests.length} more`}
-                </span>
               </div>
               <div className="flex flex-wrap gap-1.5">
                 {interestOptions.map((i) => (
