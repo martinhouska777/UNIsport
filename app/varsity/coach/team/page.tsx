@@ -145,7 +145,7 @@ export default function CoachTeamPage() {
                       className={`tap44 press-icon flex h-8 w-8 items-center justify-center rounded-lg border text-primary ${
                         hasNote
                           ? "border-primary-line bg-primary-tint"
-                          : "border-border bg-surface-2"
+                          : "border-border bg-surface"
                       }`}
                     >
                       <IconPencil size={14} />

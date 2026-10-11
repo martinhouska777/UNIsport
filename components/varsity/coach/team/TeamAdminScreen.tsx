@@ -470,7 +470,7 @@ export default function TeamAdminScreen({
                 </div>
                 {/* Exactly what goes out: the link, and the code for anyone
                     already signed in to the app. */}
-                <div className="mt-1.5 whitespace-pre-line break-all rounded-lg border border-border bg-surface-2 px-2.5 py-2 font-mono text-[12px] text-text">
+                <div className="mt-1.5 whitespace-pre-line break-all rounded-lg border border-border bg-surface px-2.5 py-2 font-mono text-[12px] text-text">
                   {inviteMessage(membership.teamName, fresh)}
                 </div>
                 <div className="mt-2.5 flex items-center gap-2">
@@ -514,7 +514,7 @@ export default function TeamAdminScreen({
                           autoFocus
                           aria-label="University email to lock this invite to"
                           /* text-base so phones don't zoom the page on focus */
-                          className="min-w-0 flex-1 basis-0 rounded-lg border border-border bg-surface-2 px-3 py-2 text-base text-text placeholder:text-faint focus:border-accent focus:outline-none"
+                          className="min-w-0 flex-1 basis-0 rounded-lg border border-border bg-surface px-3 py-2 text-base text-text placeholder:text-faint focus:border-accent focus:outline-none"
                         />
                         <Button type="submit" size="sm" disabled={busy === "new" || !emailValue.trim()}>
                           Make
@@ -598,7 +598,7 @@ export default function TeamAdminScreen({
                         a see-through <select> laid over it at 16px, so iOS
                         doesn't zoom in on tap. */}
                     {picker && (
-                      <span className="relative flex flex-shrink-0 items-center gap-1 rounded-full border border-border bg-surface-2 px-2.5 py-1 text-[11px] font-medium text-text">
+                      <span className="relative flex flex-shrink-0 items-center gap-1 rounded-full border border-border bg-surface px-2.5 py-1 text-[11px] font-medium text-text">
                         {roleLabel[m.role]}
                         <IconChevronDown size={11} />
                         <select

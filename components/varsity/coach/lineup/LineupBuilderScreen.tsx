@@ -385,7 +385,7 @@ function PracticeBody({ practice }: { practice: Practice & { plan: PlanCell } })
           {s.label}
         </span>
       ) : (
-        <span className="mt-auto flex items-center gap-1.5 self-start rounded-[3px] border border-border bg-surface-2 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-text/75">
+        <span className="mt-auto flex items-center gap-1.5 self-start rounded-[3px] border border-border bg-surface px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-text/75">
           <span className="h-2 w-2 rounded-full bg-faint" />
           {s.label}
         </span>
@@ -615,7 +615,7 @@ function Seat({
   const chip = (
     <span
       className={`flex h-[23px] w-[23px] flex-shrink-0 select-none items-center justify-center rounded-[7px] border font-mono text-[12px] font-semibold ${
-        cox ? "" : "border-border bg-surface-2 text-text-2"
+        cox ? "" : "border-border bg-surface text-text-2"
       }`}
       style={cox ? blade(COX_COLOR, COX_INK) : undefined}
       title={cox ? "Cox" : `Seat ${label}`}
