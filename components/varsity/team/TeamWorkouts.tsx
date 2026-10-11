@@ -760,7 +760,7 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
             <p className="py-6 text-center text-[13px] leading-relaxed text-muted">
               {raceCandidates.length === 0
                 ? "No water session in the last three weeks is without race pieces."
-                : "No water session in the last three weeks has a published lineup yet, and a piece is timed crew by crew."}
+                : "No water session in the last three weeks has a published lineup yet."}
             </p>
           ) : (
             <div className="flex flex-col gap-1.5">

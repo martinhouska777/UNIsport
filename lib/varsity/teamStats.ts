@@ -284,21 +284,21 @@ export const teamMetrics: TeamMetric[] = [
     label: (u) => (u.distance === "mi" ? "Average miles rowed" : "Average km rowed"),
     of: bucketMetres,
     format: (v, u) => formatDistance(v, u.distance),
-    empty: "When the squad logs its training, the average distance will chart here.",
+    empty: "Nothing logged yet.",
   },
   {
     key: "time",
     label: () => "Average hours trained",
     of: bucketMinutes,
     format: (v) => formatDuration(Math.round(v)),
-    empty: "When the squad logs its training, the average hours will chart here.",
+    empty: "Nothing logged yet.",
   },
   {
     key: "people",
     label: () => "People training",
     of: (b) => b.trained.length,
     format: (v) => `${Math.round(v)}`,
-    empty: "When the squad logs its training, how many trained will chart here.",
+    empty: "Nothing logged yet.",
   },
 ];
 export const teamMetricByKey = (key: string): TeamMetric =>

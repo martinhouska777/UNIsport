@@ -149,11 +149,10 @@ export default function AthleteDataScreen({ athleteId }: { athleteId: string }) 
       <div className="mx-auto w-full max-w-screen-sm px-4 pb-10 pt-4">
         <Link href="/varsity/coach/team" className="flex items-center gap-1.5 text-[12px] text-muted">
           <IconArrowLeft size={14} />
-          Squad
+          Team
         </Link>
         <div className="mt-6 rounded-2xl border border-dashed border-border bg-surface px-4 py-8 text-center text-[12px] leading-relaxed text-muted">
-          You can&apos;t see this athlete&apos;s training. Only a coach of their squad can, and only
-          while they are on it.
+          You can&apos;t see this athlete&apos;s training.
         </div>
       </div>
     );
@@ -172,7 +171,7 @@ export default function AthleteDataScreen({ athleteId }: { athleteId: string }) 
     <div className="mx-auto w-full max-w-screen-sm px-4 pb-10 pt-4">
       <Link href="/varsity/coach/team" className="flex items-center gap-1.5 text-[12px] text-muted">
         <IconArrowLeft size={14} />
-        Squad
+        Team
       </Link>
 
       {/* ── 1. Who ── */}

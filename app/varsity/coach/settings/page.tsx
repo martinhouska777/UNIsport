@@ -18,7 +18,7 @@ export default function CoachSettingsPage() {
   const { membership, loading } = useMembership();
 
   if (loading || !membership) {
-    return <p className="px-4 py-16 text-center text-sm text-muted">Loading the squad…</p>;
+    return <p className="px-4 py-16 text-center text-sm text-muted">Loading the team…</p>;
   }
   return <TeamAdminScreen membership={membership} />;
 }

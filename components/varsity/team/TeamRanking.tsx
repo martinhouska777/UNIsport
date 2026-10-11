@@ -812,7 +812,7 @@ export default function TeamRanking({
               ))}
             </div>
           ) : !consistency || consistency.length === 0 ? (
-            <div className={EMPTY}>Nobody on the squad yet.</div>
+            <div className={EMPTY}>Nobody on the team yet.</div>
           ) : (
             <div className={CARD}>
               <div className={`grid items-center ${GAP} border-b border-border px-2.5 py-2.5 ${HEAD}`} style={{ gridTemplateColumns: consCols }}>
@@ -826,15 +826,8 @@ export default function TeamRanking({
                 <Row key={r.id} i={i} first={r.rank === 1 && (r.share ?? 0) > 0} cols={consCols} href={athleteHref(r.id)}>
                   <Place rank={r.rank} scored={(r.share ?? 0) > 0} />
                   <Who name={r.name} />
-                  <span className="text-center leading-tight">
-                    <span className="block text-[14px] font-bold tabular-nums text-text">
-                      {r.share == null ? "—" : `${r.share}%`}
-                    </span>
-                    {r.planned > 0 && (
-                      <span className="block text-[10px] tabular-nums text-muted">
-                        {r.done}/{r.planned}
-                      </span>
-                    )}
+                  <span className="text-center text-[14px] font-bold leading-tight tabular-nums text-text">
+                    {r.share == null ? "—" : `${r.share}%`}
                   </span>
                   <span className={`text-center text-[12px] tabular-nums ${r.extra > 0 ? "font-semibold text-text" : "text-muted"}`}>
                     {r.extra}

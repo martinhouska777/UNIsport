@@ -273,10 +273,6 @@ export default function TrainingSettingsScreen({ membership }: { membership: Mem
         <div className="mx-auto w-full max-w-screen-sm px-4 pb-8 pt-4">
           <div className="mt-2 rounded-2xl border border-danger-line bg-danger-tint px-5 py-10 text-center">
             <div className="text-[14px] font-semibold text-text">Couldn&apos;t load your settings</div>
-            <p className="mx-auto mt-1 max-w-[18rem] text-[12px] text-muted">
-              Your squad&apos;s session types and boats are safe — this screen
-              couldn&apos;t reach them, so it won&apos;t change anything until it can.
-            </p>
             <Button size="md" onClick={() => window.location.reload()} className="mt-5">
               Try again
             </Button>

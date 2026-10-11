@@ -436,7 +436,7 @@ export default function TeamStatsScreen({ onClose }: { onClose: () => void }) {
             {loading && <span hidden data-tour-pending={STATS_PARTS} />}
             {!loading && empty && <span hidden data-tour-absent={STATS_PARTS} />}
             {loading ? (
-              <p className="py-12 text-center text-[13px] text-muted">Adding up the squad…</p>
+              <p className="py-12 text-center text-[13px] text-muted">Adding up the team…</p>
             ) : empty ? (
               <p className="px-6 py-12 text-center text-[13px] leading-relaxed text-muted">{metric.empty}</p>
             ) : (

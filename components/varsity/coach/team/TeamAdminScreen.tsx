@@ -80,7 +80,7 @@ export type AdminPage = "menu" | "waiting" | "invites" | "squad";
 const pageTitle: Record<Exclude<AdminPage, "menu">, string> = {
   waiting: "Waiting to join",
   invites: "Invite links",
-  squad: "Squad",
+  squad: "Team",
 };
 
 /* How long a link has left, in words a person would actually say. */
@@ -291,7 +291,7 @@ export default function TeamAdminScreen({
             />
             <Row
               icon={<IconUser size={20} />}
-              label="Squad"
+              label="Team"
               detail={loading ? undefined : String(approved.length)}
               href="/varsity/coach/settings/squad"
             />
@@ -352,7 +352,7 @@ export default function TeamAdminScreen({
     return (
       <>
         {header}
-        <p className="px-4 py-16 text-center text-sm text-muted">Loading the squad…</p>
+        <p className="px-4 py-16 text-center text-sm text-muted">Loading the team…</p>
       </>
     );
   }

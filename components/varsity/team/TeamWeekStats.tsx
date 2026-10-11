@@ -249,7 +249,7 @@ export default function TeamWeekStats({ week }: { week: TeamWeek }) {
           ("5 people trained") was written beside it until the owner cut it
           (2026-10-04: "5 people trained smaž"). */}
       <div className="mt-2.5 flex items-center justify-between gap-2 px-0.5">
-        <div className="min-w-0 truncate text-[12px] text-muted">{loading ? "Adding up the squad…" : ""}</div>
+        <div className="min-w-0 truncate text-[12px] text-muted">{loading ? "Adding up the team…" : ""}</div>
         <button
           type="button"
           onClick={() => setFull(true)}

@@ -730,12 +730,6 @@ function Seat({
             <IconX size={15} />
           </button>
         </div>
-        {/* What the pick-up means, said once, under the seat it is about. */}
-        {selected && (
-          <div className="px-1 pb-0.5 text-[11px] leading-snug text-muted" aria-live="polite">
-            Tap another seat to swap · tap again to type a name · tap the number to put down
-          </div>
-        )}
       </>
     );
   }
@@ -2252,15 +2246,9 @@ function Builder({
                 <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
                   Athlete Pool
                 </span>
-                {picked ? (
-                  <span className="rounded-full border border-primary-line bg-primary-tint px-2 py-0.5 text-[11px] font-semibold text-primary">
-                    Tap a seat for {rosterById[picked]?.name.split(/\s+/)[0] ?? "them"}
-                  </span>
-                ) : (
-                  <span className="rounded-full border border-border bg-surface px-2 py-0.5 text-[11px] text-muted">
-                    {available.length} available · {unavailable.length} out
-                  </span>
-                )}
+                <span className="rounded-full border border-border bg-surface px-2 py-0.5 text-[11px] text-muted">
+                  {available.length} available · {unavailable.length} out
+                </span>
               </div>
 
               {/*
@@ -2426,11 +2414,8 @@ function Builder({
             <div className="mx-auto mb-3 h-1 w-9 rounded-full bg-border" />
             <h2 className="text-[15px] font-semibold text-text">Add Boat</h2>
             {boatKinds.length === 0 ? (
-              /* A squad that deleted every rigging. Said plainly, with the one
-                 place that fixes it named. */
-              <p className="mt-3 text-[12px] leading-relaxed text-muted">
-                No boats set up. Add the ones your squad rows in Settings → Boats.
-              </p>
+              /* A team that deleted every rigging. */
+              <p className="mt-3 text-[12px] leading-relaxed text-muted">No boats set up.</p>
             ) : (
               /* data-tour: the walk lights the riggings and taps the first. */
               <div data-tour="coach-lineup-kinds" className="mt-3 grid grid-cols-4 gap-2">

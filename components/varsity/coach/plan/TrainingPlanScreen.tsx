@@ -808,10 +808,6 @@ export default function TrainingPlanScreen({
         <h1 className="sr-only">Training plan</h1>
         <div className="mt-2 rounded-2xl border border-danger-line bg-danger-tint px-5 py-10 text-center">
           <div className="text-[14px] font-semibold text-text">Couldn&apos;t load the plan</div>
-          <p className="mx-auto mt-1 max-w-[18rem] text-[12px] text-muted">
-            Your training is safe — this screen just couldn&apos;t reach it, so it
-            won&apos;t let anything be changed until it can.
-          </p>
           <Button size="md" onClick={() => setReloads((n) => n + 1)} className="mt-5">
             Try again
           </Button>
@@ -832,9 +828,6 @@ export default function TrainingPlanScreen({
             <IconCalendar size={22} />
           </div>
           <div className="text-[14px] font-semibold text-text">No training blocks yet</div>
-          <p className="mx-auto mt-1 max-w-[16rem] text-[12px] text-muted">
-            Create your first block to start planning the weeks ahead.
-          </p>
           {/* data-tour: whichever "new block" button is on screen is the one
               the tour lights — see visibleAnchor(). */}
           <Button size="md" onClick={openCreate} className="mt-5" data-tour="coach-plan-new-block">

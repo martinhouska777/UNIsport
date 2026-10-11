@@ -386,7 +386,7 @@ export default function RaceBoard({
 
       {day.pieces.length === 0 && (
         <div className="mt-3 rounded-2xl border border-dashed border-border bg-surface px-4 py-8 text-center text-[12px] text-muted">
-          {inConsole ? "No pieces yet — tap + to add the first one." : "No pieces timed yet."}
+          {inConsole ? "No pieces yet." : "No pieces timed yet."}
         </div>
       )}
 
@@ -487,7 +487,7 @@ export default function RaceBoard({
           )}
           {piece.crews.length === 0 && (
             <div className={`rounded-2xl border border-dashed border-border bg-surface px-4 py-8 text-center text-[12px] text-muted ${inConsole ? "mt-10" : ""}`}>
-              No crews in this piece{inConsole ? " — add them with Enter times." : "."}
+              No crews in this piece.
             </div>
           )}
         </div>
@@ -928,7 +928,7 @@ function PieceEditor({
       )}
       {boats.length === 0 && crews.length === 0 && (
         <p className="mt-3 text-[12px] text-muted">
-          This session has no published lineup, so there are no crews to time. Publish the boats first.
+          No published lineup.
         </p>
       )}
 

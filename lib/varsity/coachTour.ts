@@ -287,7 +287,7 @@ const steps: TourStep[] = [
     route: TEAM,
     anchor: "coach-team-week",
     title: "Team",
-    body: "The squad’s average week: how far each rower went and how long they trained.",
+    body: "The team’s average week: how far each rower went and how long they trained.",
   },
   /*
     TEAM STATISTICS: PERSON BY PERSON ONLY (owner, 2026-10-04: "dej jen person

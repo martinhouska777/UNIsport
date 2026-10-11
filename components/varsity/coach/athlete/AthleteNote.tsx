@@ -56,7 +56,7 @@ export default function AthleteNote({ athleteId, name }: { athleteId: string; na
               ? "Loading…"
               : hasNote
                 ? note
-                : "No note — they see “Good job”. Tap to write one."}
+                : "No note"}
           </span>
         </span>
         <span className="mt-0.5 flex-shrink-0 text-muted">

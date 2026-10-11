@@ -102,7 +102,7 @@ export default function CoachTeamPage() {
   if (loading || !membership) {
     return (
       <p className="px-4 py-16 text-center text-sm text-muted">
-        Loading the squad…
+        Loading the team…
       </p>
     );
   }
@@ -164,8 +164,7 @@ export default function CoachTeamPage() {
       {notJoined && (
         <Sheet title="Technical note" onClose={() => setNotJoined(null)}>
           <p className="py-4 text-center text-[13px] leading-relaxed text-muted">
-            {notJoined} hasn&rsquo;t joined the app yet. A note goes to their
-            phone, so it can be sent once they sign up.
+            {notJoined} hasn&rsquo;t joined the app yet.
           </p>
         </Sheet>
       )}
