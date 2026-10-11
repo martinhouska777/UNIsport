@@ -611,14 +611,11 @@ function LogEditor({
                 type="button"
                 onClick={() => fileRef.current?.click()}
                 disabled={scanning}
-                /* White, like every second button in the app (the school
-                   colour is Save's): the camera carries the colour, as the
-                   plus does on "Add exercise". */
-                className="press mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-border bg-surface text-[14px] font-semibold text-text disabled:opacity-60"
+                /* Filled in the school colour, the look the Log tab's own Scan
+                   button had (owner, 2026-10-11: "I want the rectangle to be red"). */
+                className="mt-4 flex w-full items-center justify-center gap-2.5 rounded-2xl bg-primary-live py-3.5 text-[14px] font-semibold text-primary-contrast shadow-md transition-transform duration-150 active:scale-[0.98] disabled:opacity-60"
               >
-                <span className="text-primary">
-                  <IconCamera size={17} />
-                </span>
+                <IconCamera size={20} />
                 {scanning ? "Reading photo…" : scanFilled ? "Scan again" : fields.scan}
               </button>
               {scanFilled && !scanning && !scanMsg && (
