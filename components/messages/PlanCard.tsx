@@ -12,12 +12,18 @@
 */
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Button from "@/components/ui/Button";
+import Button, { buttonClass } from "@/components/ui/Button";
 import { respondToPlan, confirmPlan, cancelPlan, planWhenLabel } from "@/lib/supabase/sessionPlans";
 import { type DmPlan } from "@/lib/supabase/messages";
 import { planLogHref } from "@/lib/reminders";
 import { activityLabel } from "@/lib/supabase/workouts";
 import { IconCalendar, IconCheck, IconX, IconMapPin } from "@/components/icons";
+import {
+  appleCalendarHref,
+  googleCalendarHref,
+  planEvent,
+  type CalendarEvent,
+} from "@/lib/calendarEvent";
 
 export default function PlanCard({
   plan,
@@ -203,6 +209,15 @@ export default function PlanCard({
           </div>
         )}
 
+        {/* Into the phone's own calendar — no account connected (lib/calendarEvent.ts).
+            Not for the walk's example plan: there is no real session behind it. */}
+        {plan.status === "accepted" && !isPast && !onAnswer && (
+          <AddToCalendar
+            planId={plan.planId}
+            event={planEvent({ ...plan, otherName })}
+          />
+        )}
+
         {/* After the time: both confirm whether it actually happened. */}
         {plan.status === "accepted" && isPast && myAnswer === null && (
           <div>
@@ -280,6 +295,34 @@ export default function PlanCard({
 
         {error && <div className="mt-1.5 text-[11px] text-danger">{error}</div>}
       </div>
+    </div>
+  );
+}
+
+/*
+  One button; pressed, it becomes the two calendars. Apple opens the calendar
+  file (the iPhone shows its own Add sheet), Google opens its new-event page
+  already filled in.
+*/
+function AddToCalendar({ planId, event }: { planId: string; event: CalendarEvent }) {
+  const [open, setOpen] = useState(false);
+  if (!open) {
+    return (
+      <Button variant="secondary" size="sm" onClick={() => setOpen(true)} className="mt-2.5 w-full">
+        <IconCalendar size={14} /> Add to calendar
+      </Button>
+    );
+  }
+  // Plain <a>, not <Link>: neither is a page of the app (a file, and Google).
+  const pill = buttonClass({ variant: "secondary", size: "sm", className: "flex-1" });
+  return (
+    <div className="mt-2.5 flex gap-2">
+      <a href={appleCalendarHref(planId)} className={pill}>
+        Apple Calendar
+      </a>
+      <a href={googleCalendarHref(event)} target="_blank" rel="noopener noreferrer" className={pill}>
+        Google Calendar
+      </a>
     </div>
   );
 }
