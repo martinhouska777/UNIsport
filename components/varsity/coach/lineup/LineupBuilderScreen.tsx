@@ -134,6 +134,7 @@ import {
   IconChevronRight,
   IconPlus,
   IconRepeat,
+  IconClock,
   IconSearch,
   IconX,
 } from "@/components/icons";
@@ -629,7 +630,7 @@ function Seat({
     return (
       <div data-tour={tour} className="relative">
         <div
-          className="flex h-10 items-center gap-2 rounded-[10px] border bg-surface-2 pl-[7px] pr-2.5"
+          className="flex h-10 items-center gap-2 rounded-[10px] border bg-surface pl-[7px] pr-2.5"
           style={coxEdge ?? { borderColor: "var(--primary)" }}
         >
           {/* Tapping the active seat's own badge puts it down again. */}
@@ -2078,7 +2079,14 @@ function Builder({
                         not carry a time an older lineup was saved with, so
                         that one is added to the list rather than silently
                         swapped out.
+
+                        THE CLOCK IS BACK (owner, 2026-10-11: "I want there to
+                        be the icon of time as well, so it's consistent"): the
+                        same white pill, clock and time as the session's time
+                        in the plan editor. Still no arrow.
                       */}
+                      <label className="flex h-8 flex-shrink-0 items-center gap-1.5 rounded-full border border-border bg-surface pl-2.5 pr-1 text-muted">
+                      <IconClock size={13} />
                       <select
                         value={boat.dock}
                         onChange={(e) => setDock(boat.id, e.target.value)}
@@ -2088,7 +2096,7 @@ function Builder({
                            keyboard ring is its only focus mark — and a select
                            (unlike a text field) only matches :focus-visible
                            when a keyboard put it there, so a tap stays clean. */
-                        className="h-8 flex-shrink-0 appearance-none rounded-lg border border-border bg-surface-2 px-2.5 text-center text-base font-semibold text-text"
+                        className="h-full appearance-none bg-transparent pr-2 text-base font-semibold text-text"
                       >
                         {(dockTimes.includes(boat.dock) ? dockTimes : [boat.dock, ...dockTimes]).map(
                           (t) => (
@@ -2098,6 +2106,7 @@ function Builder({
                           ),
                         )}
                       </select>
+                      </label>
                     </div>
 
                     {/* Shut: the header is all that is left of this boat. */}
@@ -2132,7 +2141,11 @@ function Builder({
                         one list bottom-up against the other.
                       */}
                       <div className="px-3 pb-4 pt-3">
-                        <div className="rounded-[44px] border-2 border-primary-line bg-surface-2 px-4 pb-3 pt-2.5">
+                        {/* WHITE, NOT GREY (owner, 2026-10-11: "the boats in lineups are gray. I
+                            don't like the contrast ... white or cleaner"). The
+                            school-colour outline draws the hull; the seats keep
+                            their hairline. */}
+                        <div className="rounded-[44px] border-2 border-primary-line bg-surface px-4 pb-3 pt-2.5">
                           <HullCap arrow="▲" word="BOW" />
                           {/* The number comes from the seat's POSITION, not from
                               what an older saved lineup happens to have stored in
