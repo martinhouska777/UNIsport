@@ -90,6 +90,7 @@ import {
   outMeta,
   makeSeats,
   defaultBoatName,
+  carryBoats,
   type OutReason,
   type Practice,
   type PracticeStatus,
@@ -139,6 +140,7 @@ import {
   IconX,
 } from "@/components/icons";
 import { slotKey, useNameDrag, type Slot } from "./useNameDrag";
+import RepeatSheet from "./RepeatSheet";
 import { markColor } from "@/lib/colorMarks";
 import KindTag from "@/components/varsity/KindTag";
 import { useTourRunning } from "@/lib/tour";
@@ -1378,19 +1380,21 @@ function Builder({
     };
   }, [dayKey]);
 
-  /* Yes — repeat that crew here. Except anybody who is out on THIS day: their
-     seat comes across empty, so the hole to fill is the first thing the coach
-     sees rather than a sick rower quietly carried back into the boat. */
-  const useCarried = () => {
-    if (!carried) return;
+  /* Yes — repeat these boats here: the ones picked in the Repeat sheet, from
+     the day picked there (RepeatSheet.tsx). Except anybody who is out on THIS
+     day: their seat comes across empty, so the hole to fill is the first thing
+     the coach sees rather than a sick rower quietly carried back into the boat. */
+  const [repeatOpen, setRepeatOpen] = useState(false);
+  const repeatFrom = (from: string, picked: Boat[]) => {
     setBoats(
-      carried.boats.map((b) => ({
+      carryBoats(picked).map((b) => ({
         ...b,
         coxId: b.coxId && outById[b.coxId] ? null : b.coxId,
         seats: b.seats.map((s) => (s.athleteId && outById[s.athleteId] ? { ...s, athleteId: null } : s)),
       })),
     );
-    setCarriedFrom(carried.from);
+    setCarriedFrom(from);
+    setRepeatOpen(false);
   };
 
   /* The coach would rather build this one from scratch. The offer comes back:
@@ -1821,19 +1825,23 @@ function Builder({
     So it is a chip, and it sits on the workout card: "↻ Repeat Tue AM" to
     take them, and afterwards "↻ From Tue AM" with an × that starts empty.
     The Add Boat button underneath is then the only full-width thing up there.
+
+    PICK THE DAY AND THE BOATS (owner, 2026-10-11). "↻ Repeat" now opens the
+    Repeat sheet instead of seating the last crew straight away. White, not
+    grey, like the boats.
   */
   const offersRepeat = !loading && outReady && !!carried && !carriedFrom && boats.length === 0;
   const repeatChip = loading || !outReady ? null : offersRepeat && carried ? (
     <button
       type="button"
-      onClick={useCarried}
+      onClick={() => setRepeatOpen(true)}
       data-tour="coach-lineup-repeat"
-      className="flex h-7 flex-shrink-0 items-center gap-1 rounded-full border border-border bg-surface-2 px-2.5 text-[11px] font-semibold text-text active:bg-surface"
+      className="flex h-7 flex-shrink-0 items-center gap-1 rounded-full border border-border bg-surface px-2.5 text-[11px] font-semibold text-text active:bg-surface-2"
     >
-      <IconRepeat size={12} /> Repeat {nav.label(carried.from)}
+      <IconRepeat size={12} /> Repeat
     </button>
   ) : carriedFrom ? (
-    <span className="flex h-7 flex-shrink-0 items-center gap-1 rounded-full border border-border bg-surface-2 pl-2.5 pr-1 text-[11px] text-muted">
+    <span className="flex h-7 flex-shrink-0 items-center gap-1 rounded-full border border-border bg-surface pl-2.5 pr-1 text-[11px] text-muted">
       <IconRepeat size={12} /> From {nav.label(carriedFrom)}
       <button
         type="button"
@@ -1848,6 +1856,9 @@ function Builder({
 
   return (
     <div className="relative flex h-full flex-col">
+      {repeatOpen && (
+        <RepeatSheet dayKey={dayKey} onRepeat={repeatFrom} onClose={() => setRepeatOpen(false)} />
+      )}
       {/*
         ON A LAPTOP, TWO COLUMNS (audit, 2026-09-27). One phone-width column at
         1440 wide put the athlete pool 3,500px down, under all five boats. From

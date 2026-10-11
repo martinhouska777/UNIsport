@@ -186,7 +186,7 @@ const steps: TourStep[] = [
     press: "coach-lineup-open-practice",
     anchor: "coach-lineup-repeat",
     title: "Repeat",
-    body: "Starts from the last lineup you published. Then change only what’s different.",
+    body: "Pick the day and the boats to repeat. Then change only what’s different.",
   },
   {
     // ADD A BOAT, QUICKLY (owner, 2026-10-04: "add boat jen rychle"): the
