@@ -1002,16 +1002,20 @@ export default function TrainingPlanScreen({
               </div>
               <div className="mt-1 text-[11px] text-muted">{week.rangeLabel}</div>
               {/* The race in a pill of its own, down at the foot of the left
-                  column so it answers the Edit button across from it. */}
+                  column so it answers the Edit button across from it.
+                  FILLED IN THE SCHOOL'S COLOUR, like a button (owner,
+                  2026-10-11: "I want it to be a button, and I want it to have
+                  color ... it is just a design"). Each school's own colour;
+                  pressing it does nothing. */}
               {block.raceName && (
-                <span className="mt-3 inline-flex min-w-0 max-w-full items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-[11px] text-muted">
-                  <span className="flex-shrink-0 text-primary">
+                <span className="mt-3 inline-flex min-w-0 max-w-full items-center gap-1.5 rounded-full bg-primary-live px-3 py-1.5 text-[11px] text-primary-contrast shadow-card">
+                  <span className="flex-shrink-0">
                     <IconFlag size={12} />
                   </span>
-                  <span className="truncate font-medium text-text">{block.raceName}</span>
+                  <span className="truncate font-semibold">{block.raceName}</span>
                   {race !== null && (
                     <span className="flex-shrink-0">
-                      · <span className="font-semibold text-accent">{race}</span> days
+                      · <span className="font-semibold">{race}</span> days
                     </span>
                   )}
                 </span>
