@@ -275,7 +275,7 @@ export const statMetrics: StatMetric[] = [
   {
     key: "distance",
     label: "Metres rowed",
-    empty: "Log some erg or water sessions and your metres will chart here.",
+    empty: "Nothing logged yet.",
     // Only what was actually rowed — a lift or a run isn't metres on the water.
     value: (logs) =>
       sum(logs.map((l) => (rowingCategories.has(l.category ?? "") ? (l.metres ?? 0) : 0))),
@@ -284,7 +284,7 @@ export const statMetrics: StatMetric[] = [
   {
     key: "time",
     label: "Time trained",
-    empty: "Log a session with its length and your hours will chart here.",
+    empty: "Nothing logged yet.",
     value: (logs) => sum(logs.map((l) => l.minutes ?? 0)),
     format: (v) => formatDuration(Math.round(v)),
   },
@@ -298,7 +298,7 @@ export const statMetrics: StatMetric[] = [
     */
     key: "consistency",
     label: "Consistency",
-    empty: "Log a session and your consistency will chart here.",
+    empty: "Nothing logged yet.",
     /* The same count as the Consistency cell and "Missed" under the graph
        (consistencyOf) — a week the plan gave off is an empty column. */
     value: (logs, span, plan) => consistencyOf(logs, span, plan) ?? 0,
@@ -314,7 +314,7 @@ export const statMetrics: StatMetric[] = [
     */
     key: "recovery",
     label: "Recovery",
-    empty: "Fill in a daily check-in and how you slept, how tired and how sore will chart here.",
+    empty: "No check-ins yet.",
     value: () => 0,
     format: (v) => `${Math.round(v * 10) / 10}`,
     axisMax: 10,

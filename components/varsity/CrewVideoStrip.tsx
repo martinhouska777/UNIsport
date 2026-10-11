@@ -155,9 +155,6 @@ function VideoSheet({
               <IconPlay size={22} />
             </span>
             <span className="text-[13px] font-semibold text-text">Watch in Google Drive</span>
-            <span className="px-6 text-[11px] leading-relaxed text-muted">
-              Opens the clip in a new tab. Playing it inside the app is coming.
-            </span>
           </a>
           {playHere ? (
             <iframe
@@ -198,7 +195,7 @@ function VideoSheet({
           disabled={removing}
           onClick={async () => {
             const msg = video.externalUrl
-              ? "Take this video off the boat for the whole team? The file stays in the squad's Drive folder."
+              ? "Take this video off the boat for the whole team? The file stays in the team's Drive folder."
               : "Remove this video for the whole team?";
             if (!window.confirm(msg)) return;
             setRemoving(true);
@@ -440,7 +437,7 @@ export default function CrewVideoStrip({ dayKey, boat }: { dayKey: string; boat:
           <div className="pt-1 text-[11px] text-muted">
             {picked.length === 1
               ? picked[0].name
-              : `${picked.length} clips — the rest numbered (2), (3)…`}
+              : `${picked.length} clips`}
           </div>
           <div className="mt-2 flex items-center gap-2">
             <button

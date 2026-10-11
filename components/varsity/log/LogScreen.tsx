@@ -536,10 +536,7 @@ function LogEditor({
               role="status"
               className="mb-3 flex items-start gap-2 rounded-xl border border-border bg-surface px-3.5 py-2.5"
             >
-              <p className="flex-1 text-[12px] leading-snug text-text-2">
-                <span className="font-semibold text-text">Picked up where you left off.</span> These
-                numbers didn&rsquo;t save last time — check them and save again.
-              </p>
+              <p className="flex-1 text-[12px] font-semibold leading-snug text-text">Not saved last time</p>
               <button
                 type="button"
                 onClick={discardRestored}
@@ -631,7 +628,7 @@ function LogEditor({
           <div className="mb-2 mt-6 flex items-center justify-between">
             <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">Result</span>
             {fromPlan && (
-              <span className="text-[11px] text-accent">Estimated from the plan · edit if needed</span>
+              <span className="text-[11px] text-accent">From the plan</span>
             )}
           </div>
           {/* One card, a line each — the student Log session's distance and

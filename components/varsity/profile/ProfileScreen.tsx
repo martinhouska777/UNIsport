@@ -266,8 +266,7 @@ function TrainedTodaySheet({
         ))}
       </div>
       <p className="mt-3 text-[13px] leading-relaxed text-text-2">
-        You are marked {word === "other" ? "out" : word} from now either way. Did today still
-        count as a training day?
+        Did today still count as a training day?
       </p>
       <div className="mt-4 flex flex-col gap-2.5">
         <Button variant="secondary" size="lg" full onClick={onClose}>
@@ -277,9 +276,6 @@ function TrainedTodaySheet({
           Count today as {word === "other" ? "out" : word}
         </Button>
       </div>
-      <p className="mt-2.5 text-center text-[11px] text-muted">
-        Your session stays in the log whichever you pick.
-      </p>
     </Sheet>
   );
 }
@@ -1026,7 +1022,7 @@ export default function ProfileScreen() {
               onClick={() => setModal("seat")}
               className="mt-1.5 rounded-md border border-primary-line bg-primary-tint px-2 py-1 text-[11px] font-medium text-primary"
             >
-              Pick your name on the squad list
+              Pick your name
             </button>
           )}
         </div>

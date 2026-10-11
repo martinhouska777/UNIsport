@@ -74,7 +74,7 @@ const steps: TourStep[] = [
     anchor: "varsity-workouts-switch",
     alsoAnchor: "varsity-workouts-first",
     title: "Workouts",
-    body: "Every team erg piece, with the whole squad’s results on one board.",
+    body: "Every team erg piece, with the whole team’s results on one board.",
   },
   {
     press: "varsity-workouts-water",
@@ -97,7 +97,7 @@ const steps: TourStep[] = [
   {
     anchor: "varsity-profile-team",
     title: "Team",
-    body: "The whole squad. Tap anyone for their PBs and their training calendar.",
+    body: "The whole team. Tap anyone for their PBs and their training calendar.",
   },
 
   /* ── The (+) ──────────────────────────────────────────────────────────── */

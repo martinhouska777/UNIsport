@@ -146,8 +146,6 @@ export default function WorkoutBoard({
     [results, workout.board, metric, myId, previous, reps],
   );
 
-  const readable = board.rows.some((r) => r.value != null);
-
   /*
     THE LIST'S MIDDLE COLUMNS (owner, 2026-10-02: the gap between the name and
     the result was empty space, with the time and rate squeezed under the name).
@@ -310,7 +308,7 @@ export default function WorkoutBoard({
       {board.logged > 0 &&
         (ranked ? (
           <div className="mt-3 flex gap-1.5">
-            <Tile value={board.averageDisplay} label="Squad avg" />
+            <Tile value={board.averageDisplay} label="Team avg" />
             {board.topAverages.map((t) => (
               <Tile key={t.n} value={t.display} label={`Top ${t.n}`} />
             ))}
@@ -488,14 +486,6 @@ export default function WorkoutBoard({
           onClose={() => setOpenRow(null)}
           onOpenWorkout={onOpenWorkout}
         />
-      )}
-
-      {board.logged > 0 && !readable && (
-        <p className="mt-2 px-0.5 text-[11px] leading-relaxed text-muted">
-          {metric === "wkg"
-            ? "Nobody on this board has a body weight saved yet — add yours on the Profile tab and it will fill in from your next session."
-            : `Nothing logged here carries the numbers ${metricMeta(metric).label.toLowerCase()} needs.`}
-        </p>
       )}
     </Sheet>
   );

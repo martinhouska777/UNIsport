@@ -35,7 +35,7 @@
 import { useState } from "react";
 import CrewVideoStrip from "@/components/varsity/CrewVideoStrip";
 import { useUnits } from "@/components/useUnits";
-import { IconActivity, IconChevronDown, IconChevronUp } from "@/components/icons";
+import { IconActivity, IconCheckCircle, IconChevronDown, IconChevronUp } from "@/components/icons";
 import {
   boatWorkSummary,
   distanceFieldValue,
@@ -237,19 +237,19 @@ export default function BoatSessionStrip({
                 </button>
               )}
               {error && <div className="mt-1.5 text-[11px] text-danger">{error}</div>}
-              {/* On the cox's card only — the builder has the coach, who knows. */}
-              {!onChange && (
-                <p className="mt-2 text-[11px] leading-snug text-muted">
-                  Saved once, logged for everyone in the boat — it goes into each person&apos;s calendar and statistics.
-                </p>
-              )}
             </div>
           ) : (
             /* Not yours to write: the numbers, or the honest absence of them.
-               They still land in this reader's own log — the cox writes for the boat. */
+               They still land in this reader's own log — the cox writes for the
+               boat, and the tick says so (owner, 2026-10-11: a word and a tick,
+               not a sentence). */
             <div className="text-[12px] text-muted">
               {summary ?? "Nobody has said how far this boat went yet."}
-              {summary && " · logged for the whole boat"}
+              {summary && (
+                <p className="mt-1 flex items-center gap-1 text-[11px] font-semibold text-success">
+                  <IconCheckCircle size={13} /> In your log
+                </p>
+              )}
             </div>
           )}
 

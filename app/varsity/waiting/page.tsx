@@ -101,10 +101,6 @@ export default function VarsityWaitingPage() {
         <h1 className="font-serif text-[22px] font-medium leading-tight text-text">
           {membership!.teamName}
         </h1>
-        <p className="mt-2.5 text-[13px] leading-relaxed text-muted">
-          Your request is with the team. A coach or captain has to approve it — once they
-          do, the training plan, lineups and the squad all open up here.
-        </p>
 
         <div className="mt-5 rounded-xl border border-border bg-surface px-4 py-3 text-left">
           <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
@@ -129,14 +125,8 @@ export default function VarsityWaitingPage() {
               <span className="mt-0.5 text-accent">
                 <IconCheck size={15} />
               </span>
-              <div>
-                <div className="text-[13px] font-medium text-text">
-                  While you wait — set up the student side
-                </div>
-                <p className="mt-1 text-[11px] leading-relaxed text-muted">
-                  Campus gyms, finding people to train with, and messages. Separate from
-                  your team, and entirely up to you.
-                </p>
+              <div className="text-[13px] font-medium text-text">
+                While you wait — set up the student side
               </div>
             </div>
             <Link

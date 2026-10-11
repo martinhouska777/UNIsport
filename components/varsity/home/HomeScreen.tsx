@@ -953,17 +953,14 @@ function CoachNoteCard({ note, coach }: { note: string; coach: string }) {
       <span className="text-success">
         <IconCheckCircle size={18} />
       </span>
-      <div>
-        <div className="text-[13px] font-semibold text-success">Good job</div>
-        <div className="text-[11px] text-muted">No notes from your coach — keep it up.</div>
-      </div>
+      <div className="text-[13px] font-semibold text-success">Good job</div>
     </div>
   );
 }
 
 /*
   CLAIM YOUR SEAT — the card an UNCLAIMED athlete sees until they pick their
-  name on the squad list. Without it a published boat cannot know which seat
+  name on the team list. Without it a published boat cannot know which seat
   is theirs, so the whole lineup section below stays empty and looks exactly
   like "nothing published". It sits under the greeting because it is the one
   thing standing between this person and the answer they open the app for.
@@ -980,12 +977,7 @@ function ClaimSeatCard({ onOpen }: { onOpen: () => void }) {
         <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary text-primary-contrast">
           <IconUser size={15} />
         </span>
-        <span className="flex min-w-0 flex-1 flex-col leading-tight">
-          <span className="text-[14px] font-semibold text-text">Which of these is you?</span>
-          <span className="mt-0.5 text-[11px] text-muted">
-            Pick your name on the squad list so your boat shows up here.
-          </span>
-        </span>
+        <span className="min-w-0 flex-1 text-[14px] font-semibold leading-tight text-text">Which of these is you?</span>
         <IconChevronRight size={16} className="flex-shrink-0 text-muted" />
       </button>
     </div>
@@ -1003,10 +995,6 @@ function EmptyHome() {
           <IconCalendar size={22} />
         </div>
         <div className="text-[15px] font-semibold text-text">No plan published yet</div>
-        <p className="mt-1 max-w-[18rem] text-[12px] leading-relaxed text-muted">
-          Your coach hasn&apos;t shared this week&apos;s training plan. It&apos;ll show up here as
-          soon as it&apos;s published.
-        </p>
       </div>
     </div>
   );

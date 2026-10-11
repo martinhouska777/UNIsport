@@ -146,16 +146,12 @@ export default function VarsitySettings() {
           REPLAY THE ATHLETE SETUP — the short setup a rower answers on the way
           in: name, class year, sex, rower or cox, side, height and weight. It
           asks first, because it is not a preview: the questions start blank,
-          and what you finish with replaces them. The squad, the logs and the
+          and what you finish with replaces them. The team, the logs and the
           personal bests are untouched.
         */}
         {replayArmed ? (
           <div className="rounded-2xl border border-border bg-surface p-4 shadow-card">
             <div className="text-[15px] font-medium text-text">Run the setup again?</div>
-            <p className="mt-0.5 text-[12px] leading-relaxed text-muted">
-              You&apos;ll answer the setup screen from scratch. Whatever you finish with
-              replaces your name, year and measurements.
-            </p>
             <div className="mt-3 flex gap-2">
               <Button variant="secondary" size="lg" className="flex-1" onClick={() => setReplayArmed(false)}>
                 Cancel

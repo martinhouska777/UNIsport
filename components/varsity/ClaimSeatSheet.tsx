@@ -57,11 +57,6 @@ export default function ClaimSeatSheet({
 
   return (
     <Sheet title="Which of these is you?" onClose={onClose}>
-      <p className="mb-3 text-[12px] leading-relaxed text-muted">
-        Pick your name on the squad list. That is how a published boat knows which seat is
-        yours.
-      </p>
-
       {/* 16px input so a phone doesn't zoom the page the moment it is tapped. */}
       <div className="relative mb-3">
         <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted">
@@ -121,11 +116,9 @@ export default function ClaimSeatSheet({
         )}
       </div>
 
-      {/* The honest way out. An athlete the coach hasn't put on the list yet
-          must not be made to pick somebody else's name to make the card go
-          away — and an athlete who picked wrong needs a way to un-pick. */}
-      <div className="mt-4 border-t border-border pt-3 text-center">
-        {current ? (
+      {/* The way out for an athlete who picked wrong. */}
+      {current && (
+        <div className="mt-4 border-t border-border pt-3 text-center">
           <button
             type="button"
             onClick={() => pick(null)}
@@ -133,13 +126,8 @@ export default function ClaimSeatSheet({
           >
             None of these is me
           </button>
-        ) : (
-          <p className="text-[11px] leading-relaxed text-muted">
-            Not on the list? Ask your coach to add you — you can pick your name later from your
-            Profile.
-          </p>
-        )}
-      </div>
+        </div>
+      )}
     </Sheet>
   );
 }

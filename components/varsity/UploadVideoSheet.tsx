@@ -328,7 +328,7 @@ export default function UploadVideoSheet({ onClose }: { onClose: () => void }) {
                 <div className="pb-2 pt-1.5 text-[11px] text-muted">
                   {picked.length === 1
                     ? picked[0].name
-                    : `${picked.length} clips — the rest land under the same name, numbered (2), (3)…`}
+                    : `${picked.length} clips`}
                 </div>
                 <button
                   type="button"
@@ -359,19 +359,13 @@ export default function UploadVideoSheet({ onClose }: { onClose: () => void }) {
                 <IconPlus size={14} /> {busy ?? "Choose video"}
               </button>
             )}
-            {needsConnect && (
-              <div className="pt-1.5 text-[11px] italic text-muted">
-                One sign-in, and the video goes straight to the squad&apos;s Drive folder.
-              </div>
-            )}
           </div>
         )}
 
         {done > 0 && !busy && (
-          <div className="pt-1 text-[12px] text-success">
-            {done === 1 ? "Video uploaded." : `${done} videos uploaded.`} It is on the
-            boat now — close this to see it.
-          </div>
+          <p className="flex items-center gap-1 pt-1 text-[12px] font-semibold text-success">
+            <IconCheckCircle size={13} /> Uploaded
+          </p>
         )}
         {error && <div className="pt-1 text-[12px] text-danger">{error}</div>}
       </div>
