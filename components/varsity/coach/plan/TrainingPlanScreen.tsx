@@ -29,8 +29,6 @@ import {
   periods,
   sessionKey,
   parseSessionKey,
-  boardOptions,
-  defaultBoard,
   buildWeeks,
   blockRangeLabel,
   daysToRace,
@@ -41,7 +39,6 @@ import {
   type SessionMap,
   type Period,
   type WeekRow,
-  type BoardKind,
 } from "@/lib/varsity/coachPlan";
 import {
   configSessionColor,
@@ -125,7 +122,6 @@ type Form = {
   note: string;
   repeat: "once" | "weekly";
   teamWorkout: boolean;
-  board: BoardKind;
 };
 
 function Dot({ color }: { color: string }) {
@@ -528,7 +524,6 @@ export default function TrainingPlanScreen({
     note: "",
     repeat: "once",
     teamWorkout: false,
-    board: "average",
   });
 
   // create-block form
@@ -603,7 +598,6 @@ export default function TrainingPlanScreen({
       note: existing?.note ?? "",
       repeat: "once",
       teamWorkout: existing?.teamWorkout ?? false,
-      board: existing?.board ?? defaultBoard(existing?.intensity),
     });
     setEditor({ date, period });
   };
@@ -674,7 +668,8 @@ export default function TrainingPlanScreen({
       note: form.note.trim() || undefined,
       // Weights / Off never carry a board, so they never keep a stale flag.
       teamWorkout: configCanBoard(cfg, form.category) ? form.teamWorkout : false,
-      board: form.board,
+      // Every board is ranked (coachPlan.ts): no choice to save.
+      board: "ranked",
     };
     if (form.repeat === "weekly") {
       setSessions((prev) => {
@@ -1392,14 +1387,7 @@ export default function TrainingPlanScreen({
               <button
                 type="button"
                 data-tour="coach-plan-team"
-                onClick={() =>
-                  setForm((f) => ({
-                    ...f,
-                    teamWorkout: !f.teamWorkout,
-                    // First time on, suggest the board that fits the intensity.
-                    board: f.teamWorkout ? f.board : defaultBoard(f.intensity),
-                  }))
-                }
+                onClick={() => setForm((f) => ({ ...f, teamWorkout: !f.teamWorkout }))}
                 className={`flex w-full items-center gap-3 rounded-xl border px-3.5 py-3 text-left ${
                   form.teamWorkout ? "border-primary bg-primary-tint" : "border-border bg-surface"
                 }`}
@@ -1431,29 +1419,6 @@ export default function TrainingPlanScreen({
                   />
                 </span>
               </button>
-
-              {form.teamWorkout && (
-                <div data-tour="coach-plan-boards" className="mt-1.5 grid grid-cols-2 gap-1.5">
-                  {boardOptions.map((o) => {
-                    const active = form.board === o.key;
-                    return (
-                      <button
-                        key={o.key}
-                        type="button"
-                        onClick={() => setForm((f) => ({ ...f, board: o.key }))}
-                        className={`rounded-xl border px-3 py-2.5 text-left ${
-                          active ? "border-primary bg-primary-tint" : "border-border bg-surface"
-                        }`}
-                      >
-                        <span className="block text-[12px] font-semibold text-text">{o.label}</span>
-                        <span className="mt-0.5 block text-[11px] leading-relaxed text-muted">
-                          {o.sub}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
             </>
           )}
 

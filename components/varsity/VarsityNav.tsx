@@ -6,7 +6,7 @@ import { useCallback, useState, type MouseEvent, type ReactNode } from "react";
 import LogSheet from "@/components/varsity/log/LogSheet";
 import { useAppState } from "@/components/AppState";
 import useDoubleTap from "@/components/useDoubleTap";
-import { IconUser, IconCalendar, IconPlus } from "@/components/icons";
+import { IconUser, IconCalendar, IconClipboard, IconPlus } from "@/components/icons";
 
 /*
   Varsity Mode's own 5-tab bottom navigation (separate from the normal app's
@@ -34,14 +34,6 @@ const IconHome = (
   </svg>
 );
 
-const IconTeam = (
-  <svg {...iconProps}>
-    <circle cx="9" cy="8" r="3" />
-    <path d="M3 19a6 6 0 0 1 12 0" />
-    <path d="M16 6a3 3 0 0 1 0 6M21 19a6 6 0 0 0-5-5.9" />
-  </svg>
-);
-
 const leftTabs: Tab[] = [
   { href: "/varsity/home", label: "Home", icon: IconHome },
   { href: "/varsity/calendar", label: "Calendar", icon: <IconCalendar size={24} /> },
@@ -50,8 +42,9 @@ const leftTabs: Tab[] = [
 const rightTabs: Tab[] = [
   /* WORKOUTS, not "Team" (owner, 2026-09-22): the tab has held nothing but
      the squad's workout boards since the roster moved onto the Profile, and
-     the word Team now belongs to that roster row. */
-  { href: "/varsity/team", label: "Workouts", icon: IconTeam },
+     the word Team now belongs to that roster row. Its icon is a sheet, the
+     Coach Console's Workouts icon, not the old two people (owner, 2026-10-11). */
+  { href: "/varsity/team", label: "Workouts", icon: <IconClipboard size={24} /> },
   { href: "/varsity/profile", label: "Profile", icon: <IconUser size={24} /> },
 ];
 

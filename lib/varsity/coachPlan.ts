@@ -159,24 +159,15 @@ export function suggestionsFor(category: Category, intensity?: Intensity): strin
 }
 /* ── Team workouts ──────────────────────────────────────────────────────────
    The coach can mark a session as a TEAM WORKOUT: everyone who logs it lands on
-   one shared board the whole squad can see (db/varsity_results.sql). A board is
-   one of two kinds, because not every session is a race:
+   one shared board the whole squad can see (db/varsity_results.sql).
 
-     ranked  — a test or race piece. Fastest first, with a rank number.
-     average — steady training. Who did it, and what the squad averaged. No
-               ranking, because ranking a UT2 row is bad coaching.
-
-   Both option lists are DATA (rule 7): the editor loops over them. */
+   EVERY BOARD IS RANKED, fastest first with a rank number (owner, 2026-10-11:
+   "If the workouts are on the team board, make it so that they're ranked").
+   There used to be a second kind the coach picked, "Everyone" (`average`):
+   steady work listed alphabetically under the squad's averages. The choice is
+   gone; sessions saved with it still load, and are ranked
+   (teamBoard.teamWorkouts). */
 export type BoardKind = "ranked" | "average";
-export const boardOptions: { key: BoardKind; label: string; sub: string }[] = [
-  { key: "ranked", label: "Ranked", sub: "A test or race piece — fastest first" },
-  { key: "average", label: "Everyone", sub: "Steady work — who did it, and the squad average" },
-];
-
-// What to suggest when the coach first flicks the switch: hard pieces are the
-// ones people race, everything else is training. Always editable afterwards.
-export const defaultBoard = (intensity?: string): BoardKind =>
-  intensity === "hard" ? "ranked" : "average";
 
 
 /* ── A session and how sessions are stored ──────────────────────────────────

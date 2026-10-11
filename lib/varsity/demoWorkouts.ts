@@ -69,7 +69,7 @@ export const demoPieces: DemoPiece[] = [
     reps: { metres: 2000, offsets: [-1.0, -0.2, 0.5, 0.7] } },
   { daysAgo: 13, period: "AM", description: "30' r20", intensity: "UT1", board: "ranked",
     minutes: 30, offsetSec: 13, rate: 20, turnout: 0.72 },
-  { daysAgo: 16, period: "AM", description: "3×25' UT2", intensity: "UT2", board: "average",
+  { daysAgo: 16, period: "AM", description: "3×25' UT2", intensity: "UT2", board: "ranked",
     minutes: 75, offsetSec: 21, rate: 20, turnout: 0.89 },
 
   // Earlier editions of the same pieces.

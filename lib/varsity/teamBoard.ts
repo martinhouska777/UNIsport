@@ -84,7 +84,9 @@ export function teamWorkouts(
       dateLabel: dayKeyLabel(dayKey),
       period: parsed.period,
       session,
-      board: session.board === "ranked" ? "ranked" : "average",
+      // Every board is ranked, including one saved as "Everyone" before that
+      // choice was taken away (coachPlan.ts, owner 2026-10-11).
+      board: "ranked",
     });
   }
   return out.sort((a, b) => b.date.getTime() - a.date.getTime() || a.period.localeCompare(b.period));

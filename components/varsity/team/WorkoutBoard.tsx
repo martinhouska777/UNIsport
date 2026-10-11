@@ -3,13 +3,11 @@
 /*
   WORKOUT BOARD — one team workout, everyone's result.
   ---------------------------------------------------------------------------
-  Opened from the Workouts list in the Team tab. Two shapes, decided by the
-  coach when they switched the board on:
-
-    ranked  — a test or race piece. Fastest first, numbered, your row marked.
-    average — steady training. Nobody is ranked; instead the squad's averages
-              sit at the top and the names run alphabetically, so a UT2 row can
-              never be read as a league table.
+  Opened from the Workouts list in the Team tab. RANKED: fastest first,
+  numbered, your row marked. Every board is ranked now (owner, 2026-10-11 —
+  coachPlan.ts); the coach no longer picks the second shape, `average` (names
+  alphabetically under the squad's averages), so its branches below are never
+  reached by a board from teamBoard.teamWorkouts.
 
   And two ways to read either of them:
 

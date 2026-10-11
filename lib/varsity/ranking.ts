@@ -92,11 +92,10 @@ const within = (d: Date, span: Span) => {
 /* ── The erg ranking ────────────────────────────────────────────────────── */
 
 /**
- * The tests it is made of: the team workouts the coach flagged RANKED, rowed
- * on an erg, inside the window — oldest first, the order they are read in
- * across the screen. An "Everyone" board lists people alphabetically and
- * ranks nobody, so it hands out no places; a flagged session on the water is
- * a boat's split, not an erg score.
+ * The tests it is made of: the team workouts (every board is ranked since
+ * 2026-10-11), rowed on an erg, inside the window — oldest first, the order
+ * they are read in across the screen. A flagged session on the water is a
+ * boat's split, not an erg score.
  */
 export function ergTests(workouts: TeamWorkout[], span: Span): TeamWorkout[] {
   return workouts

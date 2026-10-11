@@ -148,7 +148,6 @@ const steps: TourStep[] = [
     // shares its results is left as it is).
     press: "coach-plan-team-on",
     anchor: "coach-plan-team",
-    alsoAnchor: "coach-plan-boards",
     group: "editor",
     title: "Share results",
     body: "Everyone logs their result, and it goes on one board under Workouts.",
