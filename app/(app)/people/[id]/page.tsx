@@ -303,7 +303,7 @@ function PersonProfile() {
                     {(user.residence || user.classYear) && (
                       <div className="mt-0.5 truncate text-[12.5px] text-muted">
                         {residenceLabel(user.residence ?? "")}
-                        {user.residence && user.classYear ? " · " : ""}
+                        {user.residence && user.classYear ? ", " : ""}
                         {user.classYear ? classOfLabel(user.classYear) : ""}
                       </div>
                     )}

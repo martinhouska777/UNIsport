@@ -159,7 +159,7 @@ export default function GroupSheet({
                           share > 0 ? `${share}% of the total` : "",
                         ]
                           .filter(Boolean)
-                          .join(" · ")}
+                          .join(", ")}
                       </div>
                     </div>
                     <div className="flex-shrink-0 text-right">

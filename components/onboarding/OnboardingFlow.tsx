@@ -70,6 +70,7 @@ import WeekHourGrid from "@/components/onboarding/WeekHourGrid";
 import SportPicker from "@/components/onboarding/SportPicker";
 import { subscribeToPush, sendTestNotification } from "@/lib/push/client";
 import { fileToDataUrl } from "@/lib/image";
+import { GAP } from "@/lib/gap";
 
 const activityIcons: Record<string, (p: { size?: number; className?: string }) => React.ReactNode> = {
   barbell: IconBarbell,
@@ -176,7 +177,7 @@ function chapterMeta(stepKey: string): {
   const chapter = onboardingChapters[i];
   const at = chapter.steps.indexOf(stepKey);
   return {
-    label: `${chapter.title} · ${i + 1} of ${onboardingChapters.length}`,
+    label: `${chapter.title}${GAP}${i + 1} of ${onboardingChapters.length}`,
     index: i,
     progress: (at + 1) / chapter.steps.length,
   };

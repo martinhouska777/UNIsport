@@ -375,7 +375,7 @@ export const studentStory: Beat[] = [
   */
   {
     id: "S1",
-    kicker: "01 · Match",
+    kicker: "01 Match",
     head: "Find training partners. Make friends.",
     sub: "Browse sorts everyone by how well you fit with them, based on interests, concentration, experience and hours.",
     shot: "02-match.webp",
@@ -389,7 +389,7 @@ export const studentStory: Beat[] = [
   },
   {
     id: "S2",
-    kicker: "02 · Plan",
+    kicker: "02 Plan",
     head: "Plan sessions easily in the chat.",
     sub: "You send a card with the gym, the day and the time, and once the other one accepts it goes to both calendars.",
     shot: "04-plan-a-session.webp",
@@ -402,7 +402,7 @@ export const studentStory: Beat[] = [
   },
   {
     id: "S3",
-    kicker: "03 · Profile",
+    kicker: "03 Profile",
     head: "Track your statistics. See how you do in the leaderboards.",
     sub: "Your profile counts the sessions you logged and the partners you trained with.",
     /* A plain phone screen, not a tall strip cut under Memories — "just how
@@ -417,7 +417,7 @@ export const studentStory: Beat[] = [
   },
   {
     id: "S4",
-    kicker: "04 · Gyms",
+    kicker: "04 Gyms",
     head: "See every gym on your campus in one place.",
     /* Only what the gym page really has. The equipment lists left it on
        2026-09-22, and "how busy" with them (owner: "just rating and opening
@@ -561,7 +561,7 @@ export const varsityStory: Beat[] = [
   */
   {
     id: "V1",
-    kicker: "01 · Training plan",
+    kicker: "01 Training plan",
     /* 2026-09-17: the owner's OWN heading and first sentences as the summary
        ("use words that I used before, I don't want slop there"), then the
        features. The full old paragraph is in git history. */
@@ -579,7 +579,7 @@ export const varsityStory: Beat[] = [
   },
   {
     id: "V2",
-    kicker: "02 · Log",
+    kicker: "02 Log",
     /* The capture is the (+) log sheet risen over the Calendar tab. */
     /* 2026-09-17: the owner's OWN heading and first sentences as the summary
        ("use words that I used before, I don't want slop there"), then the
@@ -596,7 +596,7 @@ export const varsityStory: Beat[] = [
   },
   {
     id: "V4",
-    kicker: "03 · Workouts",
+    kicker: "03 Workouts",
     /* The capture is DRIVEN, not a URL: Team → Workouts → tap the 2k test.
        scripts/landing/capture-light.mjs --only=15-varsity-board re-shoots it. */
     /* 2026-09-17: the owner's OWN heading and first sentences as the summary
@@ -614,7 +614,7 @@ export const varsityStory: Beat[] = [
   },
   {
     id: "V5",
-    kicker: "04 · Statistics",
+    kicker: "04 Statistics",
     /* 2026-09-17: the owner's OWN heading and first sentences as the summary
        ("use words that I used before, I don't want slop there"), then the
        features. The full old paragraph is in git history. */
@@ -1092,7 +1092,7 @@ export const coach = {
 
      Nothing here claims anything new: every step is the same screen, saying
      the same thing in the page's settled voice. */
-  badge: "UNIsport · for coaches & athletic departments",
+  badge: "UNIsport for coaches & athletic departments",
   /* NO LEAD-IN. It used to mirror the interlude's ("And if you are the one who
      runs the squad —"); the owner cut it on 2026-09-05. The badge already says
      who the section is for, and the headline says it again. */

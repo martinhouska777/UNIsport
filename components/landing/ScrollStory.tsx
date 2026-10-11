@@ -564,7 +564,7 @@ export default function ScrollStory({ id, beats, accent, ref }: Props) {
                           shots.current[i] = el;
                         }}
                         shot={`/landing/${b.shot}`}
-                        alt={`${b.kicker.replace(/^\S+\s·\s/, "")}: ${b.head}`}
+                        alt={`${b.kicker.replace(/^\S+\s/, "")}: ${b.head}`}
                         width={size.w}
                         height={size.h}
                         sizes="360px"

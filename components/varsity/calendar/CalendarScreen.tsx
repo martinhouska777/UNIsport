@@ -86,6 +86,7 @@ import {
   type DaysOut,
 } from "@/lib/varsity/daysOut";
 import { markColor } from "@/lib/colorMarks";
+import { GAP } from "@/lib/gap";
 
 const MONTHS = [
   "January", "February", "March", "April", "May", "June",
@@ -323,7 +324,7 @@ function DaySheet({
                       (l.minutes != null ? `${l.minutes} min` : null),
                   ]
                     .filter(Boolean)
-                    .join(" · ")
+                    .join(GAP)
                 : "";
             return (
               <button

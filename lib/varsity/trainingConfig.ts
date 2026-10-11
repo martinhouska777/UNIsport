@@ -242,10 +242,10 @@ export const paletteColors: string[] = [
 export type PresetEntry = { key: string; label: string; sub: string; build: () => TrainingConfig };
 
 export const presets: PresetEntry[] = [
-  { key: "rowing", label: "Rowing", sub: "Water · Erg · Weights, UT2 / UT1 / Hard", build: rowingPreset },
-  { key: "swimming", label: "Swimming", sub: "Pool · Dryland · Lift", build: () => clone(swimming) },
-  { key: "running", label: "Running", sub: "Run · Track · Lift", build: () => clone(running) },
-  { key: "team", label: "Team sport", sub: "Practice · Lift · Film", build: () => clone(teamSport) },
+  { key: "rowing", label: "Rowing", sub: "Water, Erg, Weights, UT2 / UT1 / Hard", build: rowingPreset },
+  { key: "swimming", label: "Swimming", sub: "Pool, Dryland, Lift", build: () => clone(swimming) },
+  { key: "running", label: "Running", sub: "Run, Track, Lift", build: () => clone(running) },
+  { key: "team", label: "Team sport", sub: "Practice, Lift, Film", build: () => clone(teamSport) },
   { key: "blank", label: "Start blank", sub: "Build every type yourself", build: () => clone(blank) },
 ];
 
@@ -318,7 +318,7 @@ export function configSessionColor(cfg: TrainingConfig, typeKey: string, zoneKey
 export function configSessionLabel(cfg: TrainingConfig, typeKey: string, zoneKey?: string): string {
   const t = findType(cfg, typeKey).label;
   const z = zoneKey ? findZone(cfg, zoneKey) : undefined;
-  return z ? `${t} · ${z.label}` : t;
+  return z ? `${t} ${z.label}` : t;
 }
 
 /* Turn a coach's typed name into a key that is safe to store forever. */

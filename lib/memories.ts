@@ -71,15 +71,15 @@ export type MemoryDay = {
 export function detailLine(log: WorkoutLog): string {
   if (log.activity === "running" || log.activity === "cardio") return metricsSummary(log);
   const muscles = logMuscles(log);
-  if (muscles.length) return muscles.join(" · ");
+  if (muscles.length) return muscles.join(", ");
   const names = log.exercises.map((e) => e.name.trim()).filter(Boolean);
-  return names.slice(0, 3).join(" · ");
+  return names.slice(0, 3).join(", ");
 }
 
 /** What you trained, in one line. */
 export function trainedLine(log: WorkoutLog): string {
   if (log.activity === "running" || log.activity === "cardio") {
-    return [activityLabel(log.activity), metricsSummary(log)].filter(Boolean).join(" · ");
+    return [activityLabel(log.activity), metricsSummary(log)].filter(Boolean).join(", ");
   }
   return detailLine(log) || activityLabel(log.activity);
 }
@@ -184,7 +184,7 @@ export function groupByDay(memories: Memory[], now: Date = new Date()): MemoryDa
   for (const day of days) {
     const seen: string[] = [];
     for (const m of day.memories) if (m.trained && !seen.includes(m.trained)) seen.push(m.trained);
-    day.trained = seen.join(" · ");
+    day.trained = seen.join(", ");
   }
   return days;
 }

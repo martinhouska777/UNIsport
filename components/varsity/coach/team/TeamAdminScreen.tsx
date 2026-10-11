@@ -271,7 +271,7 @@ export default function TeamAdminScreen({
           <ProfileCard
             name={me?.name ?? ""}
             photo={me?.photo ?? null}
-            subline={`${membership.teamName} · ${roleLabel[role]}`}
+            subline={`${membership.teamName}, ${roleLabel[role]}`}
             href="/varsity/profile"
           />
 
@@ -377,9 +377,9 @@ export default function TeamAdminScreen({
               <span className={`text-[12px] font-semibold ${s.tone}`}>{s.text}</span>
             </span>
             <span className="mt-0.5 block truncate text-[13px] text-muted">
-              {i.emailLock ? `${i.emailLock} · ` : ""}
+              {i.emailLock ? `${i.emailLock}, ` : ""}
               {i.uses}/{i.maxUses} joined
-              {state === "live" ? ` · ${expiryLabel(i.expiresAt)}` : ""}
+              {state === "live" ? `, ${expiryLabel(i.expiresAt)}` : ""}
             </span>
           </span>
           {state === "live" && (
@@ -435,7 +435,7 @@ export default function TeamAdminScreen({
                       <span className="block truncate text-[15px] text-text">{m.name}</span>
                       <span className="mt-0.5 block truncate text-[13px] text-muted">
                         {m.email}
-                        {m.inviteLabel ? ` · via ${m.inviteLabel}` : ""}
+                        {m.inviteLabel ? `, via ${m.inviteLabel}` : ""}
                       </span>
                     </span>
                     <button
@@ -574,7 +574,7 @@ export default function TeamAdminScreen({
                         {roleLabel[m.role]}
                       </span>
                     )}
-                    {m.email ? `${picker ? "" : " · "}${m.email}` : ""}
+                    {m.email ? `${picker ? "" : ", "}${m.email}` : ""}
                   </span>
                 </>
               );

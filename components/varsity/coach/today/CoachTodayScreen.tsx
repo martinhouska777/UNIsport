@@ -66,10 +66,10 @@ function LineupPill({ slot }: { slot: TodaySlot }) {
       }`}
     >
       <span className={`h-1.5 w-1.5 rounded-full ${live ? "bg-success" : "bg-warn"}`} />
-      {live ? "Published" : "Draft"} · {l.boats} {l.boats === 1 ? "boat" : "boats"}
+      {live ? "Published" : "Draft"}, {l.boats} {l.boats === 1 ? "boat" : "boats"}
       {l.seats > 0 && (
         <span className="font-normal opacity-80">
-          · {l.filled}/{l.seats}
+          , {l.filled}/{l.seats}
         </span>
       )}
     </span>
@@ -177,7 +177,7 @@ function DaySection({ day, tour }: { day: TodayDay; tour?: string }) {
             /* The word alone (owner, 2026-09-21). "the squad can't see it" is
                what draft MEANS, and the Plan tab's chip has said it in one
                word all along. */
-            <span className="text-warn"> · draft</span>
+            <span className="ml-1.5 text-warn">draft</span>
           )}
         </div>
       ) : (

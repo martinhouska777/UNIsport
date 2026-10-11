@@ -46,6 +46,7 @@ import { rowingCategories, logCategoryColor, logCategoryLabel } from "@/lib/vars
 import { consistencyOf, expectedDays, planSlots, trainedDays, type Span } from "@/lib/varsity/athleteStats";
 import { dayOutReasons, dayOutName, countDaysOut, type DaysOut } from "@/lib/varsity/daysOut";
 import { recoverySummary, scoreQuestions, type CheckIns } from "@/lib/varsity/checkIn";
+import { GAP } from "@/lib/gap";
 
 /* A number on the screen. `tone` is the only styling this file decides, and it
    decides it as a word — the screen maps it to a theme token (rule 1). */
@@ -503,7 +504,7 @@ export function bucketDetail(logs: LogEntry[], units: Units): BucketDetail {
     return {
       key: l.id,
       title: l.title || (l.category ?? "Session"),
-      sub: bits.join(" · "),
+      sub: bits.join(GAP),
       color: logCategoryColor[cat],
     };
   });

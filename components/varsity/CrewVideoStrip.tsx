@@ -30,6 +30,7 @@ import {
   deleteCrewVideo,
   fetchBoatVideos,
   suggestedNameFor,
+  titleText,
   uploadCrewVideo,
   videoBoatName,
   videoSrc,
@@ -140,7 +141,7 @@ function VideoSheet({
   }, [preview, canRemove, video.externalUrl]);
 
   return (
-    <Sheet title={video.title} onClose={onClose}>
+    <Sheet title={titleText(video.title)} onClose={onClose}>
       {preview ? (
         <>
           {/* The way to the video that always works. Drive is also where the
@@ -159,7 +160,7 @@ function VideoSheet({
           {playHere ? (
             <iframe
               src={preview}
-              title={video.title}
+              title={titleText(video.title)}
               allow="autoplay; fullscreen"
               allowFullScreen
               className="mt-2 aspect-video w-full rounded-xl border-0 bg-black"
@@ -356,7 +357,7 @@ export default function CrewVideoStrip({ dayKey, boat }: { dayKey: string; boat:
       <div className="flex items-center gap-2 text-muted">
         <IconVideo size={14} />
         <span className="flex-1 text-left text-[11px] font-semibold uppercase tracking-[0.12em]">
-          Video{videos.length ? ` · ${videos.length}` : ""}
+          Video{videos.length ? ` (${videos.length})` : ""}
         </span>
       </div>
 
@@ -373,7 +374,7 @@ export default function CrewVideoStrip({ dayKey, boat }: { dayKey: string; boat:
                 <IconPlay size={12} />
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-[12px] font-medium text-text">{v.title}</span>
+                <span className="block truncate text-[12px] font-medium text-text">{titleText(v.title)}</span>
                 <span className="block text-[11px] text-muted">{v.crew.length} in the boat</span>
               </span>
             </button>

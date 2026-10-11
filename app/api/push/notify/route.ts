@@ -181,7 +181,7 @@ export async function POST(request: Request) {
        a line about them (their sport, their gym) when the caller knows one. */
     follow: {
       title: who,
-      body: preview ? `started following you · ${clip(preview)}` : "started following you",
+      body: preview ? `started following you, ${clip(preview)}` : "started following you",
       url: `/people/${user.id}`,
     },
     /* "Did you train with Sam today?" — a question, because it is one: the
@@ -189,9 +189,7 @@ export async function POST(request: Request) {
        where the Yes / No card sits at the top. */
     partner: {
       title: `Did you train with ${who} today?`,
-      body: preview
-        ? `${clip(preview)} · Confirm it and it goes on your calendar too`
-        : "Confirm it and the session goes on your calendar too",
+      body: preview ? clip(preview) : "",
       url: "/profile",
     },
     // Everything that happens to a plan AFTER the invite: accepted, declined,

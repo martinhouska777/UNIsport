@@ -76,7 +76,7 @@ export default function JoinPage() {
 
   if (invite && !showCode) {
     return (
-      <JoinShell badge={invite.house ? `${invite.house} · ${invite.school}` : invite.school}>
+      <JoinShell badge={invite.house ? `${invite.house}, ${invite.school}` : invite.school}>
         <h1 className="font-display text-3xl text-l-text">
           {invite.house ? `Join ${invite.house} on UNIsport` : `Join UNIsport at ${invite.school}`}
         </h1>

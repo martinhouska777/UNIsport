@@ -46,7 +46,7 @@ export default function Flashback({
   if (!first) return null;
 
   const what = `${first.activity}${first.partner ? ` with ${first.partner}` : ""}`;
-  const more = [first.detail, first.gym].filter(Boolean).join(" · ");
+  const more = [first.detail, first.gym].filter(Boolean).join(", ");
 
   return (
     <section className="mx-3.5 mt-3 rounded-2xl border border-primary/30 bg-primary-tint p-3">

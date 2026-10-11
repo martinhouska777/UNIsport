@@ -30,10 +30,10 @@ import { crewNames, type Lineup } from "@/lib/varsity/home";
 import { fetchOutOn } from "@/lib/varsity/availabilityStore";
 import OutOfBoatsCard, { outPeople, type OutPerson } from "@/components/varsity/OutOfBoatsCard";
 
-/* "Fri · 4 Sep" — the same shape the day detail on Home uses. */
+/* "Fri, 4 Sep" — the same shape the day detail on Home uses. */
 function dateLabel(iso: string): string {
   const d = parseDate(iso);
-  return `${d.toLocaleDateString("en-US", { weekday: "short" })} · ${d.toLocaleDateString(
+  return `${d.toLocaleDateString("en-US", { weekday: "short" })}, ${d.toLocaleDateString(
     "en-US",
     { day: "numeric", month: "short" },
   )}`;

@@ -2247,7 +2247,7 @@ function Builder({
                   Athlete Pool
                 </span>
                 <span className="rounded-full border border-border bg-surface px-2 py-0.5 text-[11px] text-muted">
-                  {available.length} available · {unavailable.length} out
+                  {available.length} available, {unavailable.length} out
                 </span>
               </div>
 

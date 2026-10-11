@@ -339,7 +339,7 @@ function LogEditor({
       if (result.totalMinutes != null) bits.push(minutesToClock(result.totalMinutes));
       if (result.strokeRate != null) bits.push(`r${result.strokeRate}`);
       if (result.avgWatts != null) bits.push(`${result.avgWatts}W`);
-      if (bits.length) setNote((prev) => [bits.join(" · "), prev].filter(Boolean).join(" · "));
+      if (bits.length) setNote((prev) => [bits.join(" "), prev].filter(Boolean).join(", "));
       setScanFilled(true);
       // A sure read needs no words beyond "Done" (drawn below). An unsure one
       // keeps its warning instead: that is something the rower has to act on.
@@ -566,7 +566,7 @@ function LogEditor({
                 </div>
                 <div className="mt-1 flex items-center gap-1 text-[12px] text-muted">
                   <IconClock size={12} /> {state.session.time}
-                  {state.session.location && ` · ${state.session.location}`}
+                  {state.session.location && `, ${state.session.location}`}
                 </div>
                 {/* No "Team workout" line here any more (owner, 2026-10-11:
                     "just the log session … cross that"). */}

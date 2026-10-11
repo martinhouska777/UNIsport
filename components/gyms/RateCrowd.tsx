@@ -136,7 +136,7 @@ export function CrowdChip({ crowd }: { crowd: GymCrowd | null }) {
       aria-label={summary}
     >
       <IconUser size={12} /> {crowdLabel(crowd.level)}
-      <span className="text-text-3">· {crowdPeople(crowd)}</span>
+      <span className="text-text-3">, {crowdPeople(crowd)}</span>
     </span>
   );
 }

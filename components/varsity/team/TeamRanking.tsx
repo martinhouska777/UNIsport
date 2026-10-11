@@ -242,7 +242,7 @@ function SeatRaceList({
   return (
     <div className={`${CARD} p-2.5`}>
       {sessions.map((d, i) => {
-        const half = days.filter((x) => x === days[i]).length > 1 ? ` · ${d.dayKey.slice(-2)}` : "";
+        const half = days.filter((x) => x === days[i]).length > 1 ? ` ${d.dayKey.slice(-2)}` : "";
         return (
           <div key={d.dayKey} className={i > 0 ? "mt-2" : ""}>
             <button
@@ -482,7 +482,7 @@ function labelRuns(runs: SessionRun[], words: (dayKey: string) => string): Run[]
       col,
       day: dayLabel(r.date),
       half: shared ? r.period : undefined,
-      when: `${dayKeyLabel(r.dayKey)} · ${r.period}`,
+      when: `${dayKeyLabel(r.dayKey)} ${r.period}`,
       words: all,
       short: withoutRest(all),
     };
@@ -692,7 +692,7 @@ export default function TeamRanking({
                 </span>
                 <span className="truncate">{rowerRecord.name}</span>
                 <span className="flex-shrink-0 tabular-nums opacity-70">
-                  · {rowerRecord.won}–{rowerRecord.lost}
+                  {rowerRecord.won}–{rowerRecord.lost}
                 </span>
               </button>
               <button

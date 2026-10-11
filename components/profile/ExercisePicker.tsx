@@ -94,7 +94,7 @@ export default function ExercisePicker({
               className="mb-4 flex w-full items-center gap-3 rounded-2xl border border-dashed border-primary-line bg-surface px-3.5 py-3 text-left active:bg-surface-2"
             >
               <span className="min-w-0 flex-1 truncate text-[15px] font-medium text-text">
-                Add “{typed}”{muscle ? ` · ${muscle}` : ""}
+                Add “{typed}”{muscle ? ` (${muscle})` : ""}
               </span>
               <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary-tint text-primary">
                 <IconPlus size={16} />

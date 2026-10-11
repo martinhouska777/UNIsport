@@ -209,8 +209,8 @@ export default function ChannelThread({
                   <div className="mb-1 flex items-baseline gap-1.5">
                     <span className="text-[12px] font-medium text-text">{m.senderName || "Member"}</span>
                     <span className="text-[11px] text-muted">
-                      {[m.senderResidence, m.senderClassYear].filter(Boolean).join(" · ")}
-                      {(m.senderResidence || m.senderClassYear) ? " · " : ""}
+                      {[m.senderResidence, m.senderClassYear].filter(Boolean).join(", ")}
+                      {(m.senderResidence || m.senderClassYear) ? ", " : ""}
                       {clockTime(m.createdAt)}
                     </span>
                   </div>

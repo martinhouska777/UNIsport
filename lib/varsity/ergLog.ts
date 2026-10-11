@@ -3,7 +3,7 @@
   and which PIECE it was, so it is only ever compared with the same piece.
   ---------------------------------------------------------------------------
   A scan writes the exact time, rate and watts to the front of the note
-  ("18:42 · r24 · 250W", LogScreen → applyScan), because the form has no field
+  ("18:42 r24 250W", LogScreen → applyScan), because the form has no field
   for them. `ergNote` takes those back out and hands over what the rower wrote
   themselves.
 
@@ -24,6 +24,14 @@ const TIME = /^\d{1,3}:\d{2}$/;
 const RATE = /^r(\d{1,2})$/i;
 const WATTS = /^(\d{2,4})W$/;
 
+/*
+  One of the scanner's numbers at the front of the note, and what follows it.
+  Since 2026-10-11 a scan writes "18:42 r24 250W, own words" (the owner: no
+  dots between words); notes saved before then read "18:42 · r24 · 250W · own
+  words", so a "·", a comma or a plain space all end a number.
+*/
+const LEAD = /^(\S+?)(?:\s*[·,]\s*|\s+|$)/;
+
 /* The scanner's numbers at the front of the note, and the rower's own words. */
 export function ergNote(note: string): {
   time: string | null;
@@ -31,19 +39,21 @@ export function ergNote(note: string): {
   watts: string | null;
   own: string;
 } {
-  const parts = note.split(" · ");
+  let rest = note.trim();
   let time: string | null = null;
   let rate: string | null = null;
   let watts: string | null = null;
-  let i = 0;
-  for (; i < parts.length; i++) {
-    const p = parts[i].trim();
+  for (;;) {
+    const m = rest.match(LEAD);
+    if (!m || !m[1]) break;
+    const p = m[1];
     if (TIME.test(p)) time ??= p;
     else if (RATE.test(p)) rate ??= p.match(RATE)![1];
     else if (WATTS.test(p)) watts ??= p.match(WATTS)![1];
     else break;
+    rest = rest.slice(m[0].length);
   }
-  return { time, rate, watts, own: parts.slice(i).join(" · ").trim() };
+  return { time, rate, watts, own: rest.trim() };
 }
 
 const clockToSec = (clock: string) => {

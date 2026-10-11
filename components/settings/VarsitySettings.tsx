@@ -79,9 +79,9 @@ export default function VarsitySettings() {
     setSaveState(error ? "error" : "saved");
   };
 
-  // "Rower · Starboard", "Coxswain", or "Rower" until a side is picked.
+  // "Rower, Starboard", "Coxswain", or "Rower" until a side is picked.
   const side = profile ? sideLabel(profile.boatRole, profile.side) : null;
-  const rowingDetail = profile ? (side ? `${profile.boatRole} · ${side}` : profile.boatRole) : undefined;
+  const rowingDetail = profile ? (side ? `${profile.boatRole}, ${side}` : profile.boatRole) : undefined;
 
   return (
     <>
@@ -91,7 +91,7 @@ export default function VarsitySettings() {
         <ProfileCard
           name={bundle?.name ?? ""}
           photo={bundle?.photo ?? null}
-          subline={membership && role ? `${membership.teamName} · ${roleLabel[role]}` : ""}
+          subline={membership && role ? `${membership.teamName}, ${roleLabel[role]}` : ""}
           href="/varsity/profile"
         />
 

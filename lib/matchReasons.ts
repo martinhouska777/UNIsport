@@ -411,7 +411,7 @@ export function whereWhenLine(m: Match): string | null {
   const gym = m.facts.gym ?? m.theirs.gym;
   const when = (m.breakdown.schedule ?? 0) > 0 ? "trains when you do" : null;
   const parts = [gym, when].filter(Boolean);
-  return parts.length > 0 ? parts.join(" · ") : null;
+  return parts.length > 0 ? parts.join(", ") : null;
 }
 
 /* ══════════════════════  what a RESULT CARD shows  ══════════════════════ */

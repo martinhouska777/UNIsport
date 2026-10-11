@@ -273,15 +273,15 @@ export function sessionPieces(s: Session): string {
 export function isTwoKTest(s: Session): boolean {
   return s.category === "erg" && /^\s*2\s*(k|000\s*m)\b/i.test(s.description);
 }
-/** sessionLabel, except a 2K test reads "Erg · 2K". */
+/** sessionLabel, except a 2K test reads "Erg 2K". */
 export function workoutLabel(s: Session): string {
-  return isTwoKTest(s) ? `${categoryMeta.erg.label} · 2K` : sessionLabel(s);
+  return isTwoKTest(s) ? `${categoryMeta.erg.label} 2K` : sessionLabel(s);
 }
 
 export function sessionLabel(s: Session): string {
   const cat = categoryMeta[s.category as Category]?.label ?? s.category;
   if (!s.intensity) return cat;
-  return `${cat} · ${intensityMeta[s.intensity as Intensity]?.label ?? s.intensity}`;
+  return `${cat} ${intensityMeta[s.intensity as Intensity]?.label ?? s.intensity}`;
 }
 
 /*
@@ -311,7 +311,7 @@ export function logLabel(
   planned?: Session,
 ): string {
   const { kind, intensity } = logLabelParts(log, planned);
-  return intensity ? `${kind} · ${intensity}` : kind;
+  return intensity ? `${kind} ${intensity}` : kind;
 }
 
 /*
@@ -446,7 +446,7 @@ export function blockRangeLabel(block: Block): string {
   // The same Mon–Sun weeks the chips draw: a Wed→Tue block is two of them, not
   // one, so counting elapsed days here used to disagree with the row above it.
   const weeks = buildWeeks(block).length || 1;
-  return `${MO[s.getMonth()]} ${s.getDate()} – ${MO[e.getMonth()]} ${e.getDate()}, ${e.getFullYear()} · ${weeks} ${weeks === 1 ? "week" : "weeks"}`;
+  return `${MO[s.getMonth()]} ${s.getDate()} – ${MO[e.getMonth()]} ${e.getDate()}, ${e.getFullYear()} (${weeks} ${weeks === 1 ? "week" : "weeks"})`;
 }
 
 // Days until the race — for the block's countdown. Null with no race date, and

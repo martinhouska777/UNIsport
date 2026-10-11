@@ -235,7 +235,7 @@ export default function WorkoutBoard({
             {/* A worked example says it is one (audit, 2026-09-27). */}
             {example && <ExampleTag />}
             <span className="ml-auto text-[11px] text-muted">
-              {workout.dateLabel} · {workout.period}
+              {workout.dateLabel} {workout.period}
             </span>
           </div>
           {/* A 2K test is already named "Erg · 2K" — no "2k test" under it. */}

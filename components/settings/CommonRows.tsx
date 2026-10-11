@@ -34,7 +34,7 @@ export function AppRows() {
       />
       {/* Units — what the app SHOWS, not what it stores: everything is kept in
           metres and kilograms underneath (lib/varsity/units.ts). */}
-      <DropdownRow icon={<IconRuler size={20} />} label="Units" detail={`${units.distance} · ${units.weight}`}>
+      <DropdownRow icon={<IconRuler size={20} />} label="Units" detail={`${units.distance}, ${units.weight}`}>
         <ChoiceRow
           label="Distance"
           options={unitPills(distanceOptions)}

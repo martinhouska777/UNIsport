@@ -196,7 +196,7 @@ export default function WorkoutDetail({
           <div className="mt-1 flex items-center gap-1.5 text-[12px] text-muted">
             <IconClock size={13} />
             {dateLabel}
-            {current.period && ` · ${current.period}`}
+            {current.period && ` ${current.period}`}
           </div>
 
           {/* Erg logs get their four numbers in one row; everything else gets tiles. */}

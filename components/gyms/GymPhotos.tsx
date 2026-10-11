@@ -67,7 +67,7 @@ export default function GymPhotos({ photos, onAdd, onRemove }: Props) {
             } ${busy ? "opacity-60" : ""}`}
           >
             <IconCamera size={20} />
-            {busy ? "Adding…" : failed ? "Didn’t upload · try again" : "Add a photo"}
+            {busy ? "Adding…" : failed ? "Didn’t upload, try again" : "Add a photo"}
           </button>
           <input
             ref={fileRef}
@@ -91,7 +91,7 @@ export default function GymPhotos({ photos, onAdd, onRemove }: Props) {
             {p.mine && (
               <button
                 type="button"
-                aria-label={stuck === p.id ? "Not removed · try again" : "Remove your photo"}
+                aria-label={stuck === p.id ? "Not removed, try again" : "Remove your photo"}
                 onClick={() => void remove(p)}
                 className="tap44 press-icon absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-background/70 text-text backdrop-blur"
               >

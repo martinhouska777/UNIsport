@@ -130,7 +130,7 @@ function AthleteSheet({
   const [calendarOpen, setCalendarOpen] = useState(false);
   const card = view.kind === "card" ? view : null;
   const p = card?.profile ?? null;
-  const classLine = card ? [card.classYear, p!.teamYear].filter(Boolean).join(" · ") : "";
+  const classLine = card ? [card.classYear, p!.teamYear].filter(Boolean).join(", ") : "";
   const status = p ? statusOptions.find((s) => s.title === p.status) : undefined;
   const bests = p ? prPieces.filter((piece) => (p.prs[piece] ?? "").trim()) : [];
 

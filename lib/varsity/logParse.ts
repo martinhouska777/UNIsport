@@ -11,6 +11,7 @@
   are rough starting points — easy to refine once we have real squad values.
 */
 import type { Session } from "./coachPlan";
+import { GAP } from "@/lib/gap";
 
 // Default pace (seconds per 500 m) used only to estimate the missing value.
 export const DEFAULT_SPLIT_SEC: Record<string, number> = {
@@ -89,5 +90,5 @@ export function formatMetrics(
   if (minutes != null) parts.push(`${minutes} min`);
   if (metres != null) parts.push(`${metres.toLocaleString("en-US")} m`);
   if (split && split.trim()) parts.push(split.trim());
-  return parts.join(" · ");
+  return parts.join(GAP);
 }

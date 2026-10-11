@@ -88,7 +88,7 @@ export default function SwitchSheet({
   }
 
   return (
-    <Sheet full title={`${piece.name} · switch`} onClose={onClose}>
+    <Sheet full title={`${piece.name} switch`} onClose={onClose}>
       {made.length > 0 && (
         <div className="mb-1 flex justify-end">
           <button

@@ -136,10 +136,10 @@ function intensityOf(session: Session | undefined): { color: string; word: strin
   return { color: kindColor[kind], word: legend.label };
 }
 
-/** "Fri 15 May · AM" for an outing's session key. */
+/** "Fri 15 May AM" for an outing's session key. */
 function outingDateLabel(dayKey: string): string {
   const parsed = parseSessionKey(dayKey);
-  return `${dayKeyLabel(dayKey)}${parsed ? ` · ${parsed.period}` : ""}`;
+  return `${dayKeyLabel(dayKey)}${parsed ? ` ${parsed.period}` : ""}`;
 }
 
 /*

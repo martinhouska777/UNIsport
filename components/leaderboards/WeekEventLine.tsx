@@ -57,7 +57,7 @@ export function EventLine({
   // "0/1" for a one-part event; "2/3 lifts · 1/2 cardio" for a route with several.
   const tally = route
     .map((p) => `${Math.min(have[p.metric] ?? 0, partTarget(event, p))}/${partTarget(event, p)}${route.length > 1 ? ` ${p.unit}` : ""}`)
-    .join(" · ");
+    .join(", ");
 
   return (
     <div
@@ -75,7 +75,7 @@ export function EventLine({
         <div className="flex items-baseline gap-1.5 text-[13px]">
           <span className="truncate font-medium text-text">{event.title}</span>
           <span className="flex-shrink-0 tabular-nums text-muted">
-            · {counts === undefined ? "…" : tally} · {done ? `done · +${event.points} pts` : ends}
+            {counts === undefined ? "…" : tally}, {done ? `done, +${event.points} pts` : ends}
           </span>
         </div>
         <div className="mt-1 h-1 overflow-hidden rounded-sm bg-border">

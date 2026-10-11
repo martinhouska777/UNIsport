@@ -30,8 +30,8 @@ export default function GoingLine({
   const text = (
     <>
       <span className="font-medium text-primary">{going.headline}</span>
-      {going.times && <span className="text-text-2"> · {going.times}</span>}
-      {going.more > 0 && <span className="text-text-3"> · +{going.more} more</span>}
+      {going.times && <span className="text-text-2">, {going.times}</span>}
+      {going.more > 0 && <span className="text-text-3">, +{going.more} more</span>}
     </>
   );
 

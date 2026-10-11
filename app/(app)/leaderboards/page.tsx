@@ -290,7 +290,7 @@ function personDetail(row: LeaderRow, competition: CompetitionKey): string | und
   return (
     [row.residence ? residenceLabel(row.residence) : "", row.classYear ?? ""]
       .filter(Boolean)
-      .join(" · ") || undefined
+      .join(", ") || undefined
   );
 }
 

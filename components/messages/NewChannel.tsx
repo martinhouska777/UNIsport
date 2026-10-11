@@ -252,7 +252,7 @@ export function AddMembers({
               const on = isPicked(p.id);
               const sub = [p.residence ? residenceLabel(p.residence) : null, p.classYear]
                 .filter(Boolean)
-                .join(" · ");
+                .join(", ");
               return (
                 <button
                   key={p.id}

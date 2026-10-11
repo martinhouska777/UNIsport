@@ -20,17 +20,18 @@
 import type { LogEntry } from "./logStore";
 import { formatMetrics } from "./logParse";
 import { ergNote } from "./ergLog";
+import { GAP } from "@/lib/gap";
 
 export function loggedLine(l: LogEntry): string {
   const min = l.minutes != null ? `${l.minutes} min` : null;
   const metres = l.metres != null ? `${l.metres.toLocaleString("en-US")} m` : null;
   switch (l.category) {
     case "water":
-      return [min, metres].filter(Boolean).join(" · ");
+      return [min, metres].filter(Boolean).join(GAP);
     case "weights":
       return min ?? "";
     case "erg":
-      return [ergNote(l.note).time ?? min, metres, l.split?.trim() || null].filter(Boolean).join(" · ");
+      return [ergNote(l.note).time ?? min, metres, l.split?.trim() || null].filter(Boolean).join(GAP);
     default:
       return formatMetrics(l.minutes, l.metres, l.split);
   }

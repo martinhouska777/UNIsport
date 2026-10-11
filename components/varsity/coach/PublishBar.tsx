@@ -80,7 +80,7 @@ export default function PublishBar({
   full?: boolean;
 }) {
   const edited = live && changed;
-  const title = !live ? "Draft" : edited ? "Live · edited" : "Live";
+  const title = !live ? "Draft" : edited ? "Live, edited" : "Live";
   // The one button there is: Publish for a draft or an edited live one,
   // Unpublish for a live one nobody has touched.
   const publish = !live || edited;

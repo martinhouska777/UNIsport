@@ -127,7 +127,7 @@ export async function GET(request: Request) {
     const what = ACTIVITY[a.plan.activity] ?? "Session";
     const result = await sendToSubscriptions(devices, {
       title: `Did you train with ${otherName}?`,
-      body: a.plan.place ? `${what} · ${a.plan.place}` : what,
+      body: a.plan.place ? `${what} at ${a.plan.place}` : what,
       url: "/profile",
     });
     sent += result.sent;

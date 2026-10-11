@@ -148,13 +148,13 @@ export default function GymProfile({ gym }: { gym: Gym }) {
                     <div className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1 text-[13px] text-text">
                       <span className="max-w-full truncate">
                         {p.authorName}
-                        {p.mine && <span className="text-muted"> · your post</span>}
+                        {p.mine && <span className="text-muted"> (you)</span>}
                       </span>
                       {!p.mine && <HookChip hook={hookFor(p.authorId)} />}
                     </div>
                     <div className="text-[11px] text-muted">
                       {focusLabel(p.focus)}
-                      {p.date ? ` · ${dateLabel(p.date)}` : ""} · {postWhenLabel(p.hour, p.timeOfDay)}
+                      {p.date ? `, ${dateLabel(p.date)}` : ","} {postWhenLabel(p.hour, p.timeOfDay)}
                     </div>
                   </div>
                 </li>

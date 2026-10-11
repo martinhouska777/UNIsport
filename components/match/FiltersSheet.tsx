@@ -329,7 +329,7 @@ export default function FiltersSheet({
             <>
               {myConcentration && (
                 <MineButton
-                  label={`Same as mine · ${myConcentration}`}
+                  label={`Same as mine (${myConcentration})`}
                   active={draft.concentration === myConcentration}
                   onClick={() =>
                     set({

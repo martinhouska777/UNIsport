@@ -296,7 +296,7 @@ function boatToLineup(
   return {
     // The display string, kept honest: the dock field only joins it when it
     // really holds a push-off time (older lineups wrote a BOATHOUSE there).
-    period: `${period} · ${boat.name}${isPushOffTime(boat.dock) ? ` · ${boat.dock.trim()}` : ""}`,
+    period: `${period}, ${boat.name}${isPushOffTime(boat.dock) ? `, ${boat.dock.trim()}` : ""}`,
     periodKey: period === "PM" ? "PM" : "AM",
     type: boatTypeName(boat.badge),
     // The seat number is its POSITION in the boat (bow is 1), not whatever the

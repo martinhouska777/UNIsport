@@ -23,6 +23,7 @@ import {
   type DistanceUnit,
   type Units,
 } from "./units";
+import { GAP } from "@/lib/gap";
 
 /* ── Distance ─────────────────────────────────────────────────────────────── */
 
@@ -95,7 +96,7 @@ export function boatWorkSummary(boat: Boat, units: Units): string | null {
   const bits: string[] = [];
   if (boat.metres) bits.push(formatDistance(boat.metres, units.distance));
   if (boat.minutes) bits.push(formatDuration(boat.minutes));
-  return bits.length ? bits.join(" · ") : null;
+  return bits.length ? bits.join(GAP) : null;
 }
 
 /** Has anyone said what this boat did? */

@@ -117,6 +117,7 @@ import {
   type TeamBucket,
   type TeamRange,
 } from "@/lib/varsity/teamStats";
+import { GAP } from "@/lib/gap";
 
 /* ONE frozen empty map, shared. A fresh `{}` per render would be a new
    dependency every render, and the whole window would be rebuilt each time. */
@@ -375,7 +376,7 @@ export default function TeamStatsScreen({ onClose }: { onClose: () => void }) {
               {buckets.length > 0 && (
                 <div className="mt-0.5 flex items-center gap-1.5 truncate text-[11px] text-muted">
                   <IconCalendar size={11} />
-                  {windowLabel(buckets)} · {each} by {each}
+                  {windowLabel(buckets)}
                 </div>
               )}
             </div>
@@ -594,7 +595,7 @@ function ReadOut({ bucket, each, units }: { bucket: TeamBucket; each: "day" | "w
               </span>
               <span className="flex-shrink-0 tabular-nums text-muted">
                 {b.metres ? formatDistance(b.metres, units.distance) : ""}
-                {b.metres && b.minutes ? " · " : ""}
+                {b.metres && b.minutes ? GAP : ""}
                 {b.minutes ? formatDuration(b.minutes) : ""}
               </span>
             </div>

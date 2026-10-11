@@ -90,6 +90,7 @@ import {
   hasRecovery,
 } from "@/lib/varsity/checkIn";
 import { markColor } from "@/lib/colorMarks";
+import { GAP } from "@/lib/gap";
 
 /* A word from the data → a theme token. The data never names a colour. */
 const toneClass: Record<StatTone, string> = {
@@ -395,7 +396,7 @@ export default function StatsFullScreen({
                             detail.minutes > 0 ? formatDuration(Math.round(detail.minutes)) : null,
                           ]
                             .filter(Boolean)
-                            .join(" · ")
+                            .join(GAP)
                         : "nothing logged"}
                   </span>
                 </div>
@@ -450,7 +451,7 @@ export default function StatsFullScreen({
                             `${c.sessions}×`,
                           ]
                             .filter(Boolean)
-                            .join(" · ")}
+                            .join(GAP)}
                         </span>
                       </div>
                     ))}

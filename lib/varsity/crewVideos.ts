@@ -105,15 +105,18 @@ export function videoTitle(dayKey: string, boat: Boat, note = ""): string {
   const stroke = strokeName(crewFromBoat(boat));
   const boatBit = [boat.name.trim(), boat.badge].filter(Boolean).join(" ");
   return [
-    dayKeyLabel(dayKey),
-    period,
+    [dayKeyLabel(dayKey), period].filter(Boolean).join(" "),
     boatBit,
     stroke ? `stroke ${lastName(stroke)}` : "",
     note.trim(),
   ]
     .filter(Boolean)
-    .join(" · ");
+    .join(", ");
 }
+
+/* A title as it reads on screen. Titles saved before 2026-10-11 were joined
+   with "·" (the owner: no dots between words), so those read with commas too. */
+export const titleText = (title: string) => title.replace(/ · /g, ", ");
 
 /* Nothing in a name that a drive, a phone or a URL would argue with. */
 const safeName = (s: string) => s.replace(/[\\/:*?"<>|]/g, "-").trim();
@@ -169,7 +172,7 @@ const WORKOUT_IN_NAME = 40;
 
 export function videoSuggestedName(boat: Boat, workout = ""): string {
   const words = workout.trim().slice(0, WORKOUT_IN_NAME).trim();
-  return safeName([videoBoatName(boat), words].filter(Boolean).join(" · "));
+  return safeName([videoBoatName(boat), words].filter(Boolean).join(", "));
 }
 
 /*

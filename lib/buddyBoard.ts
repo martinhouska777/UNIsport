@@ -155,9 +155,10 @@ export function postsForSearch<P extends SearchablePost>(
 export function timeSearchLabel(s: TimeSearch): string {
   const activity =
     s.activity === "other" ? null : primaryActivities.find((a) => a.key === s.activity)?.label;
-  return [activity, dateLabel(s.date), s.hour === null ? null : sessionTimeLabel(s.hour), s.gym]
+  const when = [dateLabel(s.date), s.hour === null ? null : sessionTimeLabel(s.hour)].filter(Boolean).join(" ");
+  return [activity, when, s.gym]
     .filter(Boolean)
-    .join(" · ");
+    .join(", ");
 }
 
 /*

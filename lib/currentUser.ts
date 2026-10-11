@@ -96,7 +96,7 @@ export const currentUser: CurrentUser = {
     level: "Advanced",
     type: "Powerlifting",
     split: "Push-Pull-Legs",
-    schedule: "Mon · Wed · Fri",
+    schedule: "Mon, Wed, Fri",
     gym: "Malkin Athletic Center",
   },
   personalRecords: [
@@ -140,7 +140,7 @@ function scheduleSummary(sched: Record<string, string[]>): string {
   const days = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
     .filter((d) => sched?.[d]?.length)
     .map((d) => DAY_LABELS[d]);
-  return days.length ? days.join(" · ") : "—";
+  return days.length ? days.join(", ") : "—";
 }
 
 // The human-readable Training rows, derived from a user's onboarding answers.

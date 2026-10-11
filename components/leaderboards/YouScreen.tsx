@@ -126,7 +126,7 @@ function FriendRow({ row, onOpen }: { row: LeaderRow; onOpen: () => void }) {
       row.classYear ? classYearLabel(row.classYear) : "",
     ]
       .filter(Boolean)
-      .join(" · ") || "—";
+      .join(", ") || "—";
 
   return (
     <button
@@ -222,7 +222,7 @@ export default function YouScreen({
         <div className="min-w-0">
           <h1 className="truncate text-base font-medium text-text">You</h1>
           <div className="truncate text-[11px] text-muted">
-            {hasPoints ? pointsLabel(standing.points) : "0 pts"} · {periodLabel.toLowerCase()}
+            {hasPoints ? pointsLabel(standing.points) : "0 pts"} {periodLabel.toLowerCase()}
           </div>
         </div>
       </div>

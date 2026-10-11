@@ -342,7 +342,7 @@ export default function TrainingSettingsScreen({ membership }: { membership: Mem
             <Row
               key={`${type.key}:${zone?.key ?? ""}`}
               icon={<Dot color={zone?.color ?? type.color} />}
-              label={zone ? `${type.label} · ${zone.label}` : type.label}
+              label={zone ? `${type.label} ${zone.label}` : type.label}
               onClick={() => setEditing({ kind: "library", typeKey: type.key, zoneKey: zone?.key })}
             />
           ))}
@@ -761,7 +761,7 @@ function LibrarySheet({
   const remove = (i: number) => onChange(list.filter((_, n) => n !== i));
 
   return (
-    <Sheet title={zone ? `${type.label} · ${zone.label}` : type.label} onClose={onClose}>
+    <Sheet title={zone ? `${type.label} ${zone.label}` : type.label} onClose={onClose}>
       <div className="space-y-2">
         {list.map((w, i) => (
           <div key={i} className="flex items-center gap-1.5">

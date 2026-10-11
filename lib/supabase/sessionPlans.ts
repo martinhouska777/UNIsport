@@ -26,15 +26,15 @@ export async function createPlan(
   notifyConversation({
     conversationId,
     kind: "plan",
-    preview: `${input.activity}${where} · ${planWhenLabel(input.scheduledAt)}`,
+    preview: `${input.activity}${where}, ${planWhenLabel(input.scheduledAt)}`,
   });
   return data as string;
 }
 
-/** "Fri 13 Jun · 3:00 PM" — how a planned session's time reads on its card. */
+/** "Fri 13 Jun 3:00 PM" — how a planned session's time reads on its card. */
 export function planWhenLabel(iso: string): string {
   const d = new Date(iso);
-  return `${shortDate(d)} · ${clockOf(d)}`;
+  return `${shortDate(d)} ${clockOf(d)}`;
 }
 
 /*

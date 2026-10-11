@@ -554,7 +554,7 @@ export default function RaceBoard({
             <div className="flex flex-wrap items-center justify-center gap-2 text-[12px]">
               {deleteFailed ? (
                 <span className="font-semibold text-danger" role="alert">
-                  {deleteWhy ? `Not deleted · ${deleteWhy}` : "Not deleted"}
+                  {deleteWhy ? `Not deleted, ${deleteWhy}` : "Not deleted"}
                 </span>
               ) : (
                 <span className="text-muted">Delete every piece of this session?</span>
@@ -911,7 +911,7 @@ function PieceEditor({
                   }}
                   className="tap44 rounded-full border border-border bg-surface px-3 py-1.5 text-[12px] font-medium text-text"
                 >
-                  {crewFromBoat(b).label} · {classTitle(b.badge)}
+                  {crewFromBoat(b).label}, {classTitle(b.badge)}
                 </button>
               ))}
             </div>

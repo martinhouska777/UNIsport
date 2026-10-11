@@ -101,7 +101,7 @@ export function tourExampleChat(e: TourExample): DmConversation {
     conversationId: TOUR_EXAMPLE_ID,
     otherId: "",
     otherName: e.otherName,
-    lastBody: `📅 ${activityLabel(e.activity)} · ${planWhenLabel(e.scheduledAt)}${e.place ? ` · ${e.place}` : ""}`,
+    lastBody: `📅 ${activityLabel(e.activity)}, ${planWhenLabel(e.scheduledAt)}${e.place ? `, ${e.place}` : ""}`,
     lastAt: e.sentAt,
     lastFromMe: false,
     tick: "sent",

@@ -65,7 +65,7 @@ export default function OutOfBoatsCard({
           {/* Shut, the card says how many and what for, so the day can be
               counted without opening anything. */}
           <span className="block text-[11px] text-muted">
-            {people.length} · {summary(people)}
+            {summary(people)}
           </span>
         </span>
         <span
@@ -99,5 +99,5 @@ export default function OutOfBoatsCard({
 function summary(people: OutPerson[]): string {
   return ORDER.filter((r) => people.some((p) => p.reason === r))
     .map((r) => `${people.filter((p) => p.reason === r).length} ${outMeta[r]}`)
-    .join(" · ");
+    .join(", ");
 }

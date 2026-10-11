@@ -222,7 +222,7 @@ export default function ChannelInfo({
           )}
           {details && (
             <div className="mt-1 text-[13px] text-muted">
-              {details.private ? "Private channel" : "Public channel"} · {count} member{count === 1 ? "" : "s"}
+              {details.private ? "Private channel" : "Public channel"}, {count} member{count === 1 ? "" : "s"}
             </div>
           )}
         </div>
@@ -236,7 +236,7 @@ export default function ChannelInfo({
             {requests.map((r) => {
               const sub = [r.residence ? residenceLabel(r.residence) : null, r.classYear]
                 .filter(Boolean)
-                .join(" · ");
+                .join(", ");
               return (
                 <div key={r.id} className="flex items-center gap-3 px-4 py-2.5">
                   <Avatar size={44} src={r.photo} name={r.name} />
@@ -301,7 +301,7 @@ export default function ChannelInfo({
             members.map((m) => {
               const sub = [m.residence ? residenceLabel(m.residence) : null, m.classYear]
                 .filter(Boolean)
-                .join(" · ");
+                .join(", ");
               return (
                 <button
                   key={m.id}

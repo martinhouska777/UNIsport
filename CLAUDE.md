@@ -81,7 +81,11 @@ A white-label university fitness PWA. These rules apply to EVERYTHING in this re
   or how to use the screen. Confirmations are a word and a tick ("✓ Uploaded").
   Empty screens say only what is empty ("No favourites yet.").
 - No captions repeating what is on screen ("3 selected", "of 26", "Top 12").
-- Never join words with a middle dot "·". Never write "squad" — say "team".
+- Never join words with a middle dot "·". Never write "squad", say "team".
+  Instead of a dot: a comma between words ("Adams, 2027"), a plain space for a
+  day or a type and its part ("Tue AM", "Erg UT2"), and `GAP` from `lib/gap.ts`
+  (a wider space) between figures ("18:42  5,000 m"), where a comma would read
+  as part of the number.
 - Kept: a warning before something is deleted for good, an error you can act on.
 - The full rule is global: `C:\Users\marti\.claude\CLAUDE.md`.
 

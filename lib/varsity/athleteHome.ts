@@ -267,7 +267,7 @@ function statusOf(
 */
 export function daySessionToCard(s: DaySession, iso: string): TodaySession {
   return {
-    period: s.clock ? `${s.time} · ${s.clock}` : s.time,
+    period: s.clock ? `${s.time} ${s.clock}` : s.time,
     // "ALL" is a whole-day entry and belongs to neither half; it can't own a
     // boat, so it falls to AM rather than inventing a third period.
     periodKey: s.time === "PM" ? "PM" : "AM",
@@ -303,7 +303,7 @@ export function buildAthleteHome(
 
   const dateLabel =
     today.toLocaleDateString("en-US", { weekday: "long" }) +
-    " · " +
+    ", " +
     today.toLocaleDateString("en-US", { month: "long", day: "numeric" });
 
   // Every week of the block, so the strip can swipe between weeks and show a
@@ -316,7 +316,7 @@ export function buildAthleteHome(
         letter: d.weekday[0],
         num: d.dayNum,
         iso,
-        dateLabel: `${d.weekday} · ${d.month} ${d.dayNum}`,
+        dateLabel: `${d.weekday}, ${d.month} ${d.dayNum}`,
         today: d.today || undefined,
         sessions: periods.flatMap((p) => {
           const dayKey = sessionKey(d.date, p);
@@ -356,7 +356,7 @@ export function buildAthleteHome(
         const desc = s.description.trim();
         return [
           {
-            period: `${p} · ${s.time}`,
+            period: `${p} ${s.time}`,
             periodKey: p,
             dayKey,
             iso: todayIso,

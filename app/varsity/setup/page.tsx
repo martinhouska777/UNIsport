@@ -282,7 +282,7 @@ export default function VarsitySetupPage() {
           <div className="mx-auto w-full max-w-screen-sm px-3.5">
             {failure && !saving && (
               <p role="alert" className="mb-2 text-center text-[13px] font-semibold text-danger">
-                {saveFailureDetail(failure) ? `Not saved · ${saveFailureDetail(failure)}` : "Not saved"}
+                {saveFailureDetail(failure) ? `Not saved, ${saveFailureDetail(failure)}` : "Not saved"}
               </p>
             )}
             <Button

@@ -85,7 +85,7 @@ export default function CategoryStatsSheet({
   const per = Math.max(1, weeks);
 
   return (
-    <Sheet title={`${label} · ${monthLabel}`} onClose={onClose}>
+    <Sheet title={`${label} in ${monthLabel}`} onClose={onClose}>
       <div className="flex gap-2">
         <Tile value={String(sessions)} label={sessions === 1 ? "Session" : "Sessions"} />
         <Tile value={minutes > 0 ? formatDuration(minutes) : "—"} label="Time" />

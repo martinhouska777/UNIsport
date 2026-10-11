@@ -81,7 +81,7 @@ export default function GlobalError({
         </div>
         {/* Small, grey, and the only part worth photographing. */}
         <code style={{ fontSize: 11, color: "#71717a", wordBreak: "break-word", maxWidth: 320 }}>
-          {error.digest ? `ref ${error.digest} · ` : ""}
+          {error.digest ? `ref ${error.digest}: ` : ""}
           {error.message}
         </code>
       </body>

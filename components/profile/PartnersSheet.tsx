@@ -87,7 +87,7 @@ export default function PartnersSheet({
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-[14px] font-medium text-text">{p.name}</span>
                   <span className="mt-0.5 block truncate text-[11px] text-muted">
-                    {p.sessions} session{p.sessions === 1 ? "" : "s"} · last {lastLabel(p.lastDate)}
+                    {p.sessions} session{p.sessions === 1 ? "" : "s"}, last {lastLabel(p.lastDate)}
                   </span>
                 </span>
                 <IconChevronRight size={16} className="shrink-0 text-muted" />

@@ -69,7 +69,7 @@ function summary(
   timeOfDay: string,
 ): string {
   const when = date ? dateLabel(date) : dayShort(day);
-  return `${focusLabel(focus)} · ${when} · ${postWhenLabel(hour, timeOfDay)}`;
+  return `${focusLabel(focus)}, ${when} ${postWhenLabel(hour, timeOfDay)}`;
 }
 
 function Status({ children }: { children: React.ReactNode }) {
@@ -108,7 +108,7 @@ export function PostCard({
           not the poster the solid band was. */}
       <div className="flex items-center justify-between gap-3 border-b border-border px-3.5 py-2.5">
         <span className="flex-shrink-0 text-[13px] font-bold text-text">
-          {p.date ? dateLabel(p.date) : dayShort(p.day)} · {postWhenLabel(p.hour, p.timeOfDay)}
+          {p.date ? dateLabel(p.date) : dayShort(p.day)} {postWhenLabel(p.hour, p.timeOfDay)}
         </span>
         {p.gym && (
           <span className="flex min-w-0 items-center gap-1 text-[12px] font-medium text-text-2">
@@ -517,7 +517,7 @@ export default function BuddyBoard({
                   <div className="text-sm text-text">{summary(m.focus, m.date, m.day, m.hour, m.timeOfDay)}</div>
                   {(m.gym || m.note) && (
                     <div className="truncate text-[11px] text-muted">
-                      {[m.gym, m.note].filter(Boolean).join(" · ")}
+                      {[m.gym, m.note].filter(Boolean).join(", ")}
                     </div>
                   )}
                 </div>

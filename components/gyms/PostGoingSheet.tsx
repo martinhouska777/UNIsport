@@ -77,7 +77,7 @@ export default function PostGoingSheet({
           <div>
             <div className="text-[15px] font-medium text-text">Going to {gymName}</div>
             <div className="mt-0.5 text-[11px] text-muted">
-              {when.isToday ? "Today" : `Tomorrow · ${dateLabel(when.date)}`}
+              {when.isToday ? "Today" : `Tomorrow, ${dateLabel(when.date)}`}
             </div>
           </div>
           <button

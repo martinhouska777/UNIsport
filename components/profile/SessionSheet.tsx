@@ -90,7 +90,7 @@ export default function SessionSheet({
                 </span>
                 <span className="mt-0.5 block truncate text-[11px] text-muted">
                   {clockOf(new Date(plan.scheduledAt))}
-                  {plan.place ? ` · ${plan.place}` : ""}
+                  {plan.place ? `, ${plan.place}` : ""}
                 </span>
               </span>
               <IconChevronRight size={16} className="shrink-0 text-muted" />

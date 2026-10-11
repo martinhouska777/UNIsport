@@ -17,6 +17,7 @@ import type { CompareCandidate } from "@/components/varsity/team/TelemetryPiece"
 import { fmtDuration, fmtSplit, outingTotals, type TelemetryOuting as Outing } from "@/lib/varsity/telemetry";
 import { dayKeyLabel } from "@/lib/varsity/coachPlan";
 import { IconChevronRight } from "@/components/icons";
+import { GAP } from "@/lib/gap";
 
 export default function TelemetryOuting({
   outing,
@@ -49,7 +50,7 @@ export default function TelemetryOuting({
           )
           .map((p) => ({
             piece: p,
-            label: o.id === outing.id ? p.name : `${p.name} · ${dayKeyLabel(o.dayKey)}`,
+            label: o.id === outing.id ? p.name : `${p.name}, ${dayKeyLabel(o.dayKey)}`,
           })),
       )
     : [];
@@ -66,15 +67,15 @@ export default function TelemetryOuting({
           <span className="ml-auto text-[11px] text-muted">{dateLabel}</span>
         </div>
         <p className="mt-2 text-[11px] tabular-nums text-muted">
-          {outing.pieces.length} pieces · {totals.metres.toLocaleString("en-US")} m ·{" "}
+          {outing.pieces.length} pieces{GAP}{totals.metres.toLocaleString("en-US")} m{GAP}
           {fmtDuration(totals.sec)}
-          {withSeats > 0 && ` · seats on ${withSeats}`}
+          {withSeats > 0 && `${GAP}seats on ${withSeats}`}
         </p>
         {(outing.box || outing.sessionNo || outing.file) && (
           <p className="mt-1 truncate text-[11px] text-muted">
             {outing.box && `Box ${outing.box}`}
-            {outing.sessionNo && ` · Session ${outing.sessionNo}`}
-            {outing.file && ` · ${outing.file}`}
+            {outing.sessionNo && `${GAP}Session ${outing.sessionNo}`}
+            {outing.file && `${GAP}${outing.file}`}
           </p>
         )}
       </div>
@@ -103,8 +104,8 @@ export default function TelemetryOuting({
                 ) : null}
               </div>
               <div className="mt-0.5 text-[11px] tabular-nums text-muted">
-                {fmtDuration(p.durationSec)} · {p.metres.toLocaleString("en-US")} m
-                {p.rating != null && ` · r${p.rating.toFixed(1)}`}
+                {fmtDuration(p.durationSec)}{GAP}{p.metres.toLocaleString("en-US")} m
+                {p.rating != null && `${GAP}r${p.rating.toFixed(1)}`}
               </div>
             </div>
             <span className="flex-shrink-0 text-[13px] font-semibold tabular-nums text-text">

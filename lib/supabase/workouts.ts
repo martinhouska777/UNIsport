@@ -593,7 +593,7 @@ export function exerciseSummary(e: WorkoutExercise, unit: WeightUnit = "kg"): st
     .filter((s) => s.weight.trim() && s.reps.trim())
     .sort((a, b) => (parseFloat(b.weight) || 0) - (parseFloat(a.weight) || 0))[0];
   const topLabel = top ? `${top.weight} ${unit} × ${top.reps}` : "";
-  return [e.name.trim(), setsLabel, topLabel].filter(Boolean).join(" · ");
+  return [e.name.trim(), setsLabel, topLabel].filter(Boolean).join(", ");
 }
 
 /**
@@ -632,8 +632,8 @@ export function isQuickLog(log: WorkoutLog): boolean {
 export function metricsSummary(log: WorkoutLog): string {
   const m = log.metrics ?? {};
   const dist = m.distance ? `${m.distance} ${m.unit ?? "km"}` : "";
-  if (log.activity === "running") return [dist, m.duration].filter(Boolean).join(" · ");
-  if (log.activity === "cardio") return [m.cardioType, dist, m.duration].filter(Boolean).join(" · ");
+  if (log.activity === "running") return [dist, m.duration].filter(Boolean).join(", ");
+  if (log.activity === "cardio") return [m.cardioType, dist, m.duration].filter(Boolean).join(", ");
   return "";
 }
 

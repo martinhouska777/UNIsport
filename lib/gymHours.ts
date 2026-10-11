@@ -87,14 +87,14 @@ export function gymOpenState(hours: string, now: number): GymOpenState | null {
     (now + MINUTES_IN_DAY >= span.opens && now + MINUTES_IN_DAY < span.closes);
 
   if (!open) {
-    return { open: false, closingSoon: false, label: `Closed · opens ${clockLabel(span.opens)}` };
+    return { open: false, closingSoon: false, label: `Closed, opens ${clockLabel(span.opens)}` };
   }
 
   const closesIn = (now >= span.opens ? span.closes - now : span.closes - now - MINUTES_IN_DAY);
   if (closesIn < 60) {
     return { open: true, closingSoon: true, label: `Closes in ${closesIn} min` };
   }
-  return { open: true, closingSoon: false, label: `Open now · closes ${clockLabel(span.closes)}` };
+  return { open: true, closingSoon: false, label: `Open now, closes ${clockLabel(span.closes)}` };
 }
 
 /** The reader's own clock: minutes since midnight, and which day it is (0 = Sunday). */

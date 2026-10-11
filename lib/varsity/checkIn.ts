@@ -185,7 +185,7 @@ export function checkInSummary(c: CheckIn | undefined): string {
     const v = c[q.key];
     if (v !== null) bits.push(`${q.short} ${v}`);
   }
-  return bits.join(" · ");
+  return bits.join(", ");
 }
 
 /*

@@ -114,7 +114,7 @@ export default function TrainingScheduleSheet({
               <div className="mt-0.5 text-[11px] text-muted">
                 {totalSlots === 0
                   ? "Add the times you're usually free"
-                  : `${totalSlots} ${totalSlots === 1 ? "time" : "times"} a week · used to match you`}
+                  : `${totalSlots} ${totalSlots === 1 ? "time" : "times"} a week`}
               </div>
             </div>
             <button

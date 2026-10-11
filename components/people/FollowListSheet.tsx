@@ -151,7 +151,7 @@ export default function FollowListSheet({
                   p.classYear ? classYearLabel(p.classYear) : null,
                 ]
                   .filter(Boolean)
-                  .join(" · ");
+                  .join(", ");
                 const isMe = p.id === meId;
                 return (
                   <div key={p.id} className="flex items-center gap-3 px-4 py-2.5">

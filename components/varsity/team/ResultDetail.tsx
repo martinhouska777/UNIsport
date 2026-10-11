@@ -53,6 +53,7 @@ import {
 import type { TeamResult } from "@/lib/varsity/resultsStore";
 import Delta from "@/components/varsity/team/Delta";
 import { IconStar, IconChevronRight } from "@/components/icons";
+import { GAP } from "@/lib/gap";
 
 // White, like every card around it (owner, 2026-10-02) — it was a grey box.
 function Stat({ label, value }: { label: string; value: string }) {
@@ -224,7 +225,7 @@ export default function ResultDetail({
                 /* No W/kg on these lines (owner, 2026-09-13). */
               ]
                 .filter(Boolean)
-                .join(" · ");
+                .join(GAP);
               const Row = canOpen ? "button" : "div";
               return (
                 <Row

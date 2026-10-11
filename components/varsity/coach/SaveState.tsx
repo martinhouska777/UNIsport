@@ -28,7 +28,7 @@ export default function SaveState({
   if (status === "error") {
     return (
       <span className="flex items-center gap-1.5 text-[12px] font-semibold text-danger" role="alert">
-        {detail ? `Not saved · ${detail}` : "Not saved"}
+        {detail ? `Not saved, ${detail}` : "Not saved"}
         {onRetry && (
           <button
             type="button"

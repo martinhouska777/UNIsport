@@ -281,7 +281,7 @@ export default function HouseDuels() {
                     h.isMine ? "border-primary text-primary" : "border-border text-muted"
                   }`}
                 >
-                  {groupLabel("house", h.key)} · {INTERHOUSE.minMembers - h.qualified} more
+                  {groupLabel("house", h.key)}, {INTERHOUSE.minMembers - h.qualified} more
                 </span>
               ))}
             </div>

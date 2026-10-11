@@ -1008,7 +1008,7 @@ export default function TrainingPlanScreen({
                   <span className="truncate font-semibold">{block.raceName}</span>
                   {race !== null && (
                     <span className="flex-shrink-0">
-                      · <span className="font-semibold">{race}</span> days
+                      {race === 0 ? "today" : <>in <span className="font-semibold">{race}</span> {race === 1 ? "day" : "days"}</>}
                     </span>
                   )}
                 </span>

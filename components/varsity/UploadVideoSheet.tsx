@@ -83,7 +83,7 @@ async function fetchPractices(teamId: string | null): Promise<Practice[]> {
       const at = day + (parsed.period === "PM" ? 1 : 0);
       return {
         dayKey,
-        label: `${dayKeyLabel(dayKey)} · ${parsed.period}`,
+        label: `${dayKeyLabel(dayKey)} ${parsed.period}`,
         workout: session ? session.description.trim() || sessionLabel(session) : "",
         at,
       };

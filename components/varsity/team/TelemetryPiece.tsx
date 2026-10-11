@@ -31,6 +31,7 @@ import { useMemo, useState } from "react";
 import Sheet from "@/components/varsity/Sheet";
 import SpeedChart from "@/components/varsity/team/SpeedChart";
 import { fmtDuration, fmtSplit, fmtDeg, type TelemetryPiece as Piece, type TelemetryOuting } from "@/lib/varsity/telemetry";
+import { GAP } from "@/lib/gap";
 
 /** Another piece the chart can lay over this one: same kind of piece (about
     the same distance), with segments to draw. */
@@ -91,9 +92,9 @@ export default function TelemetryPiece({
           <span className="ml-auto text-[11px] text-muted">{dateLabel}</span>
         </div>
         <p className="mt-2 text-[12px] tabular-nums text-muted">
-          {fmtDuration(piece.durationSec)} · {piece.metres.toLocaleString("en-US")} m
-          {piece.rating != null && ` · r${piece.rating.toFixed(1)}`}
-          {piece.splitSec != null && ` · ${fmtSplit(piece.splitSec)} /500m`}
+          {fmtDuration(piece.durationSec)}{GAP}{piece.metres.toLocaleString("en-US")} m
+          {piece.rating != null && `${GAP}r${piece.rating.toFixed(1)}`}
+          {piece.splitSec != null && `${GAP}${fmtSplit(piece.splitSec)} /500m`}
         </p>
       </div>
 
@@ -247,8 +248,8 @@ export default function TelemetryPiece({
               >
                 <span className="w-4 flex-shrink-0 font-semibold text-muted">{i + 1}</span>
                 <span className="flex-1 text-muted">
-                  {fmtDuration(g.durationSec)} · {g.metres} m
-                  {g.rating != null && ` · r${g.rating.toFixed(1)}`}
+                  {fmtDuration(g.durationSec)}{GAP}{g.metres} m
+                  {g.rating != null && `${GAP}r${g.rating.toFixed(1)}`}
                 </span>
                 <span className="flex-shrink-0 font-semibold text-text">{fmtSplit(g.splitSec)}</span>
               </div>

@@ -109,7 +109,7 @@ function RaceLine({ r }: { r: RaceData }) {
       </span>
       <span className="truncate">
         <span className="font-semibold text-text">{r.name}</span>
-        {" · "}
+        {/^\d/.test(r.big) ? " in " : " "}
         <span className="font-bold text-primary">{r.big}</span>
         {r.small && ` ${r.small.toLowerCase()}`}
       </span>
@@ -478,7 +478,7 @@ function DayDetail({ d, onClose }: { d: WeekDay; onClose: () => void }) {
                 <div className="flex items-center gap-2">
                   <span className="rounded border border-border bg-surface px-1.5 py-0.5 text-[8px] font-semibold tracking-[0.06em] text-muted">
                     {s.time}
-                    {s.clock ? ` · ${s.clock}` : ""}
+                    {s.clock ? ` ${s.clock}` : ""}
                   </span>
                   {s.type && <span className="text-[11px] text-muted">{s.type}</span>}
                 </div>
@@ -941,7 +941,7 @@ function CoachNoteCard({ note, coach }: { note: string; coach: string }) {
             <IconMessage size={15} />
           </span>
           <span className="truncate text-[11px] font-semibold uppercase tracking-[0.12em] text-primary">
-            Coach&apos;s note{coach ? ` · ${coach}` : ""}
+            {coach ? `Note from ${coach}` : "Coach’s note"}
           </span>
         </div>
         <p className="px-3.5 py-3 text-[13px] leading-relaxed text-text-2">{note}</p>
@@ -1264,7 +1264,7 @@ function HomeScreenInner() {
               href={allBoatsHref}
               className="flex items-center gap-0.5 text-[11px] font-semibold text-primary"
             >
-              All boats ·{" "}
+              All boats{" "}
               {(["AM", "PM"] as const).filter((p) => lineups.some((l) => l.periodKey === p)).join(" / ")}{" "}
               <IconChevronRight size={12} />
             </Link>

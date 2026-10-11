@@ -36,6 +36,7 @@ import {
   type PieceSegment,
   type TelemetryPiece,
 } from "@/lib/varsity/telemetry";
+import { GAP as FIGURE_GAP } from "@/lib/gap";
 
 const W = 360;
 const PAD_L = 40;
@@ -193,7 +194,7 @@ export default function SpeedChart({
               <span className="font-semibold text-text">
                 {Math.round(segStart)}–{Math.round(m.ends[h])} m
               </span>
-              {" · "}
+              {FIGURE_GAP}
               {seg.durationSec.toFixed(1)}s
             </span>
             <span className="flex items-center gap-2.5">
@@ -212,7 +213,7 @@ export default function SpeedChart({
               avg <span className="font-semibold text-text">{fmtSplit(m.avgSplit)}</span>
               {m.avgRate != null && (
                 <>
-                  {" · "}r<span className="font-semibold text-text">{m.avgRate.toFixed(1)}</span>
+                  {FIGURE_GAP}r<span className="font-semibold text-text">{m.avgRate.toFixed(1)}</span>
                 </>
               )}
             </span>
@@ -225,7 +226,7 @@ export default function SpeedChart({
               )}
               {m.peakRate >= 0 && (
                 <>
-                  {" · "}peak <span className="font-semibold text-accent">r{m.rates[m.peakRate]!.toFixed(1)}</span>
+                  {FIGURE_GAP}peak <span className="font-semibold text-accent">r{m.rates[m.peakRate]!.toFixed(1)}</span>
                 </>
               )}
             </span>

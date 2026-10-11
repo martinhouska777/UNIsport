@@ -422,8 +422,8 @@ const yaleGyms: Gym[] = [
   mainGym({ slug: "payne-whitney", name: "Payne Whitney Gymnasium", address: "70 Tower Parkway", hours: "6am–11pm", rating: 4.7, ratingCount: 163, floors: 9, size: "flagship",
     extras: [ { label: "Swimming pool", value: "50 meter" }, { label: "Basketball courts", value: "3 full-size" }, { label: "Squash courts", value: "12" } ],
     gallery: [ { label: "Main Floor", icon: "barbell" }, { label: "Cardio Room", icon: "run" }, { label: "Pool", icon: "swimming" }, { label: "Courts", icon: "basketball" } ] }),
-  mainGym({ slug: "israel-fitness", name: "Israel Fitness Center", address: "PWG · 4th floor", hours: "6am–10pm", rating: 4.6, ratingCount: 121, floors: 1, size: "large" }),
-  mainGym({ slug: "lanman", name: "Lanman Center", address: "PWG · court level", hours: "7am–10pm", rating: 4.3, ratingCount: 64, floors: 1, size: "standard",
+  mainGym({ slug: "israel-fitness", name: "Israel Fitness Center", address: "PWG, 4th floor", hours: "6am–10pm", rating: 4.6, ratingCount: 121, floors: 1, size: "large" }),
+  mainGym({ slug: "lanman", name: "Lanman Center", address: "PWG, court level", hours: "7am–10pm", rating: 4.3, ratingCount: 64, floors: 1, size: "standard",
     extras: [{ label: "Basketball courts", value: "4 full-size" }],
     gallery: [ { label: "Courts", icon: "basketball" }, { label: "Cardio Corner", icon: "run" } ] }),
   houseGym({ slug: "benjamin-franklin", name: "Benjamin Franklin", address: "90 Prospect Street", rating: 4.2, ratingCount: 24, colors: { primary: "#c9243f", secondary: "#e8e8e8" } }), // Red & White
@@ -446,7 +446,7 @@ const princetonGyms: Gym[] = [
   mainGym({ slug: "dillon", name: "Dillon Gymnasium", address: "Elm Drive", hours: "6am–11pm", rating: 4.7, ratingCount: 134, floors: 2, size: "flagship",
     extras: [ { label: "Swimming pool", value: "25 yard" }, { label: "Group fitness studio", value: "Yes" } ],
     gallery: [ { label: "Main Floor", icon: "barbell" }, { label: "Cardio Room", icon: "run" }, { label: "Pool", icon: "swimming" } ] }),
-  mainGym({ slug: "stephens", name: "Stephens Fitness Center", address: "Dillon Gym · bi-level", hours: "6am–11pm", rating: 4.6, ratingCount: 112, floors: 2, size: "large" }),
+  mainGym({ slug: "stephens", name: "Stephens Fitness Center", address: "Dillon Gym, bi-level", hours: "6am–11pm", rating: 4.6, ratingCount: 112, floors: 2, size: "large" }),
   mainGym({ slug: "jadwin", name: "Jadwin Gymnasium", address: "Fitzrandolph Road", hours: "7am–10pm", rating: 4.2, ratingCount: 58, floors: 3, size: "standard",
     extras: [ { label: "Indoor track", value: "200 meter" }, { label: "Basketball courts", value: "3 full-size" } ],
     gallery: [ { label: "Courts", icon: "basketball" }, { label: "Track", icon: "run" } ] }),
@@ -464,7 +464,7 @@ const pennGyms: Gym[] = [
     extras: [ { label: "Swimming pool", value: "25 yard" }, { label: "Climbing wall", value: "Yes" }, { label: "Basketball courts", value: "2 full-size" } ],
     gallery: [ { label: "Main Floor", icon: "barbell" }, { label: "Cardio Room", icon: "run" }, { label: "Pool", icon: "swimming" }, { label: "Courts", icon: "basketball" } ] }),
   mainGym({ slug: "fox-fitness", name: "Fox Fitness Center", address: "219 S 33rd Street", hours: "7am–10pm", rating: 4.3, ratingCount: 71, floors: 1, size: "standard" }),
-  mainGym({ slug: "sheerr-pool", name: "Sheerr Pool", address: "Pottruck · lower level", hours: "7am–9pm", rating: 4.4, ratingCount: 52, floors: 1, size: "standard",
+  mainGym({ slug: "sheerr-pool", name: "Sheerr Pool", address: "Pottruck, lower level", hours: "7am–9pm", rating: 4.4, ratingCount: 52, floors: 1, size: "standard",
     extras: [{ label: "Swimming pool", value: "12 lanes" }],
     gallery: [ { label: "Pool", icon: "swimming" }, { label: "Cardio Corner", icon: "run" } ] }),
   houseGym({ slug: "harrison", name: "Harrison", address: "3910 Irving Street", rating: 4.3, ratingCount: 34, colors: { primary: "#c93a3a", secondary: "#9aa0a6" } }), // Red & Gray
@@ -472,7 +472,7 @@ const pennGyms: Gym[] = [
   houseGym({ slug: "rodin", name: "Rodin", address: "3901 Locust Walk", rating: 4.2, ratingCount: 27, colors: { primary: "#2ea3a3", secondary: "#e8e8e8" } }), // Teal & White
   houseGym({ slug: "fisher-hassenfeld", name: "Fisher Hassenfeld", address: "3700 Spruce Street", rating: 4.1, ratingCount: 22, colors: { primary: "#d4a843", secondary: "#9e2b4d" } }), // Gold & Maroon
   houseGym({ slug: "ware", name: "Ware", address: "3650 Spruce Street", rating: 4.0, ratingCount: 18, colors: { primary: "#9e2b4d", secondary: "#e8e8e8" } }), // Maroon & White
-  houseGym({ slug: "riepe", name: "Riepe", address: "The Quad · 3700 Spruce St", rating: 4.1, ratingCount: 20, colors: { primary: "#2e8f5b", secondary: "#e8e8e8" } }), // Green & White
+  houseGym({ slug: "riepe", name: "Riepe", address: "The Quad, 3700 Spruce St", rating: 4.1, ratingCount: 20, colors: { primary: "#2e8f5b", secondary: "#e8e8e8" } }), // Green & White
   houseGym({ slug: "hill", name: "Hill", address: "3333 Walnut Street", rating: 3.9, ratingCount: 16, colors: { primary: "#d9553e", secondary: "#2b2b2b" } }), // Orange & Black
   houseGym({ slug: "kings-court", name: "Kings Court English", address: "3465 Sansom Street", rating: 4.0, ratingCount: 15, colors: { primary: "#8f4bd0", secondary: "#e8e8e8" } }), // Purple & White
   houseGym({ slug: "lauder", name: "Lauder", address: "3335 Woodland Walk", rating: 4.3, ratingCount: 26, colors: { primary: "#3a3f8f", secondary: "#d4a843" } }), // Navy & Gold
@@ -500,10 +500,10 @@ const columbiaGyms: Gym[] = [
   mainGym({ slug: "dodge", name: "Dodge Fitness Center", address: "3030 Broadway", hours: "6am–11pm", rating: 4.4, ratingCount: 156, floors: 3, size: "flagship",
     extras: [ { label: "Swimming pool", value: "25 yard" }, { label: "Basketball courts", value: "3 full-size" } ],
     gallery: [ { label: "Main Floor", icon: "barbell" }, { label: "Cardio Room", icon: "run" }, { label: "Pool", icon: "swimming" }, { label: "Courts", icon: "basketball" } ] }),
-  mainGym({ slug: "levien", name: "Levien Gymnasium", address: "Dodge · court level", hours: "7am–10pm", rating: 4.3, ratingCount: 74, floors: 1, size: "standard",
+  mainGym({ slug: "levien", name: "Levien Gymnasium", address: "Dodge, court level", hours: "7am–10pm", rating: 4.3, ratingCount: 74, floors: 1, size: "standard",
     extras: [{ label: "Basketball courts", value: "3 full-size" }],
     gallery: [ { label: "Courts", icon: "basketball" }, { label: "Cardio Corner", icon: "run" } ] }),
-  mainGym({ slug: "blue-gym", name: "University Gym (Blue Gym)", address: "Dodge · lower level", hours: "7am–10pm", rating: 4.1, ratingCount: 48, floors: 1, size: "standard",
+  mainGym({ slug: "blue-gym", name: "University Gym (Blue Gym)", address: "Dodge, lower level", hours: "7am–10pm", rating: 4.1, ratingCount: 48, floors: 1, size: "standard",
     extras: [{ label: "Basketball courts", value: "1 full-size" }] }),
   houseGym({ slug: "carman", name: "Carman", address: "545 W 114th Street", rating: 4.1, ratingCount: 26, colors: { primary: "#3b6fe0", secondary: "#e8e8e8" } }), // Blue & White
   houseGym({ slug: "john-jay", name: "John Jay", address: "519 W 114th Street", rating: 4.0, ratingCount: 22, colors: { primary: "#9e2b4d", secondary: "#c4c8d0" } }), // Maroon & Silver
@@ -535,8 +535,8 @@ const cornellGyms: Gym[] = [
 ];
 
 const dartmouthGyms: Gym[] = [
-  mainGym({ slug: "zimmerman", name: "Zimmerman Fitness Center", address: "Alumni Gym · 3rd floor", hours: "6am–11pm", rating: 4.7, ratingCount: 115, floors: 1, size: "flagship" }),
-  mainGym({ slug: "lewinstein", name: "Lewinstein Athletic Center", address: "Alumni Gym · 6 S Park St", hours: "6am–11pm", rating: 4.6, ratingCount: 97, floors: 2, size: "large" }),
+  mainGym({ slug: "zimmerman", name: "Zimmerman Fitness Center", address: "Alumni Gym, 3rd floor", hours: "6am–11pm", rating: 4.7, ratingCount: 115, floors: 1, size: "flagship" }),
+  mainGym({ slug: "lewinstein", name: "Lewinstein Athletic Center", address: "Alumni Gym, 6 S Park St", hours: "6am–11pm", rating: 4.6, ratingCount: 97, floors: 2, size: "large" }),
   mainGym({ slug: "berry-sports", name: "Berry Sports Center", address: "6 South Park Street", hours: "7am–10pm", rating: 4.3, ratingCount: 56, floors: 2, size: "standard",
     extras: [{ label: "Basketball courts", value: "2 full-size" }],
     gallery: [ { label: "Courts", icon: "basketball" }, { label: "Cardio Corner", icon: "run" } ] }),
@@ -675,7 +675,7 @@ export function gymHighlights(gym: Gym, max = 4): string[] {
   not. Apple's own link only works on Apple devices.
 */
 export function gymMapsUrl(gym: Gym, universityName: string): string {
-  const place = gym.address.split("·")[0].trim();
+  const place = gym.address.split(",")[0].trim();
   const query = [gym.name, place, universityName].filter(Boolean).join(", ");
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
 }

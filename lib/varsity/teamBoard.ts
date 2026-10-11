@@ -48,6 +48,7 @@ import {
 } from "./coachPlan";
 import { configCanBoard, type TrainingConfig } from "./trainingConfig";
 import type { TeamResult } from "./resultsStore";
+import { GAP } from "@/lib/gap";
 
 /* ── Which sessions have a board ─────────────────────────────────────────── */
 
@@ -387,7 +388,7 @@ function detailLine(r: TeamResult, reps: boolean): string {
   const bits: string[] = [];
   if (!reps && r.minutes != null && r.minutes > 0) bits.push(secToClock(r.minutes * 60));
   if (r.strokeRate != null) bits.push(`r${r.strokeRate}`);
-  return bits.join(" · ");
+  return bits.join(GAP);
 }
 
 /*
