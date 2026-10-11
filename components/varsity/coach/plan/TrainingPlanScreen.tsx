@@ -22,6 +22,7 @@
 */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Button, { buttonClass } from "@/components/ui/Button";
+import DetailRow, { detailRowInput } from "@/components/ui/DetailRow";
 import { createPortal } from "react-dom";
 import ThemeProvider from "@/components/ThemeProvider";
 import { useVarsityTheme } from "@/components/varsity/useVarsityTheme";
@@ -807,9 +808,11 @@ export default function TrainingPlanScreen({
   if (view.name === "create" || view.name === "edit") {
     const editing = view.name === "edit" ? blocks.find((b) => b.id === view.blockId) : undefined;
     const valid = draft.name.trim() && draft.start && draft.end && draft.end >= draft.start;
-    const inputCls =
-      "w-full rounded-xl border border-border bg-surface-2 px-3.5 py-3 text-base text-text outline-none focus:border-primary placeholder:text-faint";
-    const labelCls = "mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.12em] text-muted";
+    /* A date keeps its own width at the right of its row: a full-width date
+       field ignores text-align, and two of them side by side ran into each
+       other on a phone (owner, 2026-10-11: "the from-to is overlapping", "the
+       race date is outside the box"). */
+    const dateCls = "min-w-0 bg-transparent py-3 text-right text-base text-text outline-none";
     return (
       <div className="mx-auto w-full max-w-screen-sm px-4 pb-8 pt-4">
         <button onClick={() => setView(null)} className="flex items-center gap-1 text-[13px] text-muted">
@@ -817,41 +820,41 @@ export default function TrainingPlanScreen({
         </button>
         <h1 className="mt-1 text-2xl font-semibold text-text">{editing ? "Edit block" : "New training block"}</h1>
 
+        {/* WHITE CARDS, A LINE EACH — the name on the left, the answer on the
+            right, as in every other form in the app (the student Log session,
+            Plan a session, the Varsity log). The fields were grey boxes. */}
         <div className="mt-5 flex flex-col gap-4">
-          <div>
-            <label className={labelCls}>Block name</label>
-            <input
-              className={inputCls}
-              value={draft.name}
-              onChange={(e) => setDraft({ ...draft, name: e.target.value })}
-            />
-          </div>
-          <div className="flex gap-3">
-            <div className="flex-1">
-              <label className={labelCls}>From</label>
-              <input type="date" className={inputCls} value={draft.start} onChange={(e) => setDraft({ ...draft, start: e.target.value })} />
-            </div>
-            <div className="flex-1">
-              <label className={labelCls}>To</label>
-              <input type="date" className={inputCls} value={draft.end} onChange={(e) => setDraft({ ...draft, end: e.target.value })} />
-            </div>
+          <div className="overflow-hidden rounded-2xl border border-border bg-surface">
+            <DetailRow label="Block name">
+              <input
+                className={detailRowInput}
+                value={draft.name}
+                onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+              />
+            </DetailRow>
+            <DetailRow label="From">
+              <input type="date" className={dateCls} value={draft.start} onChange={(e) => setDraft({ ...draft, start: e.target.value })} />
+            </DetailRow>
+            <DetailRow label="To">
+              <input type="date" className={dateCls} value={draft.end} onChange={(e) => setDraft({ ...draft, end: e.target.value })} />
+            </DetailRow>
           </div>
 
-          <div className="rounded-2xl border border-border bg-surface p-3.5">
-            <div className="mb-3 flex items-center gap-1.5 text-[11px] font-semibold text-accent">
+          <div>
+            <div className="mb-1.5 flex items-center gap-1.5 px-0.5 text-[11px] font-semibold text-accent">
               <IconFlag size={13} /> Goal race <span className="font-normal text-muted">(optional)</span>
             </div>
-            <div className="flex flex-col gap-3">
-              <input
-                className={inputCls}
-                placeholder="Race name"
-                value={draft.raceName}
-                onChange={(e) => setDraft({ ...draft, raceName: e.target.value })}
-              />
-              <div>
-                <label className={labelCls}>Race date</label>
-                <input type="date" className={inputCls} value={draft.raceDate} onChange={(e) => setDraft({ ...draft, raceDate: e.target.value })} />
-              </div>
+            <div className="overflow-hidden rounded-2xl border border-border bg-surface">
+              <DetailRow label="Race">
+                <input
+                  className={detailRowInput}
+                  value={draft.raceName}
+                  onChange={(e) => setDraft({ ...draft, raceName: e.target.value })}
+                />
+              </DetailRow>
+              <DetailRow label="Race date">
+                <input type="date" className={dateCls} value={draft.raceDate} onChange={(e) => setDraft({ ...draft, raceDate: e.target.value })} />
+              </DetailRow>
             </div>
           </div>
 
