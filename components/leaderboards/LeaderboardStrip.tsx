@@ -84,7 +84,8 @@ function IconRank({
 }
 
 export default function LeaderboardStrip({
-  period = "month",
+  // The same window the Rankings tab opens on (owner, 2026-10-11).
+  period = "semester",
   compact = false,
 }: {
   period?: Period;
