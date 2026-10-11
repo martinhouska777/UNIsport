@@ -35,6 +35,8 @@ import {
   daysToRace,
   toISO,
   addDays,
+  timeTo12,
+  timeTo24,
   type Block,
   type Session,
   type SessionMap,
@@ -47,10 +49,11 @@ import {
   defaultConfig,
   configCanBoard,
   findType,
+  libraryKey,
   workoutsFor,
   type TrainingConfig,
 } from "@/lib/varsity/trainingConfig";
-import { fetchTrainingConfig } from "@/lib/varsity/configStore";
+import { fetchTrainingConfigResult, saveTrainingConfig } from "@/lib/varsity/configStore";
 import { useMembership } from "@/components/varsity/useMembership";
 import { fetchPlan, savePlan } from "@/lib/varsity/planStore";
 import { notifySquad } from "@/lib/push/client";
@@ -70,6 +73,7 @@ import {
 
   IconTrash,
   IconTrophy,
+  IconX,
   IconPencil,
 } from "@/components/icons";
 import { markColor } from "@/lib/colorMarks";
@@ -160,7 +164,7 @@ export default function TrainingPlanScreen({
   openSlot?: string | null;
 }) {
   const vTheme = useVarsityTheme();
-  const { membership } = useMembership();
+  const { membership, loading: membershipLoading } = useMembership();
   /*
     The squad's own words for everything in the editor — the session types, the
     zones, the most-used workouts and the preset times. Until it arrives (and
@@ -168,6 +172,11 @@ export default function TrainingPlanScreen({
     exactly what the builder shipped with.
   */
   const [cfg, setCfg] = useState<TrainingConfig>(defaultConfig);
+  /* The squad's real list has arrived, so adding a most-used workout from the
+     editor may write it back. Never on the default that stands in while the
+     read is out — or that a FAILED read hands back: saving that would replace
+     the squad's own words (configStore.ts). */
+  const [cfgWritable, setCfgWritable] = useState(false);
   /* The plan as the database has it. Everything that SAVES reads these; the
      screen draws `blocks` / `sessions` below, which are these — except while
      the console walk shows its example week. */
@@ -252,16 +261,43 @@ export default function TrainingPlanScreen({
   /* The team's training vocabulary, once we know which team this is. Kept
      separate from the plan load so the grid is never held up by it. */
   useEffect(() => {
-    const teamId = membership?.teamId;
-    if (!teamId) return;
+    // Once the membership is known; no team = the phone's own list.
+    if (membershipLoading) return;
+    const teamId = membership?.teamId ?? null;
     let active = true;
-    fetchTrainingConfig(teamId).then((c) => {
-      if (active) setCfg(c);
+    fetchTrainingConfigResult(teamId).then(({ config, failed }) => {
+      if (!active) return;
+      setCfg(config);
+      setCfgWritable(!failed);
     });
     return () => {
       active = false;
     };
-  }, [membership?.teamId]);
+  }, [membershipLoading, membership?.teamId]);
+
+  /*
+    "+" ON MOST USED (owner, 2026-10-11: "do a plus there for the most used
+    workouts, and you can add them right on the spot"). The workout joins the
+    squad's own list for this type (and zone) — the same list Settings →
+    Training edits — and fills the description. Nothing is removed from here;
+    that stays in Settings.
+  */
+  const addMostUsed = async (typeKey: string, zoneKey: string | undefined, text: string) => {
+    const workout = text.trim();
+    if (!workout) return;
+    setForm((f) => ({ ...f, description: workout }));
+    const key = libraryKey(typeKey, findType(cfg, typeKey).hasZones ? zoneKey : undefined);
+    const list = cfg.library[key] ?? [];
+    if (list.includes(workout) || !cfgWritable) return;
+    const before = cfg;
+    const next = { ...cfg, library: { ...cfg.library, [key]: [...list, workout] } };
+    setCfg(next);
+    const { error } = await saveTrainingConfig(membership?.teamId ?? null, next);
+    if (error) {
+      console.error("save most used:", error);
+      setCfg(before);
+    }
+  };
 
   // Write the whole plan. Returns false if it failed, so callers that must be
   // sure (Publish) can hold their notification back.
@@ -518,6 +554,10 @@ export default function TrainingPlanScreen({
 
   // editor sheet
   const [editor, setEditor] = useState<{ date: Date; period: Period } | null>(null);
+  // The "+" on Most used, open with what is being typed into it (null = shut).
+  const [newWorkout, setNewWorkout] = useState<string | null>(null);
+  // The note box is showing: "+ Add note" pressed, or the session has a note.
+  const [noteOpen, setNoteOpen] = useState(false);
   const [form, setForm] = useState<Form>({
     description: "",
     time: "",
@@ -600,6 +640,8 @@ export default function TrainingPlanScreen({
       repeat: "once",
       teamWorkout: existing?.teamWorkout ?? false,
     });
+    setNewWorkout(null);
+    setNoteOpen(!!existing?.note);
     setEditor({ date, period });
   };
 
@@ -1201,8 +1243,10 @@ export default function TrainingPlanScreen({
     const weekday = editor.date.toLocaleDateString("en-US", { weekday: "long" });
     const longDate = editor.date.toLocaleDateString("en-US", { month: "long", day: "numeric" });
     const existing = !!sessions[sessionKey(editor.date, editor.period)];
+    // White, like the type and intensity buttons above them (owner,
+    // 2026-10-11: the grey boxes read as dark grey).
     const inputCls =
-      "w-full rounded-xl border border-border bg-surface-2 px-3.5 py-3 text-base text-text outline-none focus:border-primary placeholder:text-faint";
+      "w-full rounded-xl border border-border bg-surface px-3.5 py-3 text-base text-text outline-none focus:border-primary placeholder:text-faint";
     const labelCls = "mb-1.5 mt-4 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted";
     const overlay = (
       <div className="fixed inset-0 z-[60] flex h-dvh flex-col bg-background">
@@ -1233,20 +1277,41 @@ export default function TrainingPlanScreen({
             here with the day it is part of: it reads as a fact, and clicking
             it changes it. The form below is then the workout and a note,
             which is what the coach is actually there to write.
+
+            A TIME PICKER, NOT A TYPING BOX (owner, 2026-10-11: "I want there
+            to be either the wheel or the dropdown for the time"): the phone's
+            own time wheel, a dropdown on a laptop. Stored as before, "7:00 AM".
           */}
           {cat && cat !== "off" && (
             <label
               data-tour="coach-plan-time"
-              className="ml-auto flex flex-shrink-0 items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-muted focus-within:border-primary"
+              className="relative ml-auto flex flex-shrink-0 items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-muted focus-within:border-primary"
             >
               <IconClock size={13} />
+              <span className="text-base font-semibold tabular-nums text-text">
+                {timeTo12(timeTo24(form.time || cfg.times[editor.period])) || form.time}
+              </span>
+              {/* The picker itself lies over the pill, unseen, so a tap
+                  anywhere on it opens the wheel (or, on a laptop, the
+                  dropdown — showPicker, since Chrome only opens it from its
+                  own small icon otherwise). */}
               <input
-                value={form.time}
-                onChange={(e) => setForm((f) => ({ ...f, time: e.target.value }))}
-                placeholder={cfg.times[editor.period]}
+                type="time"
+                value={timeTo24(form.time || cfg.times[editor.period])}
+                onChange={(e) => {
+                  const t = timeTo12(e.target.value);
+                  if (t) setForm((f) => ({ ...f, time: t }));
+                }}
+                onClick={(e) => {
+                  try {
+                    e.currentTarget.showPicker?.();
+                  } catch {
+                    /* already open, or not allowed here — the tap still focuses it */
+                  }
+                }}
                 aria-label="Session time"
                 /* 16px so a phone doesn't zoom in when it takes focus. */
-                className="w-[74px] bg-transparent text-base font-semibold tabular-nums text-text outline-none placeholder:font-normal placeholder:text-faint"
+                className="absolute inset-0 h-full w-full cursor-pointer text-base opacity-0"
               />
             </label>
           )}
@@ -1318,10 +1383,12 @@ export default function TrainingPlanScreen({
             </>
           )}
 
-          {/* the coach's own most-used workouts for this type + zone */}
-          {cat && sugg.length > 0 && (
+          {/* the coach's own most-used workouts for this type + zone, and a
+              "+" that adds one on the spot (addMostUsed). Shown once the
+              type (and its zone) is picked — the list belongs to that pair. */}
+          {cat && cat !== "off" && (!asksZone(cat) || form.intensity) && (sugg.length > 0 || cfgWritable) && (
             <>
-              <div className={labelCls}>Most used · tap to fill</div>
+              <div className={labelCls}>Most used</div>
               {/* data-tour: the tour taps one chip (tourOption), so the
                   description fills in front of you. */}
               <div data-tour="coach-plan-options" className="flex flex-wrap gap-1.5">
@@ -1341,6 +1408,52 @@ export default function TrainingPlanScreen({
                     </button>
                   );
                 })}
+                {cfgWritable &&
+                  (newWorkout === null ? (
+                    <button
+                      type="button"
+                      onClick={() => setNewWorkout("")}
+                      aria-label="Add a most used workout"
+                      className="flex items-center rounded-lg border border-dashed border-border bg-surface px-2.5 py-1.5 text-muted active:border-primary-line active:text-primary"
+                    >
+                      <IconPlus size={13} />
+                    </button>
+                  ) : (
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        void addMostUsed(cat, form.intensity, newWorkout);
+                        setNewWorkout(null);
+                      }}
+                      className="flex items-center gap-1 rounded-lg border border-primary bg-surface py-0.5 pl-2.5 pr-0.5"
+                    >
+                      <input
+                        autoFocus
+                        value={newWorkout}
+                        onChange={(e) => setNewWorkout(e.target.value)}
+                        onKeyDown={(e) => e.key === "Escape" && setNewWorkout(null)}
+                        aria-label="New most used workout"
+                        /* 16px so a phone doesn't zoom in on it. */
+                        className="w-36 bg-transparent text-base leading-tight text-text outline-none"
+                      />
+                      <button
+                        type="submit"
+                        disabled={!newWorkout.trim()}
+                        aria-label="Add"
+                        className="flex h-7 w-7 items-center justify-center rounded-md bg-primary-live text-primary-contrast disabled:opacity-40"
+                      >
+                        <IconCheck size={14} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setNewWorkout(null)}
+                        aria-label="Cancel"
+                        className="flex h-7 w-7 items-center justify-center rounded-md text-muted"
+                      >
+                        <IconX size={13} />
+                      </button>
+                    </form>
+                  ))}
               </div>
             </>
           )}
@@ -1359,34 +1472,16 @@ export default function TrainingPlanScreen({
             </>
           )}
 
-          {/* WHERE TO BE — optional, free text, and EMPTY BY DEFAULT (not for
-              Off). It used to be filled in on every session, which meant every
-              card on every screen said the squad's own boathouse back at it.
-              Nobody reads that (owner, 2026-09-21). It is left blank unless the
-              coach types somewhere else, and only then does anyone see it. */}
-          {cat && cat !== "off" && (
-            <>
-              <div className={labelCls}>Somewhere else? (optional)</div>
-              <input
-                value={form.location}
-                onChange={(e) => setForm((f) => ({ ...f, location: e.target.value }))}
-                className={inputCls}
-              />
-            </>
-          )}
+          {/* NO "SOMEWHERE ELSE?" FIELD (owner, 2026-10-11). A session
+              somewhere other than usual says so in its note, at the bottom.
+              A location already saved on a session is kept as it is. */}
 
-          {/* note */}
-          <div className={labelCls}>Note (optional)</div>
-          <input
-            value={form.note}
-            onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))}
-            className={inputCls}
-          />
-
-          {/* team workout — the switch that gives this session a shared board */}
+          {/* RANKED WORKOUT — the switch that gives this session a shared
+              board, every one of which is ranked (owner, 2026-10-11: "make it
+              like ranked workout"). It was "Team workout". */}
           {configCanBoard(cfg, cat) && (
             <>
-              <div className={labelCls}>Team workout</div>
+              <div className={labelCls}>Ranked workout</div>
               <button
                 type="button"
                 data-tour="coach-plan-team"
@@ -1400,7 +1495,7 @@ export default function TrainingPlanScreen({
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block text-[12px] font-semibold text-text">
-                    Share results with the squad
+                    Rank the squad&apos;s results
                   </span>
                 </span>
                 {/* The app's one switch (onboarding/controls Toggle), drawn
@@ -1480,6 +1575,30 @@ export default function TrainingPlanScreen({
               </div>
             </>
           )}
+
+          {/* THE NOTE, LAST (owner, 2026-10-11: "just put note all the way on
+              the bottom ... put there that you can add"). A button until it is
+              wanted; a session that has a note opens with it showing. */}
+          {cat &&
+            (noteOpen ? (
+              <>
+                <div className={labelCls}>Note</div>
+                <input
+                  autoFocus={!form.note}
+                  value={form.note}
+                  onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))}
+                  className={inputCls}
+                />
+              </>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setNoteOpen(true)}
+                className="mt-4 flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-border bg-surface py-3 text-[13px] font-semibold text-muted active:border-primary-line active:text-primary"
+              >
+                <IconPlus size={14} /> Add note
+              </button>
+            ))}
         </div>
 
         {/* footer with confirm */}

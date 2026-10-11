@@ -28,6 +28,27 @@ export const periods: Period[] = ["AM", "PM"];
 // Usual start time per period (no duration — that is implied; a location is optional per session).
 export const presetTime: Record<Period, string> = { AM: "7:00 AM", PM: "4:30 PM" };
 
+/* A session's time is stored as the coach reads it ("7:00 AM"); a time picker
+   speaks 24-hour "07:00". These turn one into the other. A time that can't be
+   read (typed by hand before the picker) gives "" and the picker starts empty. */
+export function timeTo24(time: string): string {
+  const m = /^\s*(\d{1,2})(?:[:.](\d{2}))?\s*(am|pm)?\s*$/i.exec(time);
+  if (!m) return "";
+  let h = Number(m[1]);
+  const min = Number(m[2] ?? 0);
+  const ap = m[3]?.toLowerCase();
+  if (ap === "pm" && h < 12) h += 12;
+  if (ap === "am" && h === 12) h = 0;
+  if (h > 23 || min > 59) return "";
+  return `${String(h).padStart(2, "0")}:${String(min).padStart(2, "0")}`;
+}
+export function timeTo12(hhmm: string): string {
+  const m = /^(\d{2}):(\d{2})/.exec(hhmm);
+  if (!m) return "";
+  const h = Number(m[1]);
+  return `${h % 12 || 12}:${m[2]} ${h < 12 ? "AM" : "PM"}`;
+}
+
 /* ── Categories ── */
 export type Category = "water" | "erg" | "weights" | "off" | "flex";
 export const categories: Category[] = ["water", "erg", "weights", "off", "flex"];
