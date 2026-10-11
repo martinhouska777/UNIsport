@@ -75,6 +75,7 @@ import {
   IconArrowLeft,
   IconClock,
   IconX,
+  IconChevronRight,
 } from "@/components/icons";
 import { markColor } from "@/lib/colorMarks";
 import KindTag from "@/components/varsity/KindTag";
@@ -910,6 +911,67 @@ function OffRow({ session, period, color }: { session: Session; period: string; 
   );
 }
 
+/*
+  "WHICH WORKOUT WAS THIS?" — asked after the tab's Scan button has the photo
+  (owner, 2026-10-11): the day's erg sessions from the plan, a session already
+  logged marked so, and Extra session last. Closing it drops the photo.
+*/
+type ScanTarget = {
+  dayKey: string;
+  label: string;
+  period: string;
+  time: string;
+  logged: boolean;
+  editor: EditorState;
+};
+function WhichWorkoutSheet({
+  targets,
+  onPick,
+  onClose,
+}: {
+  targets: ScanTarget[];
+  onPick: (target: EditorState) => void;
+  onClose: () => void;
+}) {
+  return (
+    <Sheet title="Which workout was this?" onClose={onClose}>
+      <div className="flex flex-col gap-2">
+        {targets.map((t) => (
+          <button
+            key={t.dayKey}
+            type="button"
+            onClick={() => onPick(t.editor)}
+            className="flex w-full items-center gap-3 rounded-2xl border border-border bg-surface-2 px-3.5 py-3 text-left active:bg-surface"
+          >
+            <Dot color={catMeta.erg.color} />
+            <div className="min-w-0 flex-1">
+              <div className="text-[14px] font-semibold text-text">{t.label}</div>
+              <div className="mt-0.5 flex items-center gap-1 text-[11px] text-muted">
+                <IconClock size={11} /> {t.period} · {t.time}
+              </div>
+            </div>
+            {t.logged && (
+              <span className="flex flex-shrink-0 items-center gap-1 text-[11px] font-semibold text-success">
+                <IconCheckCircle size={14} /> Logged
+              </span>
+            )}
+            <IconChevronRight size={16} className="flex-shrink-0 text-muted" />
+          </button>
+        ))}
+        <button
+          type="button"
+          onClick={() => onPick({ mode: "extra" })}
+          className="flex w-full items-center gap-3 rounded-2xl border border-border bg-surface-2 px-3.5 py-3 text-left active:bg-surface"
+        >
+          <IconPlus size={14} className="flex-shrink-0 text-muted" />
+          <div className="min-w-0 flex-1 text-[14px] font-semibold text-text">Extra session</div>
+          <IconChevronRight size={16} className="flex-shrink-0 text-muted" />
+        </button>
+      </div>
+    </Sheet>
+  );
+}
+
 function ExtraRow({ log, onEdit }: { log: LogEntry; onEdit: () => void }) {
   const meta = catMeta[log.category ?? "other"] ?? catMeta.other;
   return (
@@ -1179,26 +1241,20 @@ function LogScreenInner() {
 
     Now the camera opens on the tap itself (a phone only opens it inside a user
     gesture, so the file input lives HERE, not in the editor) and the photo is
-    handed to the editor for the RIGHT session: the day's prescribed erg when
-    there is one, a chooser when there are several, and only when the plan has
-    no erg at all does it fall back to extra training — and the button's own
-    subtitle says which of those it is about to do.
+    handed to the editor for the RIGHT session.
+
+    PHOTO FIRST, THEN "WHICH WORKOUT WAS THIS?" (owner, 2026-10-11: "we want to
+    scan it and then log it, and say what the workout was compared to what we
+    did from the plan"). It used to guess — straight into the day's one erg
+    session, or Extra when the plan had none — and the rower couldn't tell
+    where the photo had gone. Now the camera always opens first, and the rower
+    picks: the day's erg sessions, or Extra session. Only a day with no erg in
+    the plan skips the question, because Extra is then the only answer (the
+    editor's title says it). Each erg session's own Scan button is unchanged.
   */
   const scanInputRef = useRef<HTMLInputElement>(null);
-  const scanTarget = useRef<EditorState | null>(null);
-  const [ergChooser, setErgChooser] = useState(false);
-  const startScan = (target: EditorState) => {
-    scanTarget.current = target;
-    scanInputRef.current?.click();
-  };
-  const onScanPicked = (file: File | undefined) => {
-    const target = scanTarget.current;
-    scanTarget.current = null;
-    // Let the same input fire again for the next photo.
-    if (scanInputRef.current) scanInputRef.current.value = "";
-    if (!file || !target) return;
-    setEditor({ ...target, scanFile: file });
-  };
+  // The photo taken, waiting for its answer to "Which workout was this?".
+  const [pendingScan, setPendingScan] = useState<File | null>(null);
 
   const reloadLogs = async () => {
     if (userId) setLogs(await fetchLogsInRange(userId, rangeFrom, rangeTo));
@@ -1306,6 +1362,19 @@ function LogScreenInner() {
         })),
     [prescribed, planLogByKey],
   );
+  // The scan button's photo (above): no erg in the plan → Extra; else ask.
+  const onScanPicked = (file: File | undefined) => {
+    // Let the same input fire again for the next photo.
+    if (scanInputRef.current) scanInputRef.current.value = "";
+    if (!file) return;
+    if (ergTargets.length === 0) setEditor({ mode: "extra", scanFile: file });
+    else setPendingScan(file);
+  };
+  const scanInto = (target: EditorState) => {
+    const file = pendingScan;
+    setPendingScan(null);
+    if (file) setEditor({ ...target, scanFile: file });
+  };
 
   /*
     Per-day dots for the strip: ONE PER SESSION, in the order they happen, so
@@ -1364,7 +1433,8 @@ function LogScreenInner() {
           })}
         </div>
 
-        {/* Monitor photo → the right session's editor, numbers filled in. */}
+        {/* Monitor photo first → "Which workout was this?" → that session's
+            editor, numbers filled in. */}
         <input
           ref={scanInputRef}
           type="file"
@@ -1375,11 +1445,7 @@ function LogScreenInner() {
         <button
           type="button"
           disabled={loading}
-          onClick={() => {
-            if (ergTargets.length === 1) startScan(ergTargets[0].editor);
-            else if (ergTargets.length > 1) setErgChooser(true);
-            else startScan({ mode: "extra" });
-          }}
+          onClick={() => scanInputRef.current?.click()}
           data-tour="varsity-log-scan"
           className="mt-4 flex w-full items-center justify-center gap-2.5 rounded-2xl bg-primary-live py-3.5 text-[14px] font-semibold text-primary-contrast shadow-md transition-transform duration-150 active:scale-[0.98] disabled:opacity-60"
         >
@@ -1444,37 +1510,14 @@ function LogScreenInner() {
         {isToday && userId && <CheckInRow userId={userId} iso={selectedIso} />}
       </div>
 
-      {/* Two erg sessions prescribed on one day: which one is the photo of? */}
-      {ergChooser && (
-        <Sheet title="Which session is this?" onClose={() => setErgChooser(false)}>
-          <div className="flex flex-col gap-2">
-            {ergTargets.map((t) => (
-              <button
-                key={t.dayKey}
-                type="button"
-                onClick={() => {
-                  setErgChooser(false);
-                  startScan(t.editor);
-                }}
-                className="flex w-full items-center gap-3 rounded-2xl border border-border bg-surface-2 px-3.5 py-3 text-left active:bg-surface"
-              >
-                <Dot color={catMeta.erg.color} />
-                <div className="min-w-0 flex-1">
-                  <div className="text-[14px] font-semibold text-text">{t.label}</div>
-                  <div className="mt-0.5 flex items-center gap-1 text-[11px] text-muted">
-                    <IconClock size={11} /> {t.period} · {t.time}
-                  </div>
-                </div>
-                {t.logged && (
-                  <span className="flex flex-shrink-0 items-center gap-1 text-[11px] font-semibold text-success">
-                    <IconCheckCircle size={14} /> Logged
-                  </span>
-                )}
-                <IconCamera size={16} className="flex-shrink-0 text-primary" />
-              </button>
-            ))}
-          </div>
-        </Sheet>
+      {/* The photo is taken: which workout is it? The day's erg sessions from
+          the plan, then Extra session. Closing the sheet drops the photo. */}
+      {pendingScan && (
+        <WhichWorkoutSheet
+          targets={ergTargets}
+          onPick={scanInto}
+          onClose={() => setPendingScan(null)}
+        />
       )}
 
       {activeEditor && userId && (
