@@ -38,8 +38,11 @@ export function planWhenLabel(iso: string): string {
 }
 
 /*
-  "Today · 5:00 PM" / "Tomorrow · 7:30 AM" / "Fri 13 Jun · 3:00 PM" — how a
-  plan's time reads on the Profile tab's Upcoming sessions row.
+  "Today at 5:00 PM" / "Tomorrow at 7:30 AM" / "Tuesday at 3:00 PM" — how a
+  plan's time reads on its chat card and on Upcoming sessions. Written out, no
+  dots (owner, 2026-10-11: the dots "look very AI"). The weekday alone is
+  enough because the date tile beside it (PlanDateTile) carries the month and
+  the day.
 */
 export function planDayLabel(iso: string): string {
   const d = new Date(iso);
@@ -49,9 +52,15 @@ export function planDayLabel(iso: string): string {
   const target = new Date(d);
   target.setHours(0, 0, 0, 0);
   const diff = Math.round((target.getTime() - day0.getTime()) / 86400000);
-  if (diff === 0) return `Today · ${time}`;
-  if (diff === 1) return `Tomorrow · ${time}`;
-  return `${shortDate(d)} · ${time}`;
+  const day =
+    diff === 0
+      ? "Today"
+      : diff === 1
+        ? "Tomorrow"
+        : diff === -1
+          ? "Yesterday"
+          : d.toLocaleDateString("en-US", { weekday: "long" });
+  return `${day} at ${time}`;
 }
 
 /*

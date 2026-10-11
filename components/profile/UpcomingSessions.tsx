@@ -24,6 +24,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Button from "@/components/ui/Button";
 import AddToCalendar from "@/components/AddToCalendar";
+import PlanDateTile from "@/components/PlanDateTile";
 import {
   confirmPlan,
   listPlansToConfirm,
@@ -35,41 +36,27 @@ import {
 } from "@/lib/supabase/sessionPlans";
 import { activityLabel } from "@/lib/supabase/workouts";
 import { isTourExample, tourExamplePlan, useTourExample } from "@/lib/tourExample";
-import { IconCalendar, IconCheck, IconChevronRight, IconX } from "@/components/icons";
+import { IconCheck, IconChevronRight, IconX } from "@/components/icons";
 
 const HEAD = "mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted";
 
-/* The row both lists share: icon, "Gym with Arjun", when · where, chevron. */
-function PlanRow({
-  plan,
-  onOpen,
-  waiting = false,
-}: {
-  plan: UpcomingPlan;
-  onOpen: () => void;
-  /** waiting on you — the icon fills in the school's colour */
-  waiting?: boolean;
-}) {
+/* The row both lists share: the date tile, "Gym with Arjun", "Tomorrow at
+   8:00 AM, Malkin" written out (owner, 2026-10-11: no dots), chevron. */
+function PlanRow({ plan, onOpen }: { plan: UpcomingPlan; onOpen: () => void }) {
   return (
     <button
       type="button"
       onClick={onOpen}
       className="flex w-full items-center gap-3 px-3.5 py-3 text-left active:opacity-80"
     >
-      <span
-        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
-          waiting ? "bg-primary text-primary-contrast" : "bg-primary-tint text-primary"
-        }`}
-      >
-        <IconCalendar size={16} />
-      </span>
+      <PlanDateTile iso={plan.scheduledAt} />
       <span className="min-w-0 flex-1">
         <span className="block truncate text-[13px] font-medium text-text">
           {activityLabel(plan.activity)} with {plan.otherName}
         </span>
         <span className="mt-0.5 block truncate text-[11px] text-muted">
           {planDayLabel(plan.scheduledAt)}
-          {plan.place ? ` · ${plan.place}` : ""}
+          {plan.place ? `, ${plan.place}` : ""}
         </span>
       </span>
       <IconChevronRight size={16} className="shrink-0 text-muted" />
@@ -160,7 +147,7 @@ export default function UpcomingSessions({
                 key={p.planId}
                 className="overflow-hidden rounded-2xl border border-border bg-surface shadow-card"
               >
-                <PlanRow plan={p} onOpen={() => open(p)} waiting />
+                <PlanRow plan={p} onOpen={() => open(p)} />
                 <div className="flex gap-2 px-3.5 pb-3">
                   <Button
                     size="sm"

@@ -13,12 +13,13 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Button from "@/components/ui/Button";
-import { respondToPlan, confirmPlan, cancelPlan, planWhenLabel } from "@/lib/supabase/sessionPlans";
+import { respondToPlan, confirmPlan, cancelPlan, planDayLabel } from "@/lib/supabase/sessionPlans";
 import { type DmPlan } from "@/lib/supabase/messages";
 import { planLogHref } from "@/lib/reminders";
 import { activityLabel } from "@/lib/supabase/workouts";
-import { IconCalendar, IconCheck, IconX, IconMapPin } from "@/components/icons";
+import { IconCheck, IconX, IconMapPin } from "@/components/icons";
 import AddToCalendar from "@/components/AddToCalendar";
+import PlanDateTile from "@/components/PlanDateTile";
 
 export default function PlanCard({
   plan,
@@ -137,31 +138,23 @@ export default function PlanCard({
 
   return (
     <div data-tour={tour} className="mx-auto w-full max-w-[88%] rounded-2xl border border-border bg-surface p-3.5">
-      <div className="flex items-center gap-2">
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-tint text-primary">
-          <IconCalendar size={16} />
-        </span>
-        <div className="min-w-0">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-primary">
-            Session plan
-          </div>
-          <div className="truncate text-[14px] font-medium text-text">
-            {activityLabel(plan.activity)}
-          </div>
+      {/* The calendar page carries the date, so the words say "Tuesday at 5:00 PM"
+          (owner, 2026-10-11: no dots between the parts; "Session plan" top right). */}
+      <div className="flex items-start gap-2.5">
+        <PlanDateTile iso={plan.scheduledAt} big />
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-[14px] font-medium text-text">{activityLabel(plan.activity)}</div>
+          <div className="text-[12px] text-text">{planDayLabel(plan.scheduledAt)}</div>
+          {plan.place && (
+            <div className="mt-0.5 flex items-center gap-1 text-[12px] text-text">
+              <IconMapPin size={12} className="shrink-0 text-muted" />
+              <span className="truncate">{plan.place}</span>
+            </div>
+          )}
         </div>
-      </div>
-
-      <div className="mt-2.5 flex flex-col gap-1.5 text-[12px] text-text">
-        <div className="flex items-center gap-2">
-          <IconCalendar size={13} className="text-muted" />
-          {planWhenLabel(plan.scheduledAt)}
+        <div className="shrink-0 text-[11px] font-semibold uppercase tracking-[0.12em] text-primary">
+          Session plan
         </div>
-        {plan.place && (
-          <div className="flex items-center gap-2">
-            <IconMapPin size={13} className="text-muted" />
-            <span className="truncate">{plan.place}</span>
-          </div>
-        )}
       </div>
 
       {/* Status / actions */}
@@ -200,7 +193,7 @@ export default function PlanCard({
             data-tour={tour ? "plan-on" : undefined}
             className="flex items-center gap-1.5 text-[12px] font-medium text-success"
           >
-            <IconCheck size={14} /> You&apos;re on — see you there
+            <IconCheck size={14} /> You&apos;re on, see you there
           </div>
         )}
 
