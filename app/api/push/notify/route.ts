@@ -9,6 +9,10 @@
               "partner"  (did you train with me?)    needs logId
     Varsity   "team_plan" | "team_lineup" | "note"   the coach telling the squad
                                                      ("note" needs athleteId)
+              "join_request"                         a rower asked to join → the
+                                                     team's coaches and captains
+              "join_approved"                        a rower was let in → them
+                                                     (needs targetId)
 
   WHO receives it is never taken from the browser. The caller sends an id for the
   thing that happened and a short preview of what they already wrote; the
@@ -28,15 +32,19 @@ export const runtime = "nodejs";
 const clip = (s: string, n = 120) => (s.length > n ? s.slice(0, n - 1) + "…" : s);
 
 const TEAM_KINDS = ["team_plan", "team_lineup", "note"] as const;
+const JOIN_KINDS = ["join_request", "join_approved"] as const;
 type Kind =
   | "message"
   | "plan"
   | "plan_update"
   | "follow"
   | "partner"
-  | (typeof TEAM_KINDS)[number];
+  | (typeof TEAM_KINDS)[number]
+  | (typeof JOIN_KINDS)[number];
 const isTeamKind = (k: string): k is (typeof TEAM_KINDS)[number] =>
   (TEAM_KINDS as readonly string[]).includes(k);
+const isJoinKind = (k: string): k is (typeof JOIN_KINDS)[number] =>
+  (JOIN_KINDS as readonly string[]).includes(k);
 
 export async function POST(request: Request) {
   if (!hasVapidConfig()) return Response.json({ error: "unconfigured" }, { status: 503 });
@@ -57,7 +65,7 @@ export async function POST(request: Request) {
   }
 
   const raw = body.kind ?? "";
-  const kind: Kind = isTeamKind(raw)
+  const kind: Kind = isTeamKind(raw) || isJoinKind(raw)
     ? raw
     : raw === "plan" || raw === "plan_update" || raw === "follow" || raw === "partner"
       ? raw
@@ -99,6 +107,20 @@ export async function POST(request: Request) {
         : await squad();
     if (error) return Response.json({ error: "forbidden" }, { status: 403 });
     subs = (data as StoredSubscription[]) ?? [];
+  } else if (isJoinKind(kind)) {
+    // "join_request": the coaches and captains of the team the caller has
+    // just asked to join (db/patch_varsity_invites_2026-10-11.sql works out
+    // which, and only for a request a few minutes old). "join_approved": the
+    // rower, and only if the caller runs a team they are now on.
+    if (kind === "join_approved" && !body.targetId) {
+      return Response.json({ error: "bad_request" }, { status: 400 });
+    }
+    const { data, error } =
+      kind === "join_request"
+        ? await supabase.rpc("join_request_push_targets")
+        : await supabase.rpc("join_approved_push_targets", { p_athlete: body.targetId });
+    if (error) return Response.json({ error: "forbidden" }, { status: 403 });
+    subs = (data as StoredSubscription[]) ?? [];
   } else if (kind === "partner") {
     // The person named as a training partner. The RPC hands over their devices
     // only to that session's logger, and only while the tag is pending.
@@ -137,7 +159,7 @@ export async function POST(request: Request) {
      lock screen "Harvard Rowing" is what tells you which part of your life this
      is, and the coach's name is already the only person who could have sent it. */
   let team = "Your squad";
-  if (isTeamKind(kind)) {
+  if (isTeamKind(kind) || isJoinKind(kind)) {
     const { data: membership } = await supabase.rpc("varsity_my_membership");
     const row = Array.isArray(membership) ? membership[0] : membership;
     team = (row?.team_name as string) || team;
@@ -196,6 +218,17 @@ export async function POST(request: Request) {
     note: {
       title: `${who} left you a note`,
       body: preview ? clip(preview) : "Open your Home to read it",
+      url: "/varsity/home",
+    },
+    // Opens the list with the Let in button on it.
+    join_request: {
+      title: team,
+      body: `${who} asked to join`,
+      url: "/varsity/coach/settings/waiting",
+    },
+    join_approved: {
+      title: team,
+      body: "You're in. Welcome to the squad.",
       url: "/varsity/home",
     },
   }[kind];

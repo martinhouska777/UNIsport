@@ -26,6 +26,7 @@ import {
 } from "@/lib/varsity/invites";
 import { VARSITY_HOME } from "@/lib/varsity/theme";
 import { clearMembershipCache } from "@/lib/varsity/membership";
+import { notifyJoinRequest } from "@/lib/push/client";
 
 /* Drop the code this device parked for the trip through sign-in. */
 function forgetParkedCode() {
@@ -61,7 +62,8 @@ export default function JoinWithCodePage() {
       // A code that doesn't work is not kept for later: /join offers the
       // parked code back, so "Try another link" opened with the rejected one
       // already typed in (launch audit 2026-09-27, item 42).
-      if (!p.valid) forgetParkedCode();
+      // Nor is one for a team you are already on: there is nothing left to redeem.
+      if (!p.valid || p.memberStatus) forgetParkedCode();
       setPreview(p);
     })();
     return () => {
@@ -71,7 +73,8 @@ export default function JoinWithCodePage() {
 
   // A good link, signed in, but no varsity profile yet: set one up first. The
   // setup screen comes back here with the parked code when it's saved.
-  const needsSetup = !!preview?.valid && ready && loggedIn && !varsityReady;
+  const needsSetup =
+    !!preview?.valid && !preview.memberStatus && ready && loggedIn && !varsityReady;
   useEffect(() => {
     if (needsSetup) router.replace("/varsity/setup");
   }, [needsSetup, router]);
@@ -81,6 +84,8 @@ export default function JoinWithCodePage() {
     const r = await redeemInvite(code);
     setBusy(false);
     setResult(r.ok ? { status: r.status } : { reason: r.reason });
+    // A new request (not someone already waiting) — tell whoever can let them in.
+    if (r.ok && r.status === "pending" && !r.already) notifyJoinRequest();
     if (r.ok) {
       forgetParkedCode();
       // The "no team" this tab may already hold is now wrong — without this,
@@ -90,6 +95,12 @@ export default function JoinWithCodePage() {
   }, [code]);
 
   const teamName = preview?.teamName ?? "your team";
+  /*
+    Already on this team — waiting, or let in. That is the answer, whatever has
+    happened to the link since: a personal link is single-use, so the person it
+    was for coming back to check on their request was told "already used".
+  */
+  const shown = result ?? (preview?.memberStatus ? { status: preview.memberStatus } : null);
   /*
     Where "back to the app" should land. Someone who came in varsity-first has
     no student side, so the student app would bounce them into an onboarding they never
@@ -154,12 +165,12 @@ export default function JoinWithCodePage() {
              captain gets a queue of "Unnamed" people. There used to be a
              "Nearly there" screen in between with one button; it was a tap
              that told them nothing they wouldn't see on the next screen. */}
-      {preview?.valid && ready && loggedIn && !varsityReady && (
+      {preview?.valid && !shown && ready && loggedIn && !varsityReady && (
         <p className="text-sm text-l-text-2">Checking this invite…</p>
       )}
 
       {/* 5. Ready to ask — the button that puts you in the queue */}
-      {preview?.valid && ready && loggedIn && varsityReady && !result && (
+      {preview?.valid && ready && loggedIn && varsityReady && !shown && (
         <>
           <h1 className="font-display text-3xl text-l-text">Join {teamName}</h1>
           <p className="mt-3 text-sm leading-relaxed text-l-text-2">
@@ -182,7 +193,7 @@ export default function JoinWithCodePage() {
       )}
 
       {/* 6a. In the waiting room */}
-      {result?.status === "pending" && (
+      {shown?.status === "pending" && (
         <>
           <h1 className="font-display text-3xl text-l-text">Request sent</h1>
           <p className="mt-3 text-sm leading-relaxed text-l-text-2">
@@ -199,7 +210,7 @@ export default function JoinWithCodePage() {
       )}
 
       {/* 6b. Straight in (a link the captain marked auto-approve) */}
-      {result?.status === "approved" && (
+      {shown?.status === "approved" && (
         <>
           <h1 className="font-display text-3xl text-l-text">You&apos;re in</h1>
           <p className="mt-3 text-sm leading-relaxed text-l-text-2">

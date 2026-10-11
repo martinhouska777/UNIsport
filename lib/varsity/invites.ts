@@ -121,6 +121,9 @@ export type InvitePreview = {
   personal?: boolean;
   autoApprove?: boolean;
   expiresAt?: string;
+  /** Signed in and already on this team — where you stand, whatever state the
+      link is in now (db/patch_varsity_invites_2026-10-11.sql). */
+  memberStatus?: "pending" | "approved";
 };
 
 export async function previewInvite(code: string): Promise<InvitePreview> {
@@ -137,6 +140,7 @@ export async function previewInvite(code: string): Promise<InvitePreview> {
     personal: !!d.personal,
     autoApprove: !!d.auto_approve,
     expiresAt: d.expires_at as string | undefined,
+    memberStatus: d.member_status as InvitePreview["memberStatus"],
   };
 }
 

@@ -66,6 +66,7 @@ import {
   IconX,
 } from "@/components/icons";
 import { requestTour, resetTour } from "@/lib/tour";
+import { notifyJoinApproved } from "@/lib/push/client";
 import { coachTour } from "@/lib/varsity/coachTour";
 import { fetchAthleteProfile, type AthleteProfileBundle } from "@/lib/varsity/athleteProfile";
 import { useAppState } from "@/components/AppState";
@@ -148,6 +149,25 @@ export default function TeamAdminScreen({
     };
   }, [teamId]);
 
+  /*
+    New requests arrive while the screen is open (the rower asks from their own
+    phone), so the menu's waiting count and the waiting list look again every
+    20 seconds while they're on screen, and the moment the app comes back to
+    the front. Before, a coach only saw a request by leaving and reopening.
+  */
+  useEffect(() => {
+    if (page !== "menu" && page !== "waiting") return;
+    const look = () => {
+      if (document.visibilityState === "visible") void reload();
+    };
+    const timer = setInterval(look, 20_000);
+    document.addEventListener("visibilitychange", look);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", look);
+    };
+  }, [page, reload]);
+
   useEffect(() => {
     if (page !== "menu" || !userId) return;
     let active = true;
@@ -216,8 +236,12 @@ export default function TeamAdminScreen({
     setBusy(userId);
     const { error: err } = await setMemberStatus(teamId, userId, status);
     setBusy(null);
-    if (err) setError(err);
-    else reload();
+    if (err) {
+      setError(err);
+      return;
+    }
+    if (status === "approved") notifyJoinApproved(userId);
+    reload();
   };
 
   const promote = async (userId: string, next: VarsityRole) => {

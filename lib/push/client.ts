@@ -243,6 +243,35 @@ export function notifySquad(input: {
   }).catch(() => {});
 }
 
+/*
+  Fire-and-forget: you just asked to join a team, tell the people who can let
+  you in. Same contract as notifySquad. The database works out which team from
+  your own request, and only answers for one made in the last few minutes.
+*/
+export function notifyJoinRequest(): void {
+  if (typeof window === "undefined") return;
+  void fetch("/api/push/notify", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ kind: "join_request" }),
+    keepalive: true,
+  }).catch(() => {});
+}
+
+/*
+  Fire-and-forget: a coach or captain just let `athleteId` in, tell them. The
+  database checks they really are now on a team the caller runs.
+*/
+export function notifyJoinApproved(athleteId: string): void {
+  if (typeof window === "undefined") return;
+  void fetch("/api/push/notify", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ kind: "join_approved", targetId: athleteId }),
+    keepalive: true,
+  }).catch(() => {});
+}
+
 // Ask the server to send a notification to this user's devices (welcome / sample).
 export async function sendTestNotification(payload?: {
   title?: string;
