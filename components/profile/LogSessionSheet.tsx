@@ -379,7 +379,7 @@ export default function LogSessionSheet({
                       className={`tap44 flex items-center gap-1 rounded-full border px-3.5 py-2 text-[13px] font-medium ${
                         on
                           ? "border-primary bg-primary-tint text-primary"
-                          : "border-transparent bg-surface-2 text-text"
+                          : "border-border bg-surface text-text"
                       }`}
                     >
                       {on && <IconCheck size={13} />}
@@ -453,7 +453,7 @@ export default function LogSessionSheet({
                                     ? isWarm
                                       ? "bg-warn-tint text-warn"
                                       : "bg-accent-tint text-accent"
-                                    : "bg-surface-2 text-text"
+                                    : "border border-border bg-surface text-text"
                                 }`}
                               >
                                 {setLabel}
@@ -464,7 +464,7 @@ export default function LogSessionSheet({
                                 inputMode="decimal"
                                 placeholder="0"
                                 aria-label={`Set ${j + 1} ${weightUnit}`}
-                                className="h-10 w-full min-w-0 flex-1 rounded-lg border border-transparent bg-surface-2 px-2 text-center text-base font-semibold tabular-nums text-text outline-none placeholder:font-normal placeholder:text-faint focus:border-primary"
+                                className="h-10 w-full min-w-0 flex-1 rounded-lg border border-border bg-surface px-2 text-center text-base font-semibold tabular-nums text-text outline-none placeholder:font-normal placeholder:text-faint focus:border-primary"
                               />
                               <input
                                 value={s.reps}
@@ -472,7 +472,7 @@ export default function LogSessionSheet({
                                 inputMode="numeric"
                                 placeholder="0"
                                 aria-label={`Set ${j + 1} reps`}
-                                className="h-10 w-full min-w-0 flex-1 rounded-lg border border-transparent bg-surface-2 px-2 text-center text-base font-semibold tabular-nums text-text outline-none placeholder:font-normal placeholder:text-faint focus:border-primary"
+                                className="h-10 w-full min-w-0 flex-1 rounded-lg border border-border bg-surface px-2 text-center text-base font-semibold tabular-nums text-text outline-none placeholder:font-normal placeholder:text-faint focus:border-primary"
                               />
                               <button
                                 type="button"
@@ -480,7 +480,7 @@ export default function LogSessionSheet({
                                 aria-label={s.done ? "Mark set not done" : "Mark set done"}
                                 aria-pressed={!!s.done}
                                 className={`tap44 press-icon flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg ${
-                                  s.done ? "bg-success text-background" : "bg-surface-2 text-muted"
+                                  s.done ? "bg-success text-background" : "border border-border bg-surface text-muted"
                                 }`}
                               >
                                 <IconCheck size={16} />
@@ -503,7 +503,7 @@ export default function LogSessionSheet({
                         <button
                           type="button"
                           onClick={() => addSet(i)}
-                          className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-surface-2 py-2.5 text-[13px] font-semibold text-text active:text-primary"
+                          className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-border bg-surface py-2.5 text-[13px] font-semibold text-text active:text-primary"
                         >
                           <IconPlus size={14} /> Add set
                         </button>
@@ -542,7 +542,7 @@ export default function LogSessionSheet({
                     className={`tap44 flex items-center gap-1 rounded-full border px-3.5 py-2 text-[13px] font-medium ${
                       cardioType === c
                         ? "border-primary bg-primary-tint text-primary"
-                        : "border-transparent bg-surface-2 text-text"
+                        : "border-border bg-surface text-text"
                     }`}
                   >
                     {cardioType === c && <IconCheck size={13} />}

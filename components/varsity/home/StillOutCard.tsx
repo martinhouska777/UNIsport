@@ -77,7 +77,7 @@ export default function StillOutCard({ userId }: { userId: string | null }) {
               }
               setSpell(null);
             }}
-            className="flex-1 rounded-xl border border-border bg-surface-2 py-2.5 text-[12px] font-medium text-text"
+            className="flex-1 rounded-xl border border-border bg-surface py-2.5 text-[12px] font-medium text-text"
           >
             {spell.reason === "away" ? "Still away" : `Still ${word}`}
           </button>

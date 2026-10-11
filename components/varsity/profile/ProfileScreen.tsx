@@ -108,7 +108,7 @@ const toneRing: Record<StatusTone, string> = {
   success: "border-success-line bg-success-tint text-success",
   warn: "border-warn-line bg-warn-tint text-warn",
   danger: "border-danger-line bg-danger-tint text-danger",
-  muted: "border-border bg-surface-2 text-muted",
+  muted: "border-border bg-surface text-muted",
 };
 const statusByTitle = (title: string) =>
   statusOptions.find((s) => s.title === title) ?? statusOptions[0];
@@ -136,7 +136,7 @@ function initialsOf(name: string): string {
   return (parts[0][0] + (parts[1]?.[0] ?? "")).toUpperCase();
 }
 const inputCls =
-  "w-full rounded-xl border border-border bg-surface-2 px-3.5 py-3 text-base text-text outline-none focus:border-primary placeholder:text-faint";
+  "w-full rounded-xl border border-border bg-surface px-3.5 py-3 text-base text-text outline-none focus:border-primary placeholder:text-faint";
 /*
   How far back the LOGS are fetched — always the longest range the chips offer,
   once, so changing the range is instant and never returns to the database.
@@ -215,7 +215,7 @@ function CalendarNote({ value, onChange }: { value: string; onChange: (v: string
       placeholder="What was it? (optional)"
       aria-label="Note for your calendar"
       // 16px so a phone doesn't zoom in on focus.
-      className="mt-3 w-full resize-none rounded-xl border border-border bg-surface-2 px-3 py-2.5 text-base leading-snug text-text outline-none placeholder:text-faint focus:border-primary"
+      className="mt-3 w-full resize-none rounded-xl border border-border bg-surface px-3 py-2.5 text-base leading-snug text-text outline-none placeholder:text-faint focus:border-primary"
     />
   );
 }
@@ -254,7 +254,7 @@ function TrainedTodaySheet({
         {logs.map((l) => (
           <div
             key={l.id}
-            className="flex items-center gap-2 rounded-xl border border-border bg-surface-2 px-3 py-2.5"
+            className="flex items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2.5"
           >
             <div className="min-w-0 flex-1 truncate text-[13px] font-semibold text-text">
               {l.title || "Session"}
@@ -318,7 +318,7 @@ function StatusSheet({
                 onClose();
               }}
               className={`flex items-center gap-3 rounded-2xl border px-3.5 py-3 text-left ${
-                active ? "border-primary bg-primary-tint" : "border-border bg-surface-2"
+                active ? "border-primary bg-primary-tint" : "border-border bg-surface"
               }`}
             >
               <span className={`h-2.5 w-2.5 flex-shrink-0 rounded-full ${toneDot[s.tone]}`} />

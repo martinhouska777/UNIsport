@@ -361,14 +361,15 @@ function LogEditor({
     similar the colors and consistent with the other part of the app"). Every
     field and group is white on the page, like a card — the grey boxes this
     editor had were the one place left where a block on the page was grey.
-    Grey (surface-2) is only for the options INSIDE a white card, and the one
-    you picked is the school colour's pale tint.
+    The options INSIDE a white card are white too, with a hairline (owner,
+    2026-10-11: the grey tiles were "the old colour palette"), and the one you
+    picked is the school colour's pale tint.
   */
   const inputCls =
     "w-full rounded-xl border border-border bg-surface px-3 py-2.5 text-base text-text outline-none focus:border-primary placeholder:text-faint";
   const labelCls = "mb-2 mt-6 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted";
   const pick = (on: boolean) =>
-    on ? "border-primary bg-primary-tint text-primary" : "border-transparent bg-surface-2 text-text";
+    on ? "border-primary bg-primary-tint text-primary" : "border-border bg-surface text-text";
 
   // The type chips. An extra log picks from everything; a flex day picks from
   // what a flex day can be. The dot is the colour the calendar draws it in.
@@ -964,7 +965,7 @@ function CheckInRow({ userId, iso }: { userId: string; iso: string }) {
     `rounded-xl border py-2.5 text-[12px] font-semibold transition-colors ${
       on
         ? "border-primary bg-primary-tint text-primary"
-        : "border-transparent bg-surface-2 text-text"
+        : "border-border bg-surface text-text"
     }`;
 
   return (

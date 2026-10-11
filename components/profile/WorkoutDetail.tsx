@@ -144,7 +144,7 @@ export default function WorkoutDetail({
                             ? "bg-warn-tint text-warn"
                             : s.type
                               ? "bg-accent-tint text-accent"
-                              : "bg-surface-2 text-text"
+                              : "border border-border bg-surface text-text"
                         }`}
                       >
                         {labels[j]}
@@ -206,7 +206,7 @@ export default function WorkoutDetail({
         {log.note && (
           <div className="mb-4">
             <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">Note</div>
-            <div className="rounded-xl border border-border bg-surface-2 px-3 py-2.5 text-[13px] leading-relaxed text-muted">
+            <div className="rounded-xl border border-border bg-surface px-3 py-2.5 text-[13px] leading-relaxed text-muted">
               {log.note}
             </div>
           </div>
@@ -220,7 +220,7 @@ export default function WorkoutDetail({
             <button
               type="button"
               onClick={() => setConfirming(false)}
-              className="flex-1 rounded-full border border-border bg-surface-2 px-5 py-3 text-sm font-medium text-text"
+              className="flex-1 rounded-full border border-border bg-surface px-5 py-3 text-sm font-medium text-text"
             >
               Cancel
             </button>
