@@ -566,7 +566,7 @@ export default function RaceBoard({
                   if (!why) onDeleted();
                   else setDeleteFailed(why);
                 }}
-                className="tap44 rounded-full border border-border bg-surface-2 px-3 py-1.5 font-medium text-danger"
+                className="tap44 rounded-full border border-border bg-surface px-3 py-1.5 font-medium text-danger"
               >
                 Delete
               </button>
@@ -707,7 +707,7 @@ function TimeTile({
       ? "border border-dashed border-danger text-danger"
       : value == null
         ? "border border-dashed border-faint/50 text-muted"
-        : "bg-surface-2 text-text";
+        : "border border-border bg-surface text-text";
   const cls = `mt-1 flex h-10 w-full items-center justify-center rounded-xl px-1 font-mono text-[14px] font-semibold tabular-nums ${look} ${
     on ? "ring-2 ring-text ring-offset-2 ring-offset-surface" : ""
   }`;
@@ -945,7 +945,7 @@ function PieceEditor({
             <button
               type="button"
               onClick={onDelete}
-              className="tap44 flex-shrink-0 rounded-full border border-border bg-surface-2 px-3 py-1.5 font-medium text-danger"
+              className="tap44 flex-shrink-0 rounded-full border border-border bg-surface px-3 py-1.5 font-medium text-danger"
             >
               Delete
             </button>

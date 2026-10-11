@@ -57,7 +57,7 @@ export default function TelemetryOuting({
   return (
     <Sheet title="Water" onClose={onClose}>
       {/* the outing */}
-      <div className="rounded-2xl border border-border bg-surface-2 px-3.5 py-3">
+      <div className="rounded-2xl border border-border bg-surface px-3.5 py-3">
         <div className="flex items-center gap-2">
           <span className="text-[13px] font-semibold text-text">{outing.crew}</span>
           <span className="rounded border border-border px-1.5 py-px text-[8px] font-bold uppercase tracking-[0.08em] text-muted">

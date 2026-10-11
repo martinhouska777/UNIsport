@@ -81,7 +81,7 @@ export default function OutOfBoatsCard({
             <li key={p.id} className="flex items-center gap-2 px-2 py-2">
               <span className="min-w-0 flex-1 truncate text-[14px] text-text">{p.name}</span>
               <span
-                className={`flex-shrink-0 rounded-full bg-surface-2 px-2 py-0.5 text-[11px] font-medium ${
+                className={`flex-shrink-0 rounded-full border border-border bg-surface px-2 py-0.5 text-[11px] font-medium ${
                   outTone[p.reason] === "warn" ? "text-warn" : "text-muted"
                 }`}
               >

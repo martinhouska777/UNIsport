@@ -116,7 +116,7 @@ export default function VarsityWaitingPage() {
         <button
           type="button"
           onClick={reload}
-          className="mt-4 w-full rounded-xl border border-border bg-surface-2 py-3 text-sm font-medium text-text"
+          className="mt-4 w-full rounded-xl border border-border bg-surface py-3 text-sm font-medium text-text"
         >
           Check again
         </button>

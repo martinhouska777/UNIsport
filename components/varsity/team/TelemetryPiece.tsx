@@ -41,7 +41,7 @@ const TD = "px-2.5 py-2 text-[12px] tabular-nums text-text whitespace-nowrap";
 
 function Tile({ value, label }: { value: string; label: string }) {
   return (
-    <div className="flex-1 rounded-2xl border border-border bg-surface-2 px-2 py-3 text-center">
+    <div className="flex-1 rounded-2xl border border-border bg-surface px-2 py-3 text-center">
       <div className="text-[15px] font-semibold leading-none tabular-nums text-text">{value}</div>
       <div className="mt-1.5 text-[8px] font-semibold uppercase tracking-[0.12em] text-muted">
         {label}
@@ -82,7 +82,7 @@ export default function TelemetryPiece({
   return (
     <Sheet title={piece.name} onClose={onClose}>
       {/* what this piece was */}
-      <div className="rounded-2xl border border-border bg-surface-2 px-3.5 py-3">
+      <div className="rounded-2xl border border-border bg-surface px-3.5 py-3">
         <div className="flex items-center gap-2">
           <span className="text-[13px] font-semibold text-text">{outing.crew}</span>
           <span className="rounded border border-border px-1.5 py-px text-[8px] font-bold uppercase tracking-[0.08em] text-muted">
@@ -117,7 +117,7 @@ export default function TelemetryPiece({
                     type="button"
                     onClick={() => setCompareId(on ? null : c.piece.id)}
                     className={`rounded-full border px-2.5 py-1 text-[11px] font-medium ${
-                      on ? "border-primary bg-primary-tint text-primary" : "border-border bg-surface-2 text-text"
+                      on ? "border-primary bg-primary-tint text-primary" : "border-border bg-surface text-text"
                     }`}
                   >
                     {c.label}

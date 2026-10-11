@@ -96,7 +96,7 @@ export default function ClaimSeatSheet({
               onClick={() => pick(a.id)}
               aria-pressed={isCurrent}
               className={`flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left ${
-                isCurrent ? "border-primary bg-primary-tint" : "border-border bg-surface-2 active:bg-surface"
+                isCurrent ? "border-primary bg-primary-tint" : "border-border bg-surface active:bg-surface-2"
               }`}
             >
               <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-primary-tint text-[11px] font-semibold text-primary">

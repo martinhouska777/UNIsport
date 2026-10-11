@@ -53,7 +53,7 @@ const toneRing: Record<StatusTone, string> = {
   success: "border-success-line bg-success-tint text-success",
   warn: "border-warn-line bg-warn-tint text-warn",
   danger: "border-danger-line bg-danger-tint text-danger",
-  muted: "border-border bg-surface-2 text-muted",
+  muted: "border-border bg-surface text-muted",
 };
 /*
   The side dot. It carries a hairline of its own ink so the dot keeps a crisp
@@ -145,17 +145,17 @@ function AthleteSheet({
           <div className="text-lg font-semibold leading-tight text-text">{a?.name ?? "Unknown"}</div>
           {classLine && <div className="mt-1 text-[11px] text-muted">{classLine}</div>}
           <div className="mt-2 flex flex-wrap items-center gap-1.5">
-            <span className="inline-flex items-center gap-1 rounded-md border border-border bg-surface-2 px-2 py-1 text-[11px] text-text">
+            <span className="inline-flex items-center gap-1 rounded-md border border-border bg-surface px-2 py-1 text-[11px] text-text">
               <span className="h-2 w-2 rounded-full" style={sideDot(a)} />
               {sideLabel(a)}
             </span>
             {p?.heightCm != null && (
-              <span className="rounded-md border border-border bg-surface-2 px-2 py-1 text-[11px] text-text">
+              <span className="rounded-md border border-border bg-surface px-2 py-1 text-[11px] text-text">
                 {p.heightCm} cm
               </span>
             )}
             {p?.weightKg != null && (
-              <span className="rounded-md border border-border bg-surface-2 px-2 py-1 text-[11px] text-text">
+              <span className="rounded-md border border-border bg-surface px-2 py-1 text-[11px] text-text">
                 {formatWeight(p.weightKg, units.weight)}
               </span>
             )}
@@ -186,7 +186,7 @@ function AthleteSheet({
           <button
             type="button"
             onClick={() => setCalendarOpen(true)}
-            className="mt-4 flex w-full items-center gap-3 rounded-xl border border-border bg-surface-2 px-3.5 py-3 text-left active:bg-surface"
+            className="mt-4 flex w-full items-center gap-3 rounded-xl border border-border bg-surface px-3.5 py-3 text-left active:bg-surface-2"
           >
             <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-primary-tint text-primary">
               <IconCalendar size={16} />
@@ -195,7 +195,7 @@ function AthleteSheet({
             <IconChevronRight size={15} className="flex-shrink-0 text-muted" />
           </button>
         ) : (
-          <div className="mt-4 flex items-center gap-2.5 rounded-xl border border-border bg-surface-2 px-3.5 py-3 text-[12px] text-muted">
+          <div className="mt-4 flex items-center gap-2.5 rounded-xl border border-border bg-surface px-3.5 py-3 text-[12px] text-muted">
             <IconEyeOff size={15} />
             {(a?.name ?? "").split(" ")[0] || "They"} keeps their calendar private.
           </div>
@@ -212,7 +212,7 @@ function AthleteSheet({
             {bests.map((piece) => (
               <div
                 key={piece}
-                className="flex items-baseline justify-between rounded-xl border border-border bg-surface-2 px-3 py-2.5"
+                className="flex items-baseline justify-between rounded-xl border border-border bg-surface px-3 py-2.5"
               >
                 <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">{piece}</span>
                 <span className="text-[14px] font-semibold text-text">{p!.prs[piece]}</span>

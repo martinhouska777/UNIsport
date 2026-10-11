@@ -154,7 +154,7 @@ export default function SwitchSheet({
                           className={`tap44 flex min-h-10 min-w-0 max-w-full items-center rounded-xl border px-3 text-[13px] transition-opacity ${border} ${
                             switched
                               ? "bg-danger-tint font-semibold text-danger"
-                              : "bg-surface-2 font-medium text-text"
+                              : "bg-surface font-medium text-text"
                           } ${isFirst ? "ring-2 ring-text ring-offset-2 ring-offset-surface" : ""} ${dimmed ? "opacity-40" : ""}`}
                         >
                           <span className="truncate">{f.name}</span>

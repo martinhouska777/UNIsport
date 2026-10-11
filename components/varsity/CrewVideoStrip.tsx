@@ -149,7 +149,7 @@ function VideoSheet({
             href={video.externalUrl ?? "#"}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex aspect-video w-full flex-col items-center justify-center gap-2.5 rounded-xl border border-border bg-surface-2 text-center active:bg-surface"
+            className="flex aspect-video w-full flex-col items-center justify-center gap-2.5 rounded-xl border border-border bg-surface text-center active:bg-surface-2"
           >
             <span className="flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-contrast">
               <IconPlay size={22} />
@@ -180,7 +180,7 @@ function VideoSheet({
       ) : src ? (
         <video src={src} controls playsInline className="w-full rounded-xl bg-black" />
       ) : (
-        <div className="flex h-40 items-center justify-center rounded-xl border border-border bg-surface-2 text-[12px] text-muted">
+        <div className="flex h-40 items-center justify-center rounded-xl border border-border bg-surface text-[12px] text-muted">
           {failed ? "This video could not be opened." : "Loading…"}
         </div>
       )}
@@ -370,7 +370,7 @@ export default function CrewVideoStrip({ dayKey, boat }: { dayKey: string; boat:
               key={v.id}
               type="button"
               onClick={() => setPlaying(v)}
-              className="flex items-center gap-2.5 rounded-xl border border-border bg-surface-2 px-2.5 py-2 text-left active:border-primary-line"
+              className="flex items-center gap-2.5 rounded-xl border border-border bg-surface px-2.5 py-2 text-left active:border-primary-line"
             >
               <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-primary-tint text-primary">
                 <IconPlay size={12} />
@@ -402,7 +402,7 @@ export default function CrewVideoStrip({ dayKey, boat }: { dayKey: string; boat:
           onChange={(e) => setLabel(e.target.value)}
           aria-label="Video label"
           placeholder="Label (optional)"
-          className="min-w-0 flex-1 rounded-lg border border-border bg-surface-2 px-2.5 py-1.5 text-base text-text outline-none placeholder:italic placeholder:text-faint"
+          className="min-w-0 flex-1 rounded-lg border border-border bg-surface px-2.5 py-1.5 text-base text-text outline-none placeholder:italic placeholder:text-faint"
         />
         {/* One button, two jobs. Before Drive is connected it signs you in —
             which has to be a real tap, because a browser only lets a popup
@@ -425,7 +425,7 @@ export default function CrewVideoStrip({ dayKey, boat }: { dayKey: string; boat:
           <div className="pb-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
             Save it as
           </div>
-          <div className="flex items-center gap-1.5 rounded-lg border border-border bg-surface-2 px-2.5 py-1.5">
+          <div className="flex items-center gap-1.5 rounded-lg border border-border bg-surface px-2.5 py-1.5">
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}

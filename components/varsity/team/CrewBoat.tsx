@@ -51,7 +51,7 @@ export default function CrewBoat({
         ? "border-danger-line bg-danger-tint font-semibold text-danger"
         : dim
           ? "border-border text-muted"
-          : "border-border bg-surface-2 font-medium text-text"
+          : "border-border bg-surface font-medium text-text"
     }`;
   return (
     <div className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1">

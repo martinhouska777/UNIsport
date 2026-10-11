@@ -248,7 +248,7 @@ function SeatRaceList({
             <button
               type="button"
               onClick={() => onOpenRace?.(d.dayKey)}
-              className="flex w-full items-center gap-2 rounded-xl bg-surface-2 px-3 py-2 text-left active:bg-border"
+              className="flex w-full items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2 text-left active:bg-surface-2"
             >
               <span className="min-w-0 flex-1">
                 <span className="block text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">
@@ -395,7 +395,7 @@ function SessionTag({ run, onOpen }: { run: Run; onOpen?: () => void }) {
         type="button"
         onClick={onOpen}
         aria-label={`${run.when}: ${run.words}`}
-        className="flex w-full min-w-0 items-center justify-center rounded-[6px] bg-surface-2 px-0.5 py-1 text-center transition-colors active:bg-border"
+        className="flex w-full min-w-0 items-center justify-center rounded-[6px] border border-border bg-surface px-0.5 py-1 text-center transition-colors active:bg-surface-2"
       >
         <span className="sticky left-3 right-3 min-w-0 max-w-full">
           <span className="block truncate text-[9px] font-semibold uppercase tracking-[0.08em] text-muted">
@@ -708,7 +708,7 @@ export default function TeamRanking({
             <button
               type="button"
               onClick={() => setPickingRower(true)}
-              className="tap44 flex flex-shrink-0 items-center gap-1 rounded-full border border-border bg-surface-2 px-3 py-1.5 text-[12px] text-muted"
+              className="tap44 flex flex-shrink-0 items-center gap-1 rounded-full border border-border bg-surface px-3 py-1.5 text-[12px] text-muted"
             >
               Everyone
               <IconChevronDown size={12} />

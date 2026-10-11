@@ -624,7 +624,7 @@ function WeeklyGraph({
           onClick={() => setFull(true)}
           disabled={!anyData}
           aria-label="See the graph full screen"
-          className="tap44 press-icon flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border border-border bg-surface-2 text-muted disabled:opacity-40"
+          className="tap44 press-icon flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border border-border bg-surface text-muted disabled:opacity-40"
         >
           <IconExpand size={14} />
         </button>

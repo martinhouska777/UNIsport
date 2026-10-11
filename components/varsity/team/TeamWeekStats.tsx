@@ -179,7 +179,7 @@ export function useTeamWeek(on = true): TeamWeek {
 */
 function Figure({ value, label }: { value: string; label: string }) {
   return (
-    <div className="min-w-0 flex-1 rounded-xl border border-border bg-surface-2 px-3 py-2.5">
+    <div className="min-w-0 flex-1 rounded-xl border border-border bg-surface px-3 py-2.5">
       <div className="text-[9px] font-semibold uppercase tracking-[0.1em] text-muted">{label}</div>
       <div className="mt-1 truncate text-[22px] font-semibold leading-none text-text">{value}</div>
     </div>
@@ -254,7 +254,7 @@ export default function TeamWeekStats({ week }: { week: TeamWeek }) {
           type="button"
           onClick={() => setFull(true)}
           data-tour="coach-team-full-stats"
-          className="tap44 flex flex-shrink-0 items-center gap-1 rounded-full border border-border bg-surface-2 px-3 py-1.5 text-[12px] font-medium text-text"
+          className="tap44 flex flex-shrink-0 items-center gap-1 rounded-full border border-border bg-surface px-3 py-1.5 text-[12px] font-medium text-text"
         >
           Full statistics <IconChevronRight size={13} />
         </button>

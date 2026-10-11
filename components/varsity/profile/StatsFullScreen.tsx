@@ -274,7 +274,7 @@ export default function StatsFullScreen({
               <button
                 type="button"
                 onClick={onZoomOut}
-                className="tap44 mr-auto flex flex-shrink-0 items-center gap-1 rounded-full border border-border bg-surface-2 px-3 py-1.5 text-[12px] font-medium text-text"
+                className="tap44 mr-auto flex flex-shrink-0 items-center gap-1 rounded-full border border-border bg-surface px-3 py-1.5 text-[12px] font-medium text-text"
               >
                 <IconArrowLeft size={13} /> Zoom out
               </button>

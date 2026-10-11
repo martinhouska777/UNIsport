@@ -45,7 +45,7 @@ export default function Dropdown({
             : `tap44 flex flex-shrink-0 items-center gap-1 rounded-full border px-3 py-1.5 text-[12px] transition-colors ${
                 open
                   ? "border-primary bg-primary-tint text-primary"
-                  : "border-border bg-surface-2 text-muted"
+                  : "border-border bg-surface text-muted"
               }`
         }
       >
@@ -65,7 +65,7 @@ export default function Dropdown({
             className="fixed inset-0 z-10 cursor-default"
           />
           <div
-            className={`absolute ${align === "right" ? "right-0" : "left-0"} top-[calc(100%+7px)] z-20 w-44 overflow-hidden rounded-xl border border-border bg-surface-2 shadow-lg`}
+            className={`absolute ${align === "right" ? "right-0" : "left-0"} top-[calc(100%+7px)] z-20 w-44 overflow-hidden rounded-xl border border-border bg-surface shadow-lg`}
           >
             {options.map((o) => (
               <button
@@ -76,7 +76,7 @@ export default function Dropdown({
                   onOpen(false);
                 }}
                 aria-pressed={o.key === value}
-                className={`flex w-full items-center gap-2 px-3 py-2.5 text-left text-[12px] active:bg-surface ${
+                className={`flex w-full items-center gap-2 px-3 py-2.5 text-left text-[12px] active:bg-surface-2 ${
                   o.key === value ? "font-semibold text-text" : "text-muted"
                 }`}
               >

@@ -28,7 +28,7 @@ export default function Delta({
           ? "border-success-line bg-success-tint text-success"
           : worse
             ? "border-danger-line bg-danger-tint text-danger"
-            : "border-border bg-surface-2 text-muted"
+            : "border-border bg-surface text-muted"
       }`}
     >
       {better && <IconChevronUp size={lg ? 13 : 11} />}

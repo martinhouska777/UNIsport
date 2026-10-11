@@ -73,7 +73,7 @@ function SeatChip({ label, mine, cox }: { label: string; mine?: boolean; cox?: b
           ? "border-primary bg-primary text-primary-contrast"
           : cox
             ? "border-transparent"
-            : "border-border bg-surface-2 text-text-2"
+            : "border-border bg-surface text-text-2"
       }`}
       style={cox && !mine ? { background: COX_COLOR, color: COX_INK } : undefined}
     >
@@ -226,7 +226,7 @@ export function LineupSeats({ l }: { l: Lineup }) {
       rather than a fluorescent tube. The seat that is YOURS keeps the primary
       at FULL strength, so it still wins the card.
     */
-    <div className="rounded-[44px] border-2 border-primary-line bg-surface-2 px-4 pb-3 pt-2.5">
+    <div className="rounded-[44px] border-2 border-primary-line bg-surface px-4 pb-3 pt-2.5">
       <HullCap arrow="▲" word="BOW" />
       <div className="flex flex-col gap-1">
         {l.seats.map((s) => (
@@ -325,7 +325,7 @@ export default function LineupBoatCard({
                 thing that changes what you do before you have even read the
                 seats, and unlabelled it read as a stray line of text. */}
             {l.note && (
-              <div className="rounded-xl bg-surface-2 px-3 py-2.5">
+              <div className="rounded-xl border border-border bg-surface px-3 py-2.5">
                 <div className="font-mono text-[10px] font-medium tracking-[0.12em] text-muted">
                   COACH&rsquo;S NOTE
                 </div>

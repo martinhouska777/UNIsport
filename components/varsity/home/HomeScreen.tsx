@@ -476,7 +476,7 @@ function DayDetail({ d, onClose }: { d: WeekDay; onClose: () => void }) {
               <div className="w-[3px] flex-shrink-0 rounded" style={kindBar(s.kind)} />
               <div className="flex-1">
                 <div className="flex items-center gap-2">
-                  <span className="rounded border border-border bg-surface-2 px-1.5 py-0.5 text-[8px] font-semibold tracking-[0.06em] text-muted">
+                  <span className="rounded border border-border bg-surface px-1.5 py-0.5 text-[8px] font-semibold tracking-[0.06em] text-muted">
                     {s.time}
                     {s.clock ? ` · ${s.clock}` : ""}
                   </span>
@@ -705,7 +705,7 @@ function SessionCard({
         <div className="flex-1 p-3">
           <div className="mb-1 flex items-center justify-between">
             <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 pr-8">
-              <span className="rounded border border-border bg-surface-2 px-1.5 py-0.5 text-[10px] font-semibold tracking-[0.06em] text-muted">
+              <span className="rounded border border-border bg-surface px-1.5 py-0.5 text-[10px] font-semibold tracking-[0.06em] text-muted">
                 {s.period}
               </span>
               {s.detail && <KindTag label={s.detail} color={mark} />}

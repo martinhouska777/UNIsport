@@ -8,7 +8,7 @@
 */
 export default function ExampleTag() {
   return (
-    <span className="inline-flex flex-shrink-0 items-center rounded-md border border-border bg-surface-2 px-1.5 py-0.5 text-[10px] font-semibold tracking-[0.08em] text-warn">
+    <span className="inline-flex flex-shrink-0 items-center rounded-md border border-border bg-surface px-1.5 py-0.5 text-[10px] font-semibold tracking-[0.08em] text-warn">
       Example
     </span>
   );

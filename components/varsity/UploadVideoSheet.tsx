@@ -111,7 +111,7 @@ function Row({
       className={`tap44 flex w-full items-center justify-between gap-2 rounded-xl border px-3 py-2.5 text-left ${
         picked
           ? "border-primary-line bg-primary-tint text-primary"
-          : "border-border bg-surface-2 text-text"
+          : "border-border bg-surface text-text"
       }`}
     >
       <span className="min-w-0">
@@ -299,7 +299,7 @@ export default function UploadVideoSheet({ onClose }: { onClose: () => void }) {
                   if (t) setConnected(true);
                   else setError("Google sign-in didn't finish. Tap to try again.");
                 }}
-                className="tap44 flex w-full items-center justify-center gap-1.5 rounded-xl border border-border bg-surface-2 px-3 py-2.5 text-[13px] font-semibold text-text"
+                className="tap44 flex w-full items-center justify-center gap-1.5 rounded-xl border border-border bg-surface px-3 py-2.5 text-[13px] font-semibold text-text"
               >
                 <IconVideo size={14} /> Connect Google Drive
               </button>
@@ -312,7 +312,7 @@ export default function UploadVideoSheet({ onClose }: { onClose: () => void }) {
               */
               <>
                 <Label>Save it as</Label>
-                <div className="flex items-center gap-1.5 rounded-xl border border-border bg-surface-2 px-3 py-2">
+                <div className="flex items-center gap-1.5 rounded-xl border border-border bg-surface px-3 py-2">
                   <input
                     value={name}
                     onChange={(e) => setTyped({ boatId: boat.id, value: e.target.value })}

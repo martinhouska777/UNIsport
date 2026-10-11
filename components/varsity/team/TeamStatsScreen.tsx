@@ -383,7 +383,7 @@ export default function TeamStatsScreen({ onClose }: { onClose: () => void }) {
               <button
                 type="button"
                 onClick={zoomOut}
-                className="tap44 flex flex-shrink-0 items-center gap-1 rounded-full border border-border bg-surface-2 px-3 py-1.5 text-[12px] font-medium text-text"
+                className="tap44 flex flex-shrink-0 items-center gap-1 rounded-full border border-border bg-surface px-3 py-1.5 text-[12px] font-medium text-text"
               >
                 <IconArrowLeft size={13} /> Zoom out
               </button>
@@ -571,13 +571,13 @@ function ReadOut({ bucket, each, units }: { bucket: TeamBucket; each: "day" | "w
         {bucket.latest ? (each === "day" ? "Today" : "This week") : bucket.label}
       </div>
       <div className="mt-2 grid grid-cols-2 gap-2">
-        <div className="rounded-xl border border-border bg-surface-2 px-3 py-2">
+        <div className="rounded-xl border border-border bg-surface px-3 py-2">
           <div className="text-[9px] font-semibold uppercase tracking-[0.1em] text-muted">Per person</div>
           <div className="mt-0.5 text-[16px] font-semibold leading-none text-text">
             {formatDistance(bucketMetres(bucket), units.distance)}
           </div>
         </div>
-        <div className="rounded-xl border border-border bg-surface-2 px-3 py-2">
+        <div className="rounded-xl border border-border bg-surface px-3 py-2">
           <div className="text-[9px] font-semibold uppercase tracking-[0.1em] text-muted">Per person</div>
           <div className="mt-0.5 text-[16px] font-semibold leading-none text-text">
             {formatDuration(Math.round(bucketMinutes(bucket)))}
