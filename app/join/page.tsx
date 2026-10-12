@@ -82,7 +82,7 @@ export default function JoinPage() {
         </h1>
         <p className="mt-3 text-sm leading-relaxed text-l-text-2">
           {invite.from ? `${invite.from} invited you. ` : ""}
-          UNIsport finds you a training partner at your gym, at your hour — and every session you
+          UNIsport finds you a training partner at your gym, at your hour, and every session you
           log counts for {invite.house ?? "your house"} on the {invite.school} leaderboard.
         </p>
         {loggedIn ? (
@@ -90,7 +90,7 @@ export default function JoinPage() {
             href="/match"
             className="mt-8 inline-block w-full rounded-full bg-l-accent px-5 py-3 text-sm font-semibold text-l-bg"
           >
-            You&apos;re already in — open the app
+            Open the app
           </Link>
         ) : (
           <>

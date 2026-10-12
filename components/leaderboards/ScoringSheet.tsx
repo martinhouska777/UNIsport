@@ -88,7 +88,7 @@ export default function ScoringSheet({
 
           <p className="text-[12px] leading-relaxed text-muted">
             That is the whole scoring system. Training with people is worth more because
-            that is what this app is for — the fastest way up any board is to bring
+            that is what this app is for. The fastest way up any board is to bring
             somebody along, and the very fastest is to train with somebody new.
           </p>
 
@@ -109,12 +109,12 @@ export default function ScoringSheet({
 
             <Rule title="The boards reset">
               Every month everyone starts level again, so the table is always still
-              winnable. All time is the one that never resets — that one is the record,
+              winnable. All time is the one that never resets, so that one is the record,
               not the race.
             </Rule>
 
             <Rule title="Houses and dorms are ranked per member">
-              Points divided by everyone who lives there, not the total — otherwise the
+              Points divided by everyone who lives there, not the total, otherwise the
               biggest house wins every month forever. It also means a few very keen people
               can&rsquo;t carry a house on their own: getting more of you logging is the
               only way the number moves. Every house is on the board, always.
@@ -122,7 +122,7 @@ export default function ScoringSheet({
 
             <Rule title="Nobody can see your workouts">
               A board only ever shows a name, a house, a class year and a total. Never a
-              workout, an exercise, a note, a photo or a date — there is no way to read a
+              workout, an exercise, a note, a photo or a date, so there is no way to read a
               leaderboard backwards into what somebody actually did.
             </Rule>
           </div>

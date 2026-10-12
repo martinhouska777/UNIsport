@@ -373,7 +373,7 @@ export default function TrainingSettingsScreen({ membership }: { membership: Mem
       {error && (
         <div className="fixed inset-x-0 bottom-[76px] z-20 px-3.5 lg:bottom-5 lg:left-56">
           <div className="mx-auto flex max-w-screen-sm items-center gap-2.5 rounded-2xl border border-danger-line bg-surface p-3 shadow-lg">
-            <span className="flex-1 px-1 text-[12px] text-danger">Not saved — {error}</span>
+            <span className="flex-1 px-1 text-[12px] text-danger">Not saved, {error}</span>
             <Button size="md" onClick={() => void save()} disabled={saving}>
               Retry
             </Button>
@@ -523,7 +523,7 @@ function TypeSheet({
           </p>
           <p className="mt-2 text-[12px] leading-relaxed text-muted">
             {inUse > 0
-              ? `${inUse} session${inUse === 1 ? "" : "s"} in your plan use this type. They are not deleted — they will show as "${existing.key}" until you add the type back.`
+              ? `${inUse} session${inUse === 1 ? "" : "s"} in your plan use this type. They are not deleted. They will show as "${existing.key}" until you add the type back.`
               : "Nothing in your plan uses it. Its saved workouts go with it."}
           </p>
           <div className="mt-4 flex gap-2.5">

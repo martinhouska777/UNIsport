@@ -72,7 +72,7 @@ function defaultHonorCode(school: string): HonorCode {
   return {
     title: `The ${school} Gym Honor Code`,
     paragraphs: [
-      `Members of the ${school} fitness community commit themselves to producing training logs of integrity — that is, logs that adhere to the physical and numerical standards of accurate attribution of sets, appropriate collection and use of kilograms, and transparent acknowledgement of the contribution of others to their sessions, records and standings.`,
+      `Members of the ${school} fitness community commit themselves to producing training logs of integrity, that is, logs that adhere to the physical and numerical standards of accurate attribution of sets, appropriate collection and use of kilograms, and transparent acknowledgement of the contribution of others to their sessions, records and standings.`,
       `Logging a session that did not happen, claiming a partner who was not there, passing off a warm-up as a working set, inflating a distance, or any other instance of athletic dishonesty violates the standards of our community, as well as the standards of the wider world of gyms and group chats.`,
     ],
     agree: "I agree",

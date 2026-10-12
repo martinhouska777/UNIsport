@@ -83,7 +83,7 @@ export default function PlanSessionSheet({
     */
     const when = new Date(`${date}T${time}`);
     if (Number.isNaN(when.getTime())) {
-      setError("That date and time didn't make sense — try again.");
+      setError("That date and time didn't make sense. Try again.");
       return;
     }
     if (when.getTime() <= Date.now()) {

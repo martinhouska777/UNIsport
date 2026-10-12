@@ -95,12 +95,12 @@ export function matchReasons(m: Match): MatchReason[] {
   */
   if (f.activity && f.activityNote) {
     const w = activityWording[f.activity] ?? activityWording.other;
-    const often = f.activityFreq ? ` — ${f.activityFreq} a week` : "";
+    const often = f.activityFreq ? `, ${f.activityFreq} a week` : "";
     const full =
       f.activityNote === "both_main"
         ? w.both
         : f.activityNote === "their_main"
-          ? `${w.both} — it's their main thing`
+          ? `${w.both}, it's their main thing`
           : f.activityNote === "they_also"
             ? `${w.they}${often}`
             : `${w.both} on the side${often}`;
@@ -131,7 +131,7 @@ export function matchReasons(m: Match): MatchReason[] {
       full:
         f.interests.length === 1
           ? `You're both into ${f.interests[0]}`
-          : `${f.interests.length} shared interests — ${listWords(f.interests)}`,
+          : `Shared interests: ${listWords(f.interests)}`,
       pts: b.interests,
       weight: 3,
     });

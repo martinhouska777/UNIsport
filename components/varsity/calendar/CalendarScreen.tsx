@@ -200,7 +200,7 @@ function DayOutSection({
   if (missing) {
     return (
       <div className="mt-3 rounded-2xl border border-border bg-surface px-3.5 py-3">
-        <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">Missed — why?</div>
+        <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">Reason</div>
         <div className="mt-2 flex flex-wrap gap-1.5">
           {dayOutReasons.map((r) => (
             <button

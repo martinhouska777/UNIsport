@@ -314,7 +314,7 @@ export async function driveUpload(
     return {
       error:
         start.status === 401 || start.status === 403
-          ? "Google refused the upload — reconnect Drive and try again."
+          ? "Google refused the upload. Reconnect Drive and try again."
           : "Could not start the upload to Drive.",
     };
   }

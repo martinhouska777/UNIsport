@@ -14,7 +14,7 @@ import { notFound } from "@/lib/landingCopy";
   be the wrong thing to offer them. The words are lib/landingCopy.ts's.
 */
 export const metadata: Metadata = {
-  title: "Page not found — UNIsport",
+  title: "Page not found | UNIsport",
 };
 
 export default function NotFound() {

@@ -343,7 +343,7 @@ export default function OnboardingFlow() {
     if (status === "granted") {
       void sendTestNotification({
         title: "Welcome to UNIsport",
-        body: "Notifications are on — we'll ping you the moment something matters.",
+        body: "✓ Notifications are on",
         url: "/match",
       });
     }
@@ -1118,7 +1118,7 @@ export default function OnboardingFlow() {
           className="mb-4 rounded-xl border border-border bg-surface px-3.5 py-2.5 text-[13px] leading-relaxed text-danger"
         >
           Your answers couldn&apos;t be saved ({saveError}). They are kept on this
-          device — check your connection and tap the button again.
+          device. Check your connection and tap the button again.
         </p>
       )}
       {renderBody()}

@@ -39,8 +39,7 @@ export default function LoadingGate({ back = "/" }: { back?: string }) {
       {slow && (
         <>
           <p className="max-w-xs text-[13px] leading-relaxed text-muted">
-            This is taking longer than it should. Your connection may have dropped
-            part-way through loading.
+            This is taking longer than it should.
           </p>
           <div className="flex items-center gap-2">
             <button

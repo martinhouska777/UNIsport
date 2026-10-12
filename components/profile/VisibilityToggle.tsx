@@ -23,7 +23,7 @@ export default function VisibilityToggle({
       type="button"
       onClick={() => onChange(!visible)}
       aria-pressed={visible}
-      aria-label={visible ? "Shown to others — tap to hide" : "Hidden from others — tap to show"}
+      aria-label={visible ? "Shown to others" : "Hidden from others"}
       className={`tap44 flex h-7 w-7 items-center justify-center rounded-full border transition-colors ${
         visible
           ? "border-success-line bg-success-tint text-success"

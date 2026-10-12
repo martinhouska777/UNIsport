@@ -183,7 +183,7 @@ export default function ScheduleOverlap({
                     <div
                       key={d.key}
                       role="img"
-                      aria-label={`${d.label} ${h}:00 — ${
+                      aria-label={`${d.label} ${h}:00, ${
                         them && me ? "both free" : them ? `only ${name}` : me ? "only you" : "neither"
                       }`}
                       className={`h-[14px] rounded-[3px] ${cls}`}

@@ -97,7 +97,7 @@ export async function respondToPlan(
   });
   if (error) throw new Error(`respondToPlan failed: ${error.message}`);
   const when = ctx ? planWhenLabel(ctx.scheduledAt) : "";
-  announce(ctx, accept ? `is in — ${when}` : `can't make ${when}`);
+  announce(ctx, accept ? `is in, ${when}` : `can't make ${when}`);
 }
 
 /**
@@ -126,7 +126,7 @@ export async function confirmPlan(
     alert that they've been marked a no-show is a fight, not a notification.
   */
   if (attended && status === "accepted") {
-    announce(ctx, "says you trained — confirm it too");
+    announce(ctx, "says you trained, confirm it too");
   }
   return status;
 }
@@ -155,7 +155,7 @@ export async function reschedulePlan(
   // "proposed", so the other person has to accept again.
   announce(
     conversationId ? { conversationId, scheduledAt: input.scheduledAt } : undefined,
-    `moved it to ${planWhenLabel(input.scheduledAt)} — accept again`,
+    `moved it to ${planWhenLabel(input.scheduledAt)}, accept again`,
   );
 }
 

@@ -140,7 +140,7 @@ export default function MatchCard({
                 const Icon = ACTIVITY_ICON[t.key];
                 return (
                   <span key={t.word}>
-                    {i > 0 && <span className="mx-1 text-faint">{"\u00b7"}</span>}
+                    {i > 0 && <span className="mx-1" />}
                     {Icon && <Icon size={13} className="mr-0.5 inline-block align-[-2px]" />}
                     {t.word}
                   </span>

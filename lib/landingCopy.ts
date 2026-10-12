@@ -112,7 +112,7 @@ export const hero = {
    the card in a group chat. The image (public/og.png) is a screenshot of the
    landing's first screen, made by scripts/landing/make-og.mjs. */
 export const social = {
-  title: `UNIsport — ${hero.headline.join(" ")}`,
+  title: `UNIsport | ${hero.headline.join(" ")}`,
   description: "Find the gym. Find someone to go with. Free for students.",
   /* Change the ?v= every time og.png is remade. WhatsApp, iMessage and Google
      remember a link's picture by its ADDRESS, so a new picture at the old
@@ -120,7 +120,7 @@ export const social = {
      long after the site went light). */
   image: "/og.png?v=2026-10-11",
   imageAlt:
-    "UNIsport — Your campus. Your gym. Your people. The landing's first screen: the headline, the Student, Varsity athlete and Coach doors, and the Gyms and Match screens in two phones.",
+    "UNIsport. Your campus. Your gym. Your people. The landing's first screen: the headline, the Student, Varsity athlete and Coach doors, and the Gyms and Match screens in two phones.",
 };
 
 /* ─────────────────────────── THE TOP BAR ─────────────────────────── */
@@ -180,21 +180,21 @@ export const views: { view: LandingView; label: string; href: string; title: str
     view: "students",
     label: "The app",
     href: "/for/students",
-    title: "UNIsport — the app",
+    title: "UNIsport | The app",
     description: "Every gym on campus, training partners matched by fit, sessions planned in the chat and logged together. Free for students.",
   },
   {
     view: "varsity",
     label: "Varsity Mode",
     href: "/for/varsity",
-    title: "UNIsport — Varsity Mode",
-    description: "Your coach's training plan, the lineups, the race countdown and their notes on your phone — and logging straight off the plan. For rowing, by team invite.",
+    title: "UNIsport | Varsity Mode",
+    description: "Your coach's training plan, the lineups, the race countdown and their notes on your phone, and logging straight off the plan. For rowing, by team invite.",
   },
   {
     view: "coaches",
     label: "Coaches",
     href: "/for/coaches",
-    title: "UNIsport — the Coach's Console",
+    title: "UNIsport | The Coach's Console",
     description: "Build a training block around a race, publish the week and the lineups to every athlete's phone, keep every result. For college rowing programs.",
   },
   {
@@ -437,10 +437,10 @@ export const studentStory: Beat[] = [
 /* ─────────────── BETWEEN THE TWO — a full stop, then a reveal ─────────────── */
 
 export const interlude = {
-  leadIn: "And if you do sport for the university itself —",
+  leadIn: "And if you do sport for the university itself,",
   /* On the Varsity view (/for/varsity) nothing comes before it, so the "And"
      that joins it to the student story goes. Same line otherwise. */
-  leadInSolo: "If you do sport for the university itself —",
+  leadInSolo: "If you do sport for the university itself,",
   headline: "Varsity",
   headlineEm: "Mode.",
   /* THE REVEAL'S WORDS ARE THE OWNER'S, dictated over two messages on

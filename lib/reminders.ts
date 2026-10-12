@@ -68,7 +68,7 @@ export type LogLink = {
 export const LOG_REMINDER = {
   /** The profile key that switches it off. Missing = on. */
   preferenceKey: "notifyLogReminders" as const,
-  title: "Train today? Log it — 10 seconds",
+  title: "Train today? Log it",
   body: (gym: string) =>
     gym ? `Your usual ${gym} slot is now. Tap to log today's session.` : "Your usual training time is now. Tap to log today's session.",
   /** The full push payload for one person. */

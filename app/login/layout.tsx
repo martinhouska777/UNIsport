@@ -8,7 +8,7 @@ import { landingViewport } from "@/components/landing/routeMeta";
   deserves to say what it is (website review, 2026-09-10).
 */
 export const metadata: Metadata = {
-  title: "Get started — UNIsport",
+  title: "Get started | UNIsport",
   description: "Create your UNIsport account with your university email, or log in.",
 };
 

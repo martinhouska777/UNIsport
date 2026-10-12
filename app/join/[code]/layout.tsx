@@ -13,7 +13,7 @@ import type { Metadata } from "next";
   Change the ?v= whenever the picture is remade — chat apps remember a link's
   picture by its address.
 */
-const title = "Team invite — UNIsport";
+const title = "Team invite | UNIsport";
 const teamInviteImage = "/og-team.png?v=2026-10-11";
 
 export const metadata: Metadata = {
@@ -31,7 +31,7 @@ export const metadata: Metadata = {
         url: teamInviteImage,
         width: 1200,
         height: 630,
-        alt: "UNIsport — the Harvard rowing mark, the oars crossed behind the shield, over “Join Harvard Rowing”",
+        alt: "UNIsport, the Harvard rowing mark, the oars crossed behind the shield, over “Join Harvard Rowing”",
       },
     ],
   },

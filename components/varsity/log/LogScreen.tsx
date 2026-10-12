@@ -310,10 +310,10 @@ function LogEditor({
         setScanFilled(false);
         setScanMsg(
           error === "unconfigured"
-            ? "Photo scanning isn't switched on yet — enter the numbers by hand."
+            ? "Photo scanning isn't switched on yet. Enter the numbers by hand."
             : error === "network"
-              ? "No signal — couldn't send the photo. Enter the numbers by hand, or try again."
-              : "Couldn't read that photo — enter the numbers by hand.",
+              ? "No signal, couldn't send the photo. Enter the numbers by hand, or try again."
+              : "Couldn't read that photo. Enter the numbers by hand.",
         );
         return;
       }
@@ -343,7 +343,7 @@ function LogEditor({
       setScanFilled(true);
       // A sure read needs no words beyond "Done" (drawn below). An unsure one
       // keeps its warning instead: that is something the rower has to act on.
-      setScanMsg(result.confident ? null : "Read it, but I wasn't fully sure — please double-check.");
+      setScanMsg(result.confident ? null : "Read it, but check the numbers.");
     },
     [isExtra, category],
   );
@@ -435,7 +435,7 @@ function LogEditor({
       // editor for this session opens with these numbers in it.
       keepPendingDraft(athleteId, slot, draft);
       setSaveError(
-        "Couldn't save — check your signal and try again. Your numbers are kept on this phone until they save.",
+        "Couldn't save. Check your signal and try again.",
       );
       return;
     }

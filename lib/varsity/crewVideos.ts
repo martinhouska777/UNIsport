@@ -392,7 +392,7 @@ export async function uploadCrewVideo(
       // The one failure a coach will actually hit, said in their words.
       return {
         error: /exceed|too large|size/i.test(upErr.message)
-          ? "That file is too big for the app's own storage — this is what the Drive upload fixes."
+          ? "That file is too big. Upload it through Drive."
           : "Upload failed. Check the signal and try again.",
       };
     }

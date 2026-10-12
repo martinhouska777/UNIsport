@@ -269,7 +269,7 @@ export const weeklyEvents: SportEvent[] = [
   {
     key: "w-three-partners",
     title: "Train with 3 partners",
-    blurb: "Three different people this week. They don't have to be new — just don't train alone.",
+    blurb: "Three different people this week. They don't have to be new, just don't train alone.",
     routes: one("partners", 3, "people"),
     points: 120,
     window: "week",
@@ -307,7 +307,7 @@ export const monthlyEvents: SportEvent[] = [
   {
     key: "m-thirteen-days",
     title: "Train 13 days",
-    blurb: "Thirteen separate days this month — three a week, near enough.",
+    blurb: "Thirteen separate days this month, three a week near enough.",
     routes: one("days", 13, "days"),
     points: 250,
     window: "month",
@@ -337,7 +337,7 @@ export const monthlyEvents: SportEvent[] = [
     */
     key: "m-six-partners",
     title: "Train with 6 partners",
-    blurb: "Six different people over the month. New or not — just not alone.",
+    blurb: "Six different people over the month. New or not, just not alone.",
     routes: one("partners", 6, "people"),
     points: 350,
     window: "month",

@@ -840,8 +840,7 @@ export default function ProfilePage() {
           <div className="rounded-xl border border-border bg-surface p-3.5">
             <div className="text-[13px] font-medium text-text">Start onboarding again?</div>
             <p className="mt-0.5 text-[11px] leading-relaxed text-muted">
-              You&apos;ll answer all nine screens from scratch. Whatever you finish with
-              replaces the profile on this page.
+              Your answers on this page will be replaced.
             </p>
             <div className="mt-3 flex gap-2">
               <Button

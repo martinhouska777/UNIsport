@@ -196,10 +196,6 @@ export default function JoinWithCodePage() {
       {shown?.status === "pending" && (
         <>
           <h1 className="font-display text-3xl text-l-text">Request sent</h1>
-          <p className="mt-3 text-sm leading-relaxed text-l-text-2">
-            Your captain has to let you in. You&apos;ll find {teamName} waiting in your profile
-            once they do — nothing else to do here.
-          </p>
           <Link
             href={appHome}
             className="mt-8 inline-block w-full rounded-full border border-l-line px-5 py-3 text-sm font-medium text-l-text"
@@ -214,8 +210,7 @@ export default function JoinWithCodePage() {
         <>
           <h1 className="font-display text-3xl text-l-text">You&apos;re in</h1>
           <p className="mt-3 text-sm leading-relaxed text-l-text-2">
-            Welcome to {teamName}. Varsity Mode now sits alongside your student account —
-            switch between them from your profile.
+            Welcome to {teamName}.
           </p>
           <Link
             href={VARSITY_HOME}

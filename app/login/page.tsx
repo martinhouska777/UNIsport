@@ -224,7 +224,7 @@ export default function LoginPage({
       setLoading(false);
       if (error) {
         if (/already registered|already exists|user already/i.test(error.message)) {
-          setError("An account with that email already exists — switch to “Log in”.");
+          setError("An account with that email already exists. Switch to “Log in”.");
         } else {
           setError(error.message);
         }
@@ -237,7 +237,7 @@ export default function LoginPage({
       const alreadyRegistered =
         !data.session && !!data.user && (data.user.identities?.length ?? 0) === 0;
       if (alreadyRegistered) {
-        setError("An account with that email already exists — switch to “Log in”.");
+        setError("An account with that email already exists. Switch to “Log in”.");
         return;
       }
 

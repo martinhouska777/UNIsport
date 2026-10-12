@@ -53,8 +53,8 @@ export function buildInvite(input: {
 
   const title = house ? `Join ${house} on UNIsport` : `Join UNIsport at ${school}`;
   const text = house
-    ? `${house} is on the leaderboard at ${school} and we need people. UNIsport finds you a training partner at your gym, at your hour — and every session you log counts for the house.`
-    : `UNIsport finds you a training partner at ${school} — same gym, same hour — and every session you log counts for your house.`;
+    ? `${house} is on the leaderboard at ${school} and we need people. UNIsport finds you a training partner at your gym, at your hour, and every session you log counts for the house.`
+    : `UNIsport finds you a training partner at ${school}, same gym, same hour, and every session you log counts for your house.`;
 
   return { url, title, text };
 }

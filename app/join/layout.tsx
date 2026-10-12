@@ -14,7 +14,7 @@ import { landingViewport } from "@/components/landing/routeMeta";
 export const viewport = landingViewport;
 
 export const metadata: Metadata = {
-  title: "Join with an invite — UNIsport",
+  title: "Join with an invite | UNIsport",
 };
 
 export default function JoinLayout({ children }: { children: React.ReactNode }) {

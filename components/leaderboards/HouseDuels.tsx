@@ -268,7 +268,7 @@ export default function HouseDuels() {
 
           {bye && (
             <div className="mt-2 rounded-xl border border-dashed border-border px-3 py-2.5 text-[12px] text-muted">
-              <span className="text-text">{groupLabel("house", bye)}</span> meets the next house in.
+              <span className="text-text">{groupLabel("house", bye)}</span>, no opponent yet
             </div>
           )}
 

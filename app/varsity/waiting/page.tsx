@@ -126,7 +126,7 @@ export default function VarsityWaitingPage() {
                 <IconCheck size={15} />
               </span>
               <div className="text-[13px] font-medium text-text">
-                While you wait — set up the student side
+                While you wait, set up the student side
               </div>
             </div>
             <Link

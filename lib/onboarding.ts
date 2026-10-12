@@ -625,8 +625,8 @@ export type NotifyKey =
 
 export const notificationItems: { key: NotifyKey; icon: string; label: string }[] = [
   { key: "notifyMessages", icon: "message", label: "New messages" },
-  { key: "notifyPlans", icon: "calendar", label: "Session plans — invites, answers and changes" },
-  { key: "notifyPartnerTags", icon: "user", label: "Partner tags — “Did you train with Sam today?”" },
+  { key: "notifyPlans", icon: "calendar", label: "Session plans" },
+  { key: "notifyPartnerTags", icon: "user", label: "Partner tags" },
   { key: "notifyFollows", icon: "heart", label: "New followers" },
   { key: "notifyLogReminders", icon: "clock", label: "One reminder to log, at your usual training time" },
 ];

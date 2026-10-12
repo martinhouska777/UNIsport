@@ -54,7 +54,7 @@ export function googleCalendarHref(ev: CalendarEvent): string {
     action: "TEMPLATE",
     text: ev.title,
     dates: `${utcStamp(ev.start)}/${utcStamp(ev.end)}`,
-    details: `Planned on UNIsport — ${SITE_URL}/messages`,
+    details: `Planned on UNIsport\n${SITE_URL}/messages`,
   });
   if (ev.place) q.set("location", ev.place);
   return `https://calendar.google.com/calendar/render?${q.toString()}`;
@@ -93,7 +93,7 @@ export function icsFile(ev: CalendarEvent, now = new Date()): string {
     `DTEND:${utcStamp(ev.end)}`,
     `SUMMARY:${escapeText(ev.title)}`,
     ...(ev.place ? [`LOCATION:${escapeText(ev.place)}`] : []),
-    `DESCRIPTION:${escapeText(`Planned on UNIsport — ${SITE_URL}/messages`)}`,
+    `DESCRIPTION:${escapeText(`Planned on UNIsport\n${SITE_URL}/messages`)}`,
     "END:VEVENT",
     "END:VCALENDAR",
   ];

@@ -181,7 +181,7 @@ const COMPETITIONS: Competition[] = [
 const PERIODS: { key: Period; label: string; note: string }[] = [
   { key: "month", label: "This month", note: "Resets on the 1st" },
   { key: "semester", label: "This semester", note: "Resets each term" },
-  { key: "all", label: "All time", note: "Never resets — the record" },
+  { key: "all", label: "All time", note: "Never resets" },
 ];
 
 const GROUP_BOARDS: CompetitionKey[] = ["houses", "dorms", "years"];
@@ -238,7 +238,7 @@ function MetricSwitch({
     <button
       type="button"
       onClick={() => onPick(other.key)}
-      aria-label={`${current.label} — switch to ${other.label.toLowerCase()}`}
+      aria-label={`${current.label}, switch to ${other.label.toLowerCase()}`}
       className="tap44 inline-flex items-center gap-1 rounded-full border border-border bg-surface px-2 py-0.5 text-[10px] font-medium text-muted active:bg-surface-2"
     >
       <IconSwap size={11} />

@@ -144,10 +144,10 @@ export default function NotificationSettings({
     including iPhone owners (whose phones do support this, once the app is on the
     Home Screen) and everyone on Chrome when our own keys were missing.
   */
-  const note = (title: string, body: string) => (
+  const note = (title: string, body?: string) => (
     <div className="px-4 py-3.5">
       <div className="text-[15px] text-text">{title}</div>
-      <p className="mt-0.5 text-[12px] leading-relaxed text-muted">{body}</p>
+      {body && <p className="mt-0.5 text-[12px] leading-relaxed text-muted">{body}</p>}
     </div>
   );
 
@@ -172,10 +172,7 @@ export default function NotificationSettings({
       );
     }
     if (env === "not-configured") {
-      return note(
-        "Notifications aren’t live yet",
-        "That’s on our side, not your device — nothing for you to do. Your choices below are saved and will apply as soon as we switch them on.",
-      );
+      return note("Notifications aren’t live yet");
     }
     if (permission === "denied") {
       return note(

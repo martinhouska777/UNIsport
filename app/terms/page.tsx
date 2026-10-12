@@ -8,7 +8,7 @@ import { landingViewport } from "@/components/landing/routeMeta";
 export const viewport = landingViewport;
 
 export const metadata: Metadata = {
-  title: "Terms of Service — UNIsport",
+  title: "Terms of Service | UNIsport",
   description: "The rules for using UNIsport.",
 };
 
@@ -73,7 +73,7 @@ export default function TermsPage() {
 
       <Section heading="Your content">
         <p>
-          What you post — your profile, photos, logs, and messages — stays yours. By posting it you
+          What you post (your profile, photos, logs, and messages) stays yours. By posting it you
           give us permission to store and display it inside the app so the app can function. You
           can delete your content, or your whole account, at any time.
         </p>
@@ -88,7 +88,7 @@ export default function TermsPage() {
         </p>
       </Section>
 
-      <Section heading="Training safety — please read this one">
+      <Section heading="Training safety">
         <p>
           UNIsport is not a medical service and does not give medical, health, or professional
           fitness advice. Training plans, logs, and anything suggested by other members are not
@@ -96,7 +96,7 @@ export default function TermsPage() {
         </p>
         <p>
           You train at your own risk. You are also responsible for your own judgement when meeting
-          people you find through the app — meet in public gym spaces, and tell someone where you
+          people you find through the app. Meet in public gym spaces, and tell someone where you
           are going. Signing up requires a university email address, but we do not background-check
           members and we cannot confirm that anyone is who they say they are.
         </p>

@@ -41,7 +41,7 @@ import type { TeamResult } from "./resultsStore";
 const titles: Record<string, string[]> = {
   erg: ["3×25' UT2", "30' r20", "4×10' UT1", "8×500m, 1:30 rest", "5×1500m"],
   water: ["70' steady state", "4×12' UT1", "Technical paddle", "6×750m", "90' UT2"],
-  weights: ["Main strength — squat, pull, press", "Circuits", "Core + auxiliary"],
+  weights: ["Main strength: squat, pull, press", "Circuits", "Core + auxiliary"],
   run: ["Easy 5k", "Steady run", "Hills"],
   bike: ["Steady spin", "Bike intervals"],
   flex: ["Stretch + mobility", "Yoga"],

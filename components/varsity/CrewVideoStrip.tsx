@@ -468,7 +468,7 @@ export default function CrewVideoStrip({ dayKey, boat }: { dayKey: string; boat:
 
       {!seated && (
         <div className="mt-1.5 text-[11px] italic text-muted">
-          Seat the boat first — a video is filed by its crew.
+          Seat the boat first.
         </div>
       )}
       {error && <div className="mt-1.5 text-[11px] text-danger">{error}</div>}

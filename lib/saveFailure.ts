@@ -40,7 +40,7 @@ export function saveFailureDetail(kind: SaveFailure, denied = "not allowed"): st
     case "offline":
       return "no connection";
     case "signedOut":
-      return "signed out — sign in again";
+      return "signed out, sign in again";
     case "denied":
       return denied;
     default:

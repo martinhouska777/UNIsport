@@ -28,7 +28,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "UNIsport: Campus Fitness",
     // What sits under the icon on the home screen — the brand, unqualified.
     short_name: "UNIsport",
-    description: "Campus fitness — gyms, partners, and sessions at your university.",
+    description: "Campus fitness: gyms, partners, and sessions at your university.",
     /*
       THE INSTALLED APP OPENS ON THE APP, not on the advert for it. This was
       "/" — so someone who had put UNIsport on their home screen, signed in,

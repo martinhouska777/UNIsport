@@ -977,7 +977,7 @@ function PoolChip({
       <button
         type="button"
         onClick={onTap}
-        aria-label={`${a.name}, out — ${outMeta[out]}. Tap to be offered bringing them back into the pool.`}
+        aria-label={`${a.name}, out, ${outMeta[out]}`}
         className="flex h-[38px] select-none items-center gap-2 rounded-[10px] border border-danger-line bg-danger-tint px-2.5 opacity-60 active:opacity-90"
       >
         <span className="text-[15px] font-medium text-muted">{a.name}</span>
@@ -1070,7 +1070,7 @@ function StepArrow({
       type="button"
       disabled={!live}
       onClick={() => onGo(to)}
-      title={where ? `${dir === "prev" ? "Previous" : "Next"} water session — ${where}` : undefined}
+      title={where ? `${dir === "prev" ? "Previous" : "Next"} water session, ${where}` : undefined}
       aria-label={
         where
           ? `${dir === "prev" ? "Previous" : "Next"} water session, ${where}`

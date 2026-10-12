@@ -7,7 +7,7 @@ import { landingViewport } from "@/components/landing/routeMeta";
 export const viewport = landingViewport;
 
 export const metadata: Metadata = {
-  title: "Privacy Policy — UNIsport",
+  title: "Privacy Policy | UNIsport",
   description:
     "What UNIsport collects, why, who it is shared with, where it is stored, and how to get your data removed.",
 };
@@ -97,10 +97,10 @@ export default function PrivacyPolicyPage() {
         <p>
           <span className="text-l-text">Account details.</span>{" "}
           Your email address and a password. Passwords are stored only as a salted hash by our
-          authentication provider — we never see or store your actual password. If you sign in
+          authentication provider, and we never see or store your actual password. If you sign in
           with Google instead, we receive your email address, your name, and your Google profile
           picture. We do not receive your Google password. Signing in with Google does not give us
-          access to your Gmail, Drive, Calendar, or contacts — the separate, optional Drive
+          access to your Gmail, Drive, Calendar, or contacts. The separate, optional Drive
           permission used by varsity video has its own section below.
         </p>
         <p>
@@ -112,7 +112,7 @@ export default function PrivacyPolicyPage() {
             "Name, class year, sex, and campus residence or house",
             "Concentration, hometown country, languages, and interests",
             "A short bio and a profile photo, if you add them",
-            "Training details — your main activity, experience level, split, preferred gyms, weekly schedule, and running or cardio details",
+            "Training details: your main activity, experience level, split, preferred gyms, weekly schedule, and running or cardio details",
             "Partner and mentoring preferences",
             "Personal records, if you add them",
           ]}
@@ -178,11 +178,11 @@ export default function PrivacyPolicyPage() {
         </p>
         <List
           items={[
-            "Your account, profile, matches, messages, logs, and the gym reviews you post — because you asked us to give you the app, and it cannot work without them.",
-            "The waitlist — with your consent, given when you join it and withdrawn by asking us to take you off it.",
-            "Your training details, personal records, session logs and the photos you attach — with your consent. Some of it says something about your body and your health, which the law treats as a special category, so we hold it only because you chose to enter it, and you can remove it, or your whole account, at any time.",
-            "Push notifications — with your consent, given when your browser asks and withdrawn by turning them off.",
-            "Keeping the app working, safe, and free of abuse — our legitimate interest in running a service people can trust.",
+            "Your account, profile, matches, messages, logs, and the gym reviews you post, because you asked us to give you the app, and it cannot work without them.",
+            "The waitlist, with your consent, given when you join it and withdrawn by asking us to take you off it.",
+            "Your training details, personal records, session logs and the photos you attach, with your consent. Some of it says something about your body and your health, which the law treats as a special category, so we hold it only because you chose to enter it, and you can remove it, or your whole account, at any time.",
+            "Push notifications, with your consent, given when your browser asks and withdrawn by turning them off.",
+            "Keeping the app working, safe, and free of abuse, our legitimate interest in running a service people can trust.",
           ]}
         />
       </Section>
@@ -190,7 +190,7 @@ export default function PrivacyPolicyPage() {
       <Section heading="What other people can see">
         <p>
           Other signed-in UNIsport users can see your profile: your name, photo, class year,
-          residence, training details, bio, and interests. This is the point of the app — it is how
+          residence, training details, bio, and interests. This is the point of the app, because it is how
           people find a training partner.
         </p>
         <p>
@@ -207,8 +207,8 @@ export default function PrivacyPolicyPage() {
           Your coach sees your team training: the sessions you log against the team plan, your
           results, the lineups you are in, the videos uploaded for your crew, and the notes they
           write about you. Your teammates see your name, photo, the lineups you share with them,
-          and what is published to the whole squad. What happens on the student side of the app —
-          your matches, your direct messages, and the community feed — is not part of the
+          and what is published to the whole team. What happens on the student side of the app
+          (your matches, your direct messages, and the community feed) is not part of the
           coach&apos;s console.
         </p>
       </Section>
@@ -220,11 +220,11 @@ export default function PrivacyPolicyPage() {
         </p>
         <List
           items={[
-            "Supabase — database, photo storage, accounts, and authentication",
-            "Vercel — hosting and delivery of the website",
-            "Google — if you choose to sign in with Google, and for the varsity video upload described below",
-            "Anthropic — only for reading a photo of an erg monitor, when you use that feature",
-            "Your browser's push service (Apple, Google, or Mozilla, depending on your device) — only if you enable notifications",
+            "Supabase: database, photo storage, accounts, and authentication",
+            "Vercel: hosting and delivery of the website",
+            "Google: if you choose to sign in with Google, and for the varsity video upload described below",
+            "Anthropic: only for reading a photo of an erg monitor, when you use that feature",
+            "Your browser's push service (Apple, Google, or Mozilla, depending on your device), only if you enable notifications",
           ]}
         />
         <p>
@@ -235,11 +235,11 @@ export default function PrivacyPolicyPage() {
 
       <Section heading="Google Drive, and your crew's videos">
         <p>
-          This applies only to varsity teams, and only if you upload a video. It is optional — the
+          This applies only to varsity teams, and only if you upload a video. It is optional, and the
           rest of the app never asks for it.
         </p>
         <p>
-          A crew&apos;s videos belong to the squad, not to us, so they go into the squad&apos;s own
+          A crew&apos;s videos belong to the team, not to us, so they go into the team&apos;s own
           Google Drive folder rather than onto our servers. To put a file into a folder your team
           already made, Google requires the broad Drive permission: the narrower one only ever sees
           files the app itself created, which is not where your team keeps its videos.
@@ -270,7 +270,7 @@ export default function PrivacyPolicyPage() {
           One thing to know before you upload: so that teammates can actually watch a clip, the app
           asks Drive to make that file viewable by anyone who has its link. The link is only shown
           inside your team&apos;s part of the app, but treat it as you would any shareable link. The
-          file stays in your team&apos;s Drive, under your team&apos;s control — deleting it there
+          file stays in your team&apos;s Drive, under your team&apos;s control. Deleting it there
           deletes it, and we cannot bring it back.
         </p>
       </Section>
@@ -294,15 +294,15 @@ export default function PrivacyPolicyPage() {
           We keep your data for as long as your account exists. If you ask us to delete your
           account, we remove your profile, logs, messages, and posts. Some records may persist
           briefly in routine backups before being overwritten. Videos in your team&apos;s Google
-          Drive are not ours to delete — ask whoever administers that folder.
+          Drive are not ours to delete, so ask whoever administers that folder.
         </p>
       </Section>
 
       <Section heading="Your rights">
         <p>
           You can view and edit most of your information directly in the app, from your profile.
-          You can also ask us to give you a copy of your data, correct it, or delete it entirely —
-          email the address above and we will action it. If you are in the UK or EU, you have these
+          You can also ask us to give you a copy of your data, correct it, or delete it entirely.
+          Email the address above and we will action it. If you are in the UK or EU, you have these
           rights under the GDPR, including the right to withdraw consent at any time and the right
           to complain to your local data protection authority.
         </p>

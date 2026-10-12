@@ -173,7 +173,7 @@ export async function POST(request: Request) {
     },
     plan: {
       title: "Session invite",
-      body: preview ? `${who} proposed a session — ${clip(preview)}` : `${who} proposed a session`,
+      body: preview ? `${who} proposed a session: ${clip(preview)}` : `${who} proposed a session`,
       url: "/messages",
     },
     /* A follow opens the FOLLOWER's profile, not the reader's own — the useful
@@ -202,7 +202,7 @@ export async function POST(request: Request) {
     },
     team_plan: {
       title: team,
-      body: preview ? `Training published — ${clip(preview)}` : "Your training is published",
+      body: preview ? `Training published: ${clip(preview)}` : "Your training is published",
       url: "/varsity/home",
     },
     team_lineup: {
@@ -210,7 +210,7 @@ export async function POST(request: Request) {
       // Deliberately not "you're in the 2 seat": the boats hold the demo roster,
       // so which seat belongs to which ACCOUNT isn't known yet. Says what is
       // true and sends them to the boats.
-      body: preview ? `Lineups are up — ${clip(preview)}` : "Lineups are up",
+      body: preview ? `Lineups are up: ${clip(preview)}` : "Lineups are up",
       url: homeUrl,
     },
     note: {

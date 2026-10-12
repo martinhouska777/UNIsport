@@ -31,7 +31,7 @@ export const metadata: Metadata = {
   // same address robots.txt and the sitemap use — lib/siteUrl.ts.
   metadataBase: new URL(SITE_URL),
   title: "UNIsport",
-  description: "Campus fitness — gyms, partners, and sessions at your university.",
+  description: "Campus fitness: gyms, partners, and sessions at your university.",
   /* Safari ignores the manifest's icons for "Add to Home Screen" and looks
      for apple-touch-icon; without one an iPhone gets a screenshot of the page
      as the icon (website review, 2026-09-10). 180px and opaque — iOS paints

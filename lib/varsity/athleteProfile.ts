@@ -65,8 +65,8 @@ export const statusOptions: { title: string; sub: string; tone: StatusTone }[] =
   { title: "Active", sub: "Available for training and selection", tone: "success" },
   // Same word as the lineup's own out-reason (outMeta.SICK in coachLineup.ts)
   // — a day or two, not weeks, which is what separates it from Injured below.
-  { title: "Sick", sub: "Out today — back tomorrow", tone: "warn" },
-  { title: "Injured", sub: "Out of selection — rehab in progress", tone: "danger" },
+  { title: "Sick", sub: "Out today, back tomorrow", tone: "warn" },
+  { title: "Injured", sub: "Out of selection, rehab in progress", tone: "danger" },
   { title: "Away", sub: "Travelling / off the water this week", tone: "muted" },
 ];
 

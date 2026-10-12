@@ -76,7 +76,7 @@ export function isUniversityEmail(email: string): boolean {
 
 /** What to tell someone whose address was turned away. One sentence, no blame. */
 export const UNIVERSITY_EMAIL_MESSAGE =
-  "Please sign up with your university email — the address ending in .edu. UNIsport is only for students at a university it is live at.";
+  "Please sign up with your university email, the address ending in .edu.";
 
 /**
  * WHICH university is this address at? — the answer the whole theme hangs on.
