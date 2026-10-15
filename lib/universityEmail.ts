@@ -44,6 +44,15 @@ export const EXTRA_DOMAINS: string[] = [];
 */
 export const TEST_INBOXES: string[] = ["martinhouska777@gmail.com"];
 
+/*
+  The test inbox ITSELF, with no "+tag". It walks past the door (lib/opening.ts)
+  so the owner can use the app before opening day, while any +variant of it is
+  a stranger who waits, so the door can be seen too.
+*/
+export function isTestInbox(email: string | null | undefined): boolean {
+  return !!email && TEST_INBOXES.includes(email.trim().toLowerCase());
+}
+
 /** The domain part of an address, lower case — "" if it isn't shaped like an email. */
 function domainOf(email: string): string {
   const at = email.trim().toLowerCase().lastIndexOf("@");

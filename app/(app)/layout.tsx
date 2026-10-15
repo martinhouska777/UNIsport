@@ -17,11 +17,14 @@ import SideNav from "@/components/SideNav";
 import TourGate from "@/components/tour/TourGate";
 import TourInviteProbe from "@/components/tour/TourInviteProbe";
 import SchoolIntro from "@/components/SchoolIntro";
+import { useDoor } from "@/components/useDoor";
 import { appTour } from "@/lib/tour";
 import { getUniversity, neutralTheme } from "@/lib/themes";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { ready, loggedIn, studentReady, universityKey, userId } = useAppState();
+  // Before the school's opening morning, a finished student waits on /opening.
+  const door = useDoor();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -44,7 +47,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     // who only did the varsity setup lands here by choosing "Student" in the
     // mode switcher, and onboarding is exactly what they asked for.
     else if (!studentReady) router.replace("/onboarding");
-  }, [ready, loggedIn, studentReady, router]);
+    else if (door.closed) router.replace("/opening");
+  }, [ready, loggedIn, studentReady, door.closed, router]);
 
   /*
     THE APP OPENS ON MATCH (owner, 2026-10-03). New installs get that from the
@@ -69,7 +73,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const theme = uni?.theme ?? neutralTheme;
 
   // Never `null` while deciding — see components/LoadingGate.tsx.
-  if (!ready || !loggedIn || !studentReady) {
+  if (!ready || !loggedIn || !studentReady || door.checking || door.closed) {
     return (
       /*
         The SAME light variant the real shell gets, two lines down. Without it

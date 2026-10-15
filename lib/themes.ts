@@ -170,6 +170,14 @@ export type University = {
     elsewhere sets its own.
   */
   timezone?: string;
+  /*
+    THE DOOR (lib/opening.ts). The moment the student side opens at this
+    school, as an ISO time with its offset. Before it, a student who has
+    signed up and done onboarding waits on /opening; at it, everyone is let in
+    at once, with nobody pressing anything. No value = open, which is every
+    school until it is given a day.
+  */
+  opensAt?: string;
 };
 
 export const DEFAULT_TIMEZONE = "America/New_York";
@@ -298,6 +306,9 @@ export const universities: Record<string, University> = {
     name: "Harvard University",
     shortName: "Harvard",
     domains: ["harvard.edu"],
+    // 7:00 Boston time. A placeholder for the first Monday of spring term
+    // until the owner names the day (2026-10-15).
+    opensAt: "2027-01-25T07:00:00-05:00",
     motto: "Ex Nemo", // the rowing motto, per the product owner
     houseSection: "House gyms",
     houseNoun: "House gym",
