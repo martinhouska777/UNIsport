@@ -16,9 +16,11 @@ own words, the date. Newest at the bottom of each part.
 1. **No sentence explaining a control, a state or a result.** The control is the state:
    Publish or Unpublish, and which one is showing is the answer. Something happened = a word
    and a tick ("✓ Uploaded"). Empty screens say only what is empty ("No favourites yet.").
-   Only exceptions: an error you can act on, a warning before a permanent delete. The most
+   Only exceptions: an error you can act on, a warning before a permanent delete. No
+   reassurance tacked on either ("Nothing else.", "No spam."). The most
    repeated complaint by far, about 100 times. (2026-09-12: "cut the AI slop … people know it";
-   2026-09-20: "it doesn't need to explain how to do it. You just know."; 2026-10-11.)
+   2026-09-20: "it doesn't need to explain how to do it. You just know."; 2026-10-11;
+   2026-10-15: "Cut 'Nothing else.' from the waitlist done screen.")
 2. **No example text in a field that already has a label.** A placeholder only when it is the
    field's only name (a search box) or a format the app parses (mm:ss). (2026-09-22: "Harvard
    students are pretty smart.")

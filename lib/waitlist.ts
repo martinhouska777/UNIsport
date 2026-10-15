@@ -36,7 +36,7 @@ export const waitlist = {
      Telling somebody "you were already on it" serves nothing and reads like a
      telling-off. */
   doneHeadline: "You're on the list.",
-  doneBody: "You'll get an email the day Harvard opens. Nothing else.",
+  doneBody: "You'll get an email the day Harvard opens.",
   /* The other half of the loop: the list is fed by Instagram, so the screen at
      the end of it sends people back there. */
   doneFollow: "Follow along until then",
