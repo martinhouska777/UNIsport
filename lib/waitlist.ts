@@ -91,13 +91,21 @@ export function looksLikeEmail(raw: string): boolean {
 }
 
 /*
-  Does this address get a code? The same rule as sign-up (lib/universityEmail):
-  a school address, or the owner's test inbox. The code makes the UNIsport
-  account (no password yet), which only a school address may have. Any other
-  address is written down as before, without one.
+  FOR TESTING (owner, 2026-10-15: "i want all email not just university now so
+  i can test it"). While true, EVERY address gets the code, and with it an
+  account. Set it back to false before opening day: after that, an account on
+  any address could walk into the app.
+*/
+export const CODE_FOR_EVERY_ADDRESS = true;
+
+/*
+  Does this address get a code? Normally the same rule as sign-up
+  (lib/universityEmail): a school address, or the owner's test inbox. The code
+  makes the UNIsport account (no password yet), which only a school address
+  may have. Any other address is written down, without one.
 */
 export function getsCode(email: string): boolean {
-  return isUniversityEmail(email);
+  return CODE_FOR_EVERY_ADDRESS || isUniversityEmail(email);
 }
 
 /** Which school this address belongs to — the short name, or null. */
