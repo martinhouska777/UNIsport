@@ -15,6 +15,7 @@ import { instrumentSerif } from "@/components/landing/fonts";
 import Wordmark from "@/components/landing/Wordmark";
 import { useAppState } from "@/components/AppState";
 import { createClient, hasSupabaseEnv } from "@/lib/supabase/client";
+import { CODE_LENGTH, RESEND_SECONDS, codeError } from "@/lib/emailCode";
 import { VARSITY_HOME } from "@/lib/varsity/theme";
 import { LIVE_UNIVERSITY } from "@/lib/themes";
 import { markSignIn, clearSignIn } from "@/lib/loginIntro";
@@ -43,22 +44,10 @@ type Mode = "login" | "signup";
 */
 type Step = "form" | "verify" | "forgot" | "reset";
 
-// Mirrors two Supabase dashboard settings (Authentication → Sign In / Providers
-// → Email): "Email OTP Length" and the SMTP "minimum interval per user".
-const CODE_LENGTH = 6;
-const RESEND_SECONDS = 60;
-
 const FIELD =
   "w-full rounded-full border border-l-line bg-l-surface px-5 py-3 text-base text-l-text placeholder:text-l-placeholder focus:border-(--color-l-accent) focus:outline-none";
 const PRIMARY =
   "w-full rounded-full bg-l-accent px-5 py-3 text-sm font-semibold text-l-accent-ink transition-opacity hover:opacity-90 disabled:opacity-60";
-
-/** What to say when Supabase turns a code down. */
-function codeError(message: string): string {
-  return /expired|invalid/i.test(message)
-    ? "That code is wrong or has expired. Check it, or send a new one."
-    : message;
-}
 
 // The EMAIL of the last successful login, kept only in this browser so the form
 // can prefill it. Never the password: anything in localStorage is readable by
