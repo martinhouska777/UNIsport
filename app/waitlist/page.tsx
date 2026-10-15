@@ -92,7 +92,7 @@ export default function WaitlistPage() {
             rel="noreferrer"
             className="mt-8 inline-block w-full rounded-full border border-l-line px-5 py-3 text-sm font-medium text-l-text"
           >
-            {waitlist.doneFollow} — {instagram.handle}
+            {waitlist.doneFollow}, {instagram.handle}
           </a>
         )}
       </JoinShell>
