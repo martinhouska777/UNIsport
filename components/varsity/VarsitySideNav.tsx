@@ -10,7 +10,8 @@
     tabs    Home · Calendar · Workouts · Profile (from VarsityNav — one list)
     footer  settings — no Exit (owner, 2026-10-01: the way out is the crest;
             the Coach Console keeps its "Athlete view"), and no light/dark
-            (owner, 2026-10-04: it lives in Settings → Design, as on the phone)
+            (owner, 2026-10-04: it lives in Settings → Design, as on the phone),
+            and on Home the weather chip beside the cog, as on the phone's top bar
 */
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -21,6 +22,7 @@ import { useAppState } from "@/components/AppState";
 import { getUniversity } from "@/lib/themes";
 import { varsityTabs } from "@/components/varsity/VarsityNav";
 import { useVarsityModeTap } from "@/components/varsity/VarsityTopBar";
+import WeatherChip from "@/components/varsity/WeatherChip";
 import { IconChevronDown, IconPlus, IconSettings } from "@/components/icons";
 
 export default function VarsitySideNav() {
@@ -73,6 +75,8 @@ export default function VarsitySideNav() {
         }))}
         footer={
           <div className="flex items-center gap-2">
+            {/* Beside the cog, on Home, as on the phone's top bar. */}
+            {pathname === "/varsity/home" && <WeatherChip />}
             {/* Edit profile lives in Settings now (owner, 2026-09-19). */}
             <Link href="/settings" aria-label="Settings" className={railIconCls}>
               <IconSettings size={16} />

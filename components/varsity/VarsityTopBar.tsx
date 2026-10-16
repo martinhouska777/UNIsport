@@ -9,6 +9,7 @@ import { useAppState } from "@/components/AppState";
 import { getUniversity } from "@/lib/themes";
 import useTapOrDoubleTap from "@/components/useTapOrDoubleTap";
 import { IconChevronDown, IconSettings } from "@/components/icons";
+import WeatherChip from "@/components/varsity/WeatherChip";
 
 /*
   Top bar for the Varsity Home and Profile tabs: the varsity mark on the left, and on
@@ -82,6 +83,8 @@ export default function VarsityTopBar() {
       </button>
 
       <div className="flex flex-shrink-0 items-center gap-2">
+        {/* The wind and the UV at the boathouse, on Home only (owner, 2026-10-16). */}
+        {pathname === "/varsity/home" && <WeatherChip />}
         {/* EDIT YOUR PROFILE moved to Settings (owner, 2026-09-19), and is
             Settings → Rowing profile since 2026-09-30. A pencil stood here. */}
         {/* Settings has to be reachable from here: a rower who joined through a

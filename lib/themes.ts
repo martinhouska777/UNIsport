@@ -171,6 +171,12 @@ export type University = {
   */
   timezone?: string;
   /*
+    WHERE THE TEAM ROWS, for the weather chip on Varsity Home (lib/weather.ts):
+    the wind and the UV at the boathouse, in the units people there read a
+    forecast in ("us" = mph). No value = no chip.
+  */
+  water?: { lat: number; lon: number; units: "us" | "metric" };
+  /*
     THE DOOR (lib/opening.ts). The moment the student side opens at this
     school, as an ISO time with its offset. Before it, a student who has
     signed up and done onboarding waits on /opening; at it, everyone is let in
@@ -310,6 +316,7 @@ export const universities: Record<string, University> = {
     // until the owner names the day (2026-10-15).
     opensAt: "2027-01-25T07:00:00-05:00",
     motto: "Ex Nemo", // the rowing motto, per the product owner
+    water: { lat: 42.37, lon: -71.124, units: "us" }, // Newell Boathouse, Charles River
     houseSection: "House gyms",
     houseNoun: "House gym",
     housePill: "House",
