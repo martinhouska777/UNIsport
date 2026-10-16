@@ -53,6 +53,21 @@ export const waitlist = {
      the end of it sends people back there. */
   doneFollow: "Follow along until then",
 
+  /* THE THREE QUESTIONS under it, once the code has made the account
+     (lib/waitlistAnswers.ts), in onboarding's own words. The dropdown's empty
+     line is its only name, like the two boxes on the first screen. */
+  yearLabel: "Class year",
+  houseEmpty: "House",
+  dormEmpty: "Yard dorm",
+  trainLabel: "What do you train?",
+  save: "Save",
+  saving: "Saving…",
+  saved: "✓ Saved",
+  pickYear: "Pick your class year.",
+  pickHouse: "Pick your house.",
+  pickDorm: "Pick your dorm.",
+  pickTrain: "Pick what you train.",
+
   errorGeneric: "That didn't save. Try once more?",
   errorEmail: "That doesn't look like an email address.",
   /* An empty box used to be told it "doesn't look like an email" (launch

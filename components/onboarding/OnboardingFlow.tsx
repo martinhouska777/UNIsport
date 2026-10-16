@@ -71,6 +71,7 @@ import SportPicker from "@/components/onboarding/SportPicker";
 import { subscribeToPush, sendTestNotification } from "@/lib/push/client";
 import { fileToDataUrl } from "@/lib/image";
 import { GAP } from "@/lib/gap";
+import { readWaitlistAnswers } from "@/lib/waitlistAnswers";
 
 const activityIcons: Record<string, (p: { size?: number; className?: string }) => React.ReactNode> = {
   barbell: IconBarbell,
@@ -222,8 +223,38 @@ export default function OnboardingFlow() {
     if (draft) {
       setProfile(draft.profile);
       setStep(Math.min(Math.max(draft.step, 0), STEPS.length - 1));
+      setRestored(true);
+      return;
     }
-    setRestored(true);
+    /*
+      No draft: start from what the waitlist asked (lib/waitlistAnswers.ts),
+      so class year, house and what they train are already picked and nobody
+      answers them twice. Never for an account that has been through
+      onboarding before (a replay starts blank), and never over something
+      already tapped while this was being read.
+    */
+    let alive = true;
+    readWaitlistAnswers(userId)
+      .then((found) => {
+        const w = found && !found.onboarded ? found.answers : null;
+        if (!alive || !w) return;
+        setProfile((p) =>
+          p.classYear || p.residence || p.primaryActivity
+            ? p
+            : {
+                ...p,
+                classYear: w.classYear,
+                residence: w.residence,
+                primaryActivity: w.primaryActivity,
+              }
+        );
+      })
+      .finally(() => {
+        if (alive) setRestored(true);
+      });
+    return () => {
+      alive = false;
+    };
   }, [userId]);
 
   // Going out: every answer and the screen it was given on, after every change.

@@ -27,6 +27,20 @@ import { getsCode, looksLikeEmail, waitlist } from "@/lib/waitlist";
 import { contact } from "@/lib/landingCopy";
 import { createClient, hasSupabaseEnv } from "@/lib/supabase/client";
 import { CODE_LENGTH, RESEND_SECONDS, codeError } from "@/lib/emailCode";
+import {
+  classYears,
+  freshmanClassYear,
+  primaryActivities,
+  residenceGroup,
+  residenceOptions,
+} from "@/lib/onboarding";
+import {
+  emptyWaitlistAnswers,
+  readWaitlistAnswers,
+  saveWaitlistAnswers,
+  type WaitlistAnswers,
+} from "@/lib/waitlistAnswers";
+import { IconChevronDown } from "@/components/icons";
 
 const instagram = contact.socials.find((s) => s.icon === "instagram" && s.href);
 
@@ -44,6 +58,14 @@ export default function WaitlistPage() {
   // reason as /join: the URL only exists in the browser, and useSearchParams
   // would force a Suspense boundary around the whole screen.
   const [source, setSource] = useState<string | null>(null);
+  /* The three questions on the done screen (lib/waitlistAnswers.ts): only for
+     an account the code just made or opened, and not one that has already
+     been through onboarding. */
+  const [accountId, setAccountId] = useState<string | null>(null);
+  const [asking, setAsking] = useState(false);
+  const [answers, setAnswers] = useState<WaitlistAnswers>(emptyWaitlistAnswers);
+  const [about, setAbout] = useState<"idle" | "saving" | "saved">("idle");
+  const [aboutError, setAboutError] = useState<string | null>(null);
 
   useEffect(() => {
     const id = requestAnimationFrame(() => {
@@ -85,13 +107,63 @@ export default function WaitlistPage() {
     }
     setState("confirming");
     setError(null);
-    const { error } = await supabase.auth.verifyOtp({ email: email.trim(), token: code, type: "email" });
+    const { data, error } = await supabase.auth.verifyOtp({ email: email.trim(), token: code, type: "email" });
     if (error) {
       setError(codeError(error.message));
       setState("code");
       return;
     }
+    // Read while the button still says "Please wait…", so the done screen
+    // arrives whole instead of growing the questions a moment later.
+    const id = data.user?.id ?? data.session?.user.id ?? null;
+    const found = await readWaitlistAnswers(id);
+    setAccountId(id);
+    setAsking(!!id && !found?.onboarded);
+    if (found?.answers) {
+      setAnswers(found.answers);
+      setAbout("saved");
+    }
     setState("done");
+  }
+
+  function answer(next: Partial<WaitlistAnswers>) {
+    setAnswers((a) => {
+      const merged = { ...a, ...next };
+      // A new class year can take away the dorm or house that was picked.
+      if (next.classYear && !residenceOptions(next.classYear).includes(merged.residence)) {
+        merged.residence = "";
+      }
+      return merged;
+    });
+    setAbout("idle");
+    setAboutError(null);
+  }
+
+  async function saveAbout(e: React.FormEvent) {
+    e.preventDefault();
+    if (about === "saving") return;
+    const freshman = answers.classYear === freshmanClassYear;
+    const missing = !answers.classYear
+      ? waitlist.pickYear
+      : !answers.residence
+        ? freshman
+          ? waitlist.pickDorm
+          : waitlist.pickHouse
+        : !answers.primaryActivity
+          ? waitlist.pickTrain
+          : null;
+    if (missing) {
+      setAboutError(missing);
+      return;
+    }
+    setAbout("saving");
+    setAboutError(null);
+    if (await saveWaitlistAnswers(accountId, answers)) {
+      setAbout("saved");
+    } else {
+      setAboutError(waitlist.errorGeneric);
+      setAbout("idle");
+    }
   }
 
   async function resend() {
@@ -155,10 +227,92 @@ export default function WaitlistPage() {
   }
 
   if (state === "done") {
+    const freshman = answers.classYear === freshmanClassYear;
+    // The dropdown's list, under onboarding's own headings, in its order.
+    const groups: { name: string; options: string[] }[] = [];
+    for (const o of residenceOptions(answers.classYear)) {
+      const name = residenceGroup(o);
+      const last = groups[groups.length - 1];
+      if (last?.name === name) last.options.push(o);
+      else groups.push({ name, options: [o] });
+    }
     return (
       <JoinShell accent="brand" markClassName="text-5xl">
         <h1 className="font-display text-3xl text-l-text">{waitlist.doneHeadline}</h1>
         <p className="mt-3 text-sm leading-relaxed text-l-text-2">{waitlist.doneBody}</p>
+        {asking && (
+          <form onSubmit={saveAbout} noValidate className="mt-7 text-left">
+            <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-l-text">
+              {waitlist.yearLabel}
+            </p>
+            <div className="grid grid-cols-4 gap-2">
+              {classYears.map((y) => (
+                <Choice key={y} label={y} on={answers.classYear === y} onClick={() => answer({ classYear: y })} />
+              ))}
+            </div>
+
+            <div className="relative mt-4">
+              <select
+                value={answers.residence}
+                onChange={(e) => answer({ residence: e.target.value })}
+                aria-label={freshman ? waitlist.dormEmpty : waitlist.houseEmpty}
+                /* text-base keeps phones from zooming the whole page on focus */
+                className={`w-full appearance-none rounded-xl border border-l-line bg-l-surface px-4 py-3 pr-10 text-base focus:border-(--color-l-accent-soft) focus:outline-none ${
+                  answers.residence ? "text-l-text" : "text-l-placeholder"
+                }`}
+              >
+                <option value="" disabled>
+                  {freshman ? waitlist.dormEmpty : waitlist.houseEmpty}
+                </option>
+                {groups.map((g) => (
+                  <optgroup key={g.name} label={g.name}>
+                    {g.options.map((o) => (
+                      <option key={o} value={o}>
+                        {o}
+                      </option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
+              <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-l-text">
+                <IconChevronDown size={16} />
+              </span>
+            </div>
+
+            <p className="mb-2 mt-5 text-[11px] font-semibold uppercase tracking-[0.12em] text-l-text">
+              {waitlist.trainLabel}
+            </p>
+            <div className="grid grid-cols-4 gap-2">
+              {primaryActivities.map((a) => (
+                <Choice
+                  key={a.key}
+                  label={a.label}
+                  on={answers.primaryActivity === a.key}
+                  onClick={() => answer({ primaryActivity: a.key })}
+                />
+              ))}
+            </div>
+
+            {about === "saved" ? (
+              <p role="status" className="mt-5 flex h-11 items-center justify-center text-sm font-semibold text-l-success">
+                {waitlist.saved}
+              </p>
+            ) : (
+              <button
+                type="submit"
+                disabled={about === "saving"}
+                className="mt-5 h-11 w-full rounded-full bg-l-accent px-5 text-sm font-semibold text-l-bg disabled:opacity-40"
+              >
+                {about === "saving" ? waitlist.saving : waitlist.save}
+              </button>
+            )}
+            {aboutError && (
+              <p role="alert" className="mt-3 text-center text-xs text-l-danger">
+                {aboutError}
+              </p>
+            )}
+          </form>
+        )}
         {instagram && (
           <a
             href={instagram.href!}
@@ -288,5 +442,24 @@ export default function WaitlistPage() {
         </p>
       </form>
     </JoinShell>
+  );
+}
+
+/* One answer of a row (class year, what they train): the brand chip when
+   picked, the same box as the fields otherwise. */
+function Choice({ label, on, onClick }: { label: string; on: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={on}
+      className={`h-11 rounded-xl border text-sm transition-colors ${
+        on
+          ? "border-(--color-l-accent) bg-l-accent-dim font-semibold text-l-accent"
+          : "border-l-line bg-l-surface text-l-text"
+      }`}
+    >
+      {label}
+    </button>
   );
 }
