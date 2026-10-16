@@ -20,6 +20,7 @@ import {
   IconClock,
   IconHeart,
   IconUser,
+  IconBell,
   IconShield,
   IconMapPin,
   HouseSigil,
@@ -68,7 +69,8 @@ import { houseColorsFor } from "@/lib/gyms";
 import { hoursOfDay, hoursToSlots } from "@/lib/schedule";
 import WeekHourGrid from "@/components/onboarding/WeekHourGrid";
 import SportPicker from "@/components/onboarding/SportPicker";
-import { subscribeToPush, sendTestNotification } from "@/lib/push/client";
+import { subscribeToPush, sendTestNotification, pushEnvironment } from "@/lib/push/client";
+import { pushNote, type PushNote } from "@/lib/push/notes";
 import { fileToDataUrl } from "@/lib/image";
 import { GAP } from "@/lib/gap";
 import { readWaitlistAnswers } from "@/lib/waitlistAnswers";
@@ -193,6 +195,12 @@ export default function OnboardingFlow() {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [profile, setProfile] = useState<OnboardingProfile>(emptyProfile);
   const [newInterest, setNewInterest] = useState<string | null>(null); // Screen 6 UI
+  // Last screen: why this browser can't do notifications, once they have asked.
+  const [deviceNote, setDeviceNote] = useState<PushNote | null>(null);
+  const deviceNoteRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (deviceNote) deviceNoteRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [deviceNote]);
   /*
     Nothing is written back to the draft until the draft has been READ. Without
     this the first render — an empty profile on screen 1 — would save itself
@@ -368,8 +376,20 @@ export default function OnboardingFlow() {
     then finish. Every branch finishes, including a refusal — the switches
     above are saved with the rest of the profile either way, so all that is
     left afterwards is the phone's own permission (Settings).
+
+    Except a browser that CAN'T ask. An iPhone in Safari has no push until the
+    app is on the Home Screen, and this used to finish without a word, so
+    almost no iPhone ever subscribed. Now the first tap says how (the same
+    words as Settings, lib/push/notes.ts) and the button becomes Continue.
+    Our own missing keys are not the visitor's problem: that still just finishes.
   */
   const enableNotifications = async () => {
+    if (deviceNote) return finish();
+    const env = pushEnvironment();
+    if (env !== "ready" && env !== "not-configured") {
+      setDeviceNote(pushNote(env, "in Settings"));
+      return;
+    }
     const status = await subscribeToPush();
     if (status === "granted") {
       void sendTestNotification({
@@ -1072,6 +1092,7 @@ export default function OnboardingFlow() {
         );
       case "notifications":
         return (
+          <>
           <div className="rounded-2xl border border-border bg-surface px-4 shadow-card">
             {notificationItems.map((item, i) => {
               const NotifIcon = notifIcons[item.icon];
@@ -1095,6 +1116,24 @@ export default function OnboardingFlow() {
               );
             })}
           </div>
+          {deviceNote && (
+            <div
+              ref={deviceNoteRef}
+              role="status"
+              className="mt-3 flex gap-2.5 rounded-2xl border border-border bg-surface px-4 py-3.5 shadow-card"
+            >
+              <span className="mt-0.5 flex-shrink-0 text-accent">
+                <IconBell size={16} />
+              </span>
+              <div>
+                <div className="text-[15px] text-text">{deviceNote.title}</div>
+                {deviceNote.body && (
+                  <p className="mt-0.5 text-[12px] leading-relaxed text-muted">{deviceNote.body}</p>
+                )}
+              </div>
+            </div>
+          )}
+          </>
         );
       default:
         return (
@@ -1114,7 +1153,7 @@ export default function OnboardingFlow() {
   */
   const ctaProps = isLast
     ? {
-        primaryLabel: "Turn notifications on",
+        primaryLabel: deviceNote ? "Continue" : "Turn notifications on",
         primaryVariant: "primary" as const,
         primaryDisabled: !canContinue(),
         onPrimary: enableNotifications,

@@ -13,6 +13,7 @@ import {
   pushEnvironment,
   type PushEnvironment,
 } from "@/lib/push/client";
+import { pushNote } from "@/lib/push/notes";
 
 /*
   Settings → Notifications (app/settings/notifications). Two layers:
@@ -152,28 +153,10 @@ export default function NotificationSettings({
   );
 
   // The device row: its message + any action button depend on browser state.
+  // The words are shared with the last onboarding screen (lib/push/notes.ts).
   const renderDeviceRow = () => {
-    if (env === "install-ios") {
-      return note(
-        "Install UNIsport to get notifications",
-        "Tap the Share button at the bottom of Safari, choose “Add to Home Screen”, then open UNIsport from your Home Screen and come back here.",
-      );
-    }
-    if (env === "ios-too-old") {
-      return note(
-        "Your iPhone needs a newer iOS",
-        "Notifications need iOS 16.4 or later. Update your phone, then turn them on here.",
-      );
-    }
-    if (env === "browser") {
-      return note(
-        "This browser can’t do notifications",
-        "Open UNIsport in Chrome, Edge, Firefox, or Safari 16.4 and later to turn them on.",
-      );
-    }
-    if (env === "not-configured") {
-      return note("Notifications aren’t live yet");
-    }
+    const why = pushNote(env, "here");
+    if (why) return note(why.title, why.body);
     if (permission === "denied") {
       return note(
         "Notifications are blocked",
