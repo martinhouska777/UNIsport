@@ -87,8 +87,10 @@ own words, the date. Newest at the bottom of each part.
 20. **A suggestion is never filled in for you.** Offer the guess on a button ("Use them");
     nothing is saved until it is pressed. (2026-09-17: "do it as an option … It was very
     confusing.")
-21. **No features, stats or links nobody asked for.** (2026-09-22: "we don't want the telemetry
-    there now"; 2026-10-11: "I don't need to connect it".)
+21. **No features, stats or links nobody asked for.** No "Add to Home Screen" prompt either:
+    UNIsport is going on the App Store. (2026-09-22: "we don't want the telemetry there now";
+    2026-10-11: "I don't need to connect it"; 2026-10-16: "it will be on app store why would
+    we do this".)
 22. **Demo data looks real and varied**: different gyms, concentrations and names, never
     everyone at Malkin studying economics. No friends' real names in screenshots. (2026-09-16:
     "I don't just want everything Malkin … i want different stuff".)
