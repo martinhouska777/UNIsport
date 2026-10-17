@@ -83,15 +83,19 @@ insert into storage.buckets (id, name, public, file_size_limit)
 values ('crew-videos', 'crew-videos', false, 524288000)
 on conflict (id) do update set file_size_limit = excluded.file_size_limit;
 
+-- The team only, matching the rows above (was every signed-in account until
+-- db/patch_storage_team_only_2026-10-17.sql).
 drop policy if exists "Crew videos readable by signed-in users" on storage.objects;
-create policy "Crew videos readable by signed-in users"
+drop policy if exists "Crew video files readable by the team" on storage.objects;
+create policy "Crew video files readable by the team"
   on storage.objects for select
-  using (bucket_id = 'crew-videos' and auth.role() = 'authenticated');
+  using (bucket_id = 'crew-videos' and public.varsity_is_member());
 
 drop policy if exists "Crew videos insertable by signed-in users" on storage.objects;
-create policy "Crew videos insertable by signed-in users"
+drop policy if exists "Crew video files addable by the team" on storage.objects;
+create policy "Crew video files addable by the team"
   on storage.objects for insert
-  with check (bucket_id = 'crew-videos' and auth.role() = 'authenticated');
+  with check (bucket_id = 'crew-videos' and public.varsity_is_member());
 
 -- Only the uploader can remove the file, mirroring the row policy above.
 drop policy if exists "Own crew video file deletable" on storage.objects;

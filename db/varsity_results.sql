@@ -121,11 +121,13 @@ insert into storage.buckets (id, name, public)
 values ('erg-photos', 'erg-photos', false)
 on conflict (id) do nothing;
 
--- READ: the whole squad, matching the results themselves.
+-- READ: the whole team, matching the results themselves (was every signed-in
+-- account until db/patch_storage_team_only_2026-10-17.sql).
 drop policy if exists "Erg photos readable by signed-in users" on storage.objects;
-create policy "Erg photos readable by signed-in users"
+drop policy if exists "Erg photos readable by the team" on storage.objects;
+create policy "Erg photos readable by the team"
   on storage.objects for select
-  using (bucket_id = 'erg-photos' and auth.role() = 'authenticated');
+  using (bucket_id = 'erg-photos' and public.varsity_is_member());
 
 -- WRITE: only inside your own folder. Nobody can add, replace or delete a
 -- photo under someone else's result.
