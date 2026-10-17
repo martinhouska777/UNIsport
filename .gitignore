@@ -60,6 +60,11 @@ unisportforboathouses/
 
 # rendered video (regenerate with scripts/video/*.mjs)
 mockups/video/*.mp4
+# its sound and timing files (SOUND.md: the sfx bank is regenerated; ref-*.wav
+# are cut from the reference reel and never go public)
+mockups/video/*.mp3
+mockups/video/*.wav
+mockups/video/intro-times.json
 
 # varsity/coach captures carry the squad's REAL names — never into the public repo (SOCIAL.md 7B)
 mockups/social/screens/*/varsity-*.png
