@@ -377,7 +377,7 @@ export default function CampusColours({
                 className={`font-display text-[clamp(110px,12vw,210px)] leading-[0.8] [grid-area:1/1] ${
                   animate ? "[animation:l-letter-in_.6s_ease_both]" : ""
                 }`}
-                style={{ color: s.ink }}
+                style={{ color: inkText }}
               >
                 {s.letter}
               </span>
