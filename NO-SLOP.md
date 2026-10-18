@@ -75,8 +75,9 @@ own words, the date. Newest at the bottom of each part.
     circle in the channel's own colour with a white icon, like Apple Reminders lists, the same
     mark in the list, the chat header and Channel info (`components/messages/ChannelBadge.tsx`).
     (2026-10-18: "they look really ai", direction D of five.) A list of reasons, like Why you
-    match, keeps its ticks: no icon per row. (2026-10-18: "i dont want icons just better ticks
-    and color".)
+    match, keeps its ticks: no icon per row. Why you match is a done checklist, solid
+    school-colour square ticks on a white card with the title in the school's colour.
+    (2026-10-18: "i dont want icons just better ticks and color", picked B of four.)
 14. **Light mode is the main mode**; the landing page is light only. (2026-09-15, 2026-09-20.)
 15. **Animation is quick and one continuous motion.** (2026-09-13: "it takes too long … I just
     want to see the thing".)

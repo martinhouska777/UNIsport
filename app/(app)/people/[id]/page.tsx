@@ -363,21 +363,24 @@ function PersonProfile() {
 
             {/* WHY YOU MATCH — FIRST under who they are (owner, 2026-10-01:
                 "when you click somebody's profile, first is why you match"),
-                because it is what the tap was asking. The one tinted card on
-                the page. EVERY reason, not the handful the card had room for.
+                because it is what the tap was asking. EVERY reason, not the
+                handful the card had room for.
+                A DONE CHECKLIST since 2026-10-18 (owner picked B of four: "i
+                dont want icons just better ticks and color"): a white card, the
+                title in the school's colour, and each reason behind a solid
+                school-colour square tick, like a finished list in Apple
+                Reminders. It was a pink tinted card with small white round ticks.
                 data-tour: the walk lights this card and the next (lib/tour.ts). */}
             {reasons.length > 0 && (
-              <div data-tour="person-why" className="rounded-2xl border border-primary-line bg-primary-tint p-3.5">
-                <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-primary">
-                  Why you match
-                </div>
-                <ul className="flex flex-col gap-2">
+              <div data-tour="person-why" className="rounded-2xl border border-border bg-surface p-3.5">
+                <div className="mb-2.5 text-[15px] font-bold text-primary">Why you match</div>
+                <ul className="flex flex-col gap-2.5">
                   {reasons.map((r) => (
                     <li key={r.key} className="flex items-start gap-2.5">
-                      <span className="mt-px flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center rounded-full bg-surface text-primary">
-                        <IconCheck size={11} />
+                      <span className="mt-px flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-[6px] bg-primary text-primary-contrast [&_svg]:stroke-[3]">
+                        <IconCheck size={13} />
                       </span>
-                      <span className="text-[13.5px] leading-snug text-text">{r.full}</span>
+                      <span className="text-[14px] leading-snug text-text">{r.full}</span>
                     </li>
                   ))}
                 </ul>
