@@ -16,7 +16,7 @@
   owner's own Profile tab uses — so nothing here is faked. No fit tier, here
   or on the Match card (owner, 2026-09-30 and 2026-10-04). All colors are theme tokens (rule 1).
 */
-import { Suspense, useEffect, useState, type ReactNode } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Button from "@/components/ui/Button";
 import { useParams, useRouter } from "next/navigation";
 import { getPublicProfile } from "@/lib/supabase/profiles";
@@ -27,27 +27,10 @@ import { matchReasons, type MatchReason } from "@/lib/matchReasons";
 import { useAppState } from "@/components/AppState";
 import { startDirectConversation } from "@/lib/supabase/messages";
 import { getFollowStatus, followUser, unfollowUser } from "@/lib/supabase/follows";
-import {
-  IconArrowLeft,
-  IconUser,
-  IconCheck,
-  IconMapPin,
-  IconBarbell,
-  IconRun,
-  IconActivity,
-  IconHeart,
-  IconBulb,
-  IconGlobe,
-  IconMessage,
-  IconClock,
-  IconFloors,
-  IconStar,
-  IconSquad,
-} from "@/components/icons";
+import { IconArrowLeft, IconUser, IconCheck } from "@/components/icons";
 import PhotoGallery from "@/components/profile/PhotoGallery";
 import ProfileBadge from "@/components/ProfileBadge";
-import ScheduleOverlap, { sharedSlots, hasAnyTimes } from "@/components/people/ScheduleOverlap";
-import { rangeLabel } from "@/lib/schedule";
+import ScheduleOverlap from "@/components/people/ScheduleOverlap";
 import FollowListSheet from "@/components/people/FollowListSheet";
 import { getFollowCounts, type FollowKind } from "@/lib/supabase/follows";
 import { getPartnerCount, getWorkoutCount } from "@/lib/supabase/workouts";
@@ -103,8 +86,6 @@ function PersonProfile() {
   // already that overlap — see lib/supabase/matching.ts) rather than colouring
   // every interest the same regardless of whether the two of you share it.
   const [match, setMatch] = useState<Match | null>(null);
-  // The pair has been asked about (answer or not), so an empty card is final.
-  const [matchDone, setMatchDone] = useState(false);
 
   // Your own id in a shared link: this page is other people. Follow and Message
   // on yourself only ever produced a raw database error, so go to My Profile.
@@ -117,15 +98,12 @@ function PersonProfile() {
     let active = true;
     getPairMatch(meId, id)
       .then((m) => {
-        if (!active) return;
-        setMatchDone(true);
-        if (!m) return;
+        if (!active || !m) return;
         setMatch(m);
         setReasons(matchReasons(m));
       })
       .catch(() => {
         /* The profile itself is the point; no reasons is a fine outcome. */
-        if (active) setMatchDone(true);
       });
     return () => {
       active = false;
@@ -249,19 +227,6 @@ function PersonProfile() {
     { key: "split", label: "Split" },
     { key: "gym", label: "Gym" },
   ];
-
-  /*
-    WHY YOU MATCH, AS SHOWN: the hours you are both free (the red rectangles)
-    are one of its rows, so "You train at similar times of day" goes whenever
-    they are there; it would say the same thing twice.
-  */
-  const theirTimes = user?.trainingSchedule;
-  const sharedHours = mySchedule ? sharedSlots(theirTimes, mySchedule) : [];
-  const shownReasons =
-    sharedHours.length > 0 ? reasons.filter((r) => r.key !== "schedule") : reasons;
-  const whyCard = shownReasons.length > 0 || sharedHours.length > 0;
-  // Told to the walk (lib/tour.ts) once it is certain the card is not coming.
-  const whyAbsent = matchDone && mySchedule !== null && !whyCard;
 
   return (
     <div className="mx-auto flex w-full max-w-screen-sm flex-1 flex-col">
@@ -398,80 +363,42 @@ function PersonProfile() {
 
             {/* WHY YOU MATCH — FIRST under who they are (owner, 2026-10-01:
                 "when you click somebody's profile, first is why you match"),
-                because it is what the tap was asking. EVERY reason, not the
-                handful the card had room for.
-                VERSION A since 2026-10-18 (owner: "i want better ui for why you
-                match"; four looks shown, A built): a white card with the
-                school-colour stripe down the left edge (the Gyms list's house
-                rows), a row per reason with its own icon and the shared thing
-                in bold, and the hours you are both free as the red rectangles
-                in the last row. Used to be a pink tinted card of tick lines.
-                data-tour: the walk lights this card and the button (lib/tour.ts). */}
-            {whyCard && (
-              <div data-tour="person-why" className="overflow-hidden rounded-2xl border border-border bg-surface">
-                <div className="border-l-[4px] border-primary p-3.5">
-                  <div className="mb-3 text-[15px] font-semibold text-text">Why you match</div>
-                  <ul className="flex flex-col gap-2.5">
-                    {shownReasons.map((r) => {
-                      const Icon = reasonIcon(r.key, match?.facts.activity ?? null);
-                      return (
-                        <li key={r.key} className="flex items-center gap-3">
-                          <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-primary-tint text-primary">
-                            <Icon size={16} />
-                          </span>
-                          <span className="text-[13.5px] leading-snug text-text">
-                            <ReasonWords full={r.full} strong={r.strong} />
-                          </span>
-                        </li>
-                      );
-                    })}
-                    {sharedHours.length > 0 && (
-                      <li className="flex items-start gap-3">
-                        <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-primary-tint text-primary">
-                          <IconClock size={16} />
-                        </span>
-                        {/* THE RED RECTANGLES (owner, 2026-10-01: "the day and
-                            what times you overlap, in a red rectangle"), one
-                            per day and stretch: "Mon 7:00–9:00 AM". */}
-                        <div className="flex flex-wrap gap-1.5 pt-1">
-                          {sharedHours.flatMap((d) =>
-                            d.slots.map((sl) => (
-                              <span
-                                key={`${d.day} ${sl}`}
-                                className="rounded-md bg-primary px-2 py-1 text-[11.5px] font-medium tabular-nums text-primary-contrast"
-                              >
-                                {d.day} {rangeLabel(sl)}
-                              </span>
-                            )),
-                          )}
-                        </div>
-                      </li>
-                    )}
-                  </ul>
+                because it is what the tap was asking. The one tinted card on
+                the page. EVERY reason, not the handful the card had room for.
+                data-tour: the walk lights this card and the next (lib/tour.ts). */}
+            {reasons.length > 0 && (
+              <div data-tour="person-why" className="rounded-2xl border border-primary-line bg-primary-tint p-3.5">
+                <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-primary">
+                  Why you match
                 </div>
+                <ul className="flex flex-col gap-2">
+                  {reasons.map((r) => (
+                    <li key={r.key} className="flex items-start gap-2.5">
+                      <span className="mt-px flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center rounded-full bg-surface text-primary">
+                        <IconCheck size={11} />
+                      </span>
+                      <span className="text-[13.5px] leading-snug text-text">{r.full}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
             )}
 
-            {/* THEIR CALENDAR — only the button (owner, 2026-10-18: "see
-                martin calendar only the button"); the card around it, its
-                title and the hours went, the hours into the card above. */}
-            {hasAnyTimes(theirTimes) && (
-              <div data-tour="person-times">
+            {/* WHEN YOU'RE BOTH FREE — its own card, right after why you match,
+                because finding a time is the point of the whole app (owner,
+                2026-09-30: "this is one of the main things that we are
+                doing"). It used to be a row of unlabelled chips at the foot of
+                Training. */}
+            <div data-tour="person-times" className="rounded-2xl border border-border bg-surface p-3.5">
+              <SectionLabel>When you’re both free</SectionLabel>
+              <div className="mt-2.5">
                 <ScheduleOverlap
-                  theirs={theirTimes}
+                  theirs={user.trainingSchedule}
                   mine={mySchedule}
                   name={(user.name || "Member").split(" ")[0]}
                 />
               </div>
-            )}
-            {(whyAbsent || !hasAnyTimes(theirTimes)) && (
-              <span
-                hidden
-                data-tour-absent={[whyAbsent && "person-why", !hasAnyTimes(theirTimes) && "person-times"]
-                  .filter(Boolean)
-                  .join(" ")}
-              />
-            )}
+            </div>
 
             {/* TRAINING — four tiles. Their week has its own card above. */}
             <div className="rounded-2xl border border-border bg-surface p-3.5">
@@ -610,42 +537,5 @@ function PersonProfile() {
         </>
       )}
     </div>
-  );
-}
-
-/*
-  An icon for each kind of reason, so the rows of "Why you match" read at a
-  glance. What you do together takes that sport's own icon, the one the Match
-  card uses beside "Lifts" or "Runs".
-*/
-type ReasonIcon = (p: { size?: number; className?: string }) => ReactNode;
-function reasonIcon(key: string, activity: string | null): ReasonIcon {
-  if (key === "activity" || key === "activity-also") {
-    return activity === "gym" ? IconBarbell : activity === "running" ? IconRun : IconActivity;
-  }
-  const byKey: Record<string, ReasonIcon> = {
-    gym: IconMapPin,
-    interests: IconHeart,
-    concentration: IconBulb,
-    origin: IconGlobe,
-    languages: IconMessage,
-    schedule: IconClock,
-    level: IconFloors,
-    mentor: IconStar,
-    training: IconSquad,
-  };
-  return byKey[key] ?? IconCheck;
-}
-
-/** The reason's sentence with the shared thing in bold. */
-function ReasonWords({ full, strong }: { full: string; strong?: string }) {
-  const at = strong ? full.lastIndexOf(strong) : -1;
-  if (!strong || at < 0) return <>{full}</>;
-  return (
-    <>
-      {full.slice(0, at)}
-      <b className="font-semibold">{strong}</b>
-      {full.slice(at + strong.length)}
-    </>
   );
 }

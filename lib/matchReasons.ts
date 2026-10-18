@@ -26,8 +26,6 @@ export type MatchReason = {
   short: string;
   /** Profile-sized: a full sentence fragment ("Both studying Economics"). */
   full: string;
-  /** The shared thing inside `full`, set in bold on a profile ("Economics"). */
-  strong?: string;
 };
 
 // Joins a list the way a person would say it: "Climbing, Coffee and Chess".
@@ -83,7 +81,6 @@ export function matchReasons(m: Match): MatchReason[] {
       key: "gym",
       short: f.gym,
       full: `You both train at ${f.gym}`,
-      strong: f.gym,
       pts: b.gym,
       weight: 3,
     });
@@ -135,7 +132,6 @@ export function matchReasons(m: Match): MatchReason[] {
         f.interests.length === 1
           ? `You're both into ${f.interests[0]}`
           : `Shared interests: ${listWords(f.interests)}`,
-      strong: listWords(f.interests),
       pts: b.interests,
       weight: 3,
     });
@@ -146,7 +142,6 @@ export function matchReasons(m: Match): MatchReason[] {
       key: "concentration",
       short: f.concentration,
       full: `You're both concentrating in ${f.concentration}`,
-      strong: f.concentration,
       pts: b.concentration,
       weight: 3,
     });
@@ -171,7 +166,6 @@ export function matchReasons(m: Match): MatchReason[] {
       key: "origin",
       short: f.city,
       full: `You're both from ${f.city}`,
-      strong: f.city,
       pts: b.origin,
       weight: 4,
     });
@@ -180,7 +174,6 @@ export function matchReasons(m: Match): MatchReason[] {
       key: "origin",
       short: f.country,
       full: `You're both from ${withThe(f.country)}`,
-      strong: f.country,
       pts: b.origin,
       weight: 3,
     });
@@ -189,7 +182,6 @@ export function matchReasons(m: Match): MatchReason[] {
       key: "origin",
       short: f.region,
       full: `You're both from ${withThe(f.region)}`,
-      strong: f.region,
       pts: b.origin,
       weight: 2,
     });
@@ -213,7 +205,6 @@ export function matchReasons(m: Match): MatchReason[] {
         languages.length === 1
           ? `You both speak ${languages[0]}`
           : `You both speak ${listWords(languages)}`,
-      strong: listWords(languages),
       pts: b.languages,
       weight: 2,
     });
@@ -260,7 +251,7 @@ export function matchReasons(m: Match): MatchReason[] {
   return candidates
     .filter((r) => r.pts > 0)
     .sort((a, c) => c.pts - a.pts || c.weight - a.weight)
-    .map(({ key, short, full, strong }) => ({ key, short, full, strong }));
+    .map(({ key, short, full }) => ({ key, short, full }));
 }
 
 /*

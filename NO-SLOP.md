@@ -67,16 +67,16 @@ own words, the date. Newest at the bottom of each part.
     top that doesn't do anything"; 2026-09-22: "so much empty space"; 2026-10-02: "they're
     crammed".) Tabs and the options they open are clearly apart: a line across the whole panel
     and room on both sides of it. (2026-10-18: "in filters we want to split more the top and
-    bottom".) A button that opens something (a calendar, a list) stands on its own: no card,
-    title or chips around it; what those said goes where it belongs. (2026-10-18: "see martin
-    calendar only the button".)
+    bottom".)
 13. **Every new screen reuses a pattern the app already has** (Messages is the model). Familiar
     things copy WhatsApp, Instagram, Hevy or Strava closely. (2026-09-14: "just look at WhatsApp
     how he does it and copy it"; 2026-09-27: "I like how it is done on messages".)
     A pale pink tile with a thin red line icon looks generated. Community channels are a solid
     circle in the channel's own colour with a white icon, like Apple Reminders lists, the same
     mark in the list, the chat header and Channel info (`components/messages/ChannelBadge.tsx`).
-    (2026-10-18: "they look really ai", direction D of five.)
+    (2026-10-18: "they look really ai", direction D of five.) A list of reasons, like Why you
+    match, keeps its ticks: no icon per row. (2026-10-18: "i dont want icons just better ticks
+    and color".)
 14. **Light mode is the main mode**; the landing page is light only. (2026-09-15, 2026-09-20.)
 15. **Animation is quick and one continuous motion.** (2026-09-13: "it takes too long … I just
     want to see the thing".)
@@ -100,7 +100,10 @@ own words, the date. Newest at the bottom of each part.
     after every small slice to ask "should I start the next one?". Stop for review before a new
     feature or a new look, and show 3–5 previews for a new look. This narrows rule 4 in
     CLAUDE.md. (2026-09-27: "change everything and then tell me what you did and i will review
-    it"; 2026-10-01: "continue".)
+    it"; 2026-10-01: "continue".) A new look is built only after the owner names the preview he
+    wants. If he moves on without picking, the previews wait and the screen stays as it was;
+    never pick one for him. (2026-10-18: "i dont like the why you match i said give me
+    preview".)
 20. **A suggestion is never filled in for you.** Offer the guess on a button ("Use them");
     nothing is saved until it is pressed. (2026-09-17: "do it as an option … It was very
     confusing.")
