@@ -242,8 +242,7 @@ function PersonProfile() {
         >
           <IconArrowLeft size={18} />
         </button>
-        <span className="text-sm font-medium text-text">Profile</span>
-        <span className="w-[18px]" aria-hidden="true" />
+        {/* No "Profile" title: the card under it is the profile (NO-SLOP 7). */}
       </div>
 
       {status === "loading" && (

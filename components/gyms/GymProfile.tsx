@@ -71,9 +71,7 @@ export default function GymProfile({ gym }: { gym: Gym }) {
         >
           <IconArrowLeft size={18} />
         </Link>
-        <span className="truncate px-2 text-[13px] font-medium text-text">
-          {gym.name}
-        </span>
+        {/* No name up here: the card right under it says it (2026-10-18). */}
         <button
           type="button"
           aria-label={favorite ? "Remove from favourites" : "Add to favourites"}
