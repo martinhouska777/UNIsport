@@ -127,6 +127,10 @@ own words, the date. Newest at the bottom of each part.
 22. **Demo data looks real and varied**: different gyms, concentrations and names, never
     everyone at Malkin studying economics. No friends' real names in screenshots. (2026-09-16:
     "I don't just want everything Malkin … i want different stuff".)
+    The account a walk or a video is shot on has a made-up name, and so does anyone called
+    Martin Houska it meets (the first card on Match): Lucas Bennett, Ethan Hale, Oliver
+    Grant, through `db/shoot_names.sql`. (2026-10-18: "do a fake name and not Martin
+    Houska, then we will shoot it".)
 
 ## Coach screens
 
