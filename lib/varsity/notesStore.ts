@@ -1,8 +1,8 @@
 /*
   COACH NOTES STORE — the coach's per-athlete note.
   ------------------------------------------------------------------------
-  Each athlete can have one short note from the coach. The coach's Notes
-  screen reads the team roster (real onboarded accounts) + every note; the
+  Each athlete can have one short note from the coach. The coach's Team tab
+  reads every note and matches them to the team's approved accounts; the
   athlete's Home reads just their own. A blank note means "all clear" and is
   stored as no row (we delete it), so the Home shows a green "Good job".
 
@@ -43,18 +43,6 @@ function loadLocalNotes(): Record<string, string> {
     }
   }
   return out;
-}
-
-/* ── The team roster (real onboarded accounts), id + display name ── */
-export async function fetchTeamRoster(): Promise<TeamMember[]> {
-  if (!hasSupabaseEnv()) return [];
-  const supabase = createClient();
-  const { data, error } = await supabase.rpc("get_team_roster");
-  if (error || !data) {
-    console.error("fetchTeamRoster:", error?.message);
-    return [];
-  }
-  return (data as TeamMember[]).filter((m) => m.id);
 }
 
 /* ── Every note, keyed by athlete id (powers the coach list) ── */

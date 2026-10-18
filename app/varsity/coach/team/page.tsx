@@ -26,8 +26,8 @@
 
   Accounts are not linked to the (still mock) roster yet, so the two are matched
   by NAME — the same stand-in lib/varsity/demoAthlete.ts and lineupStore.ts use.
-  Only a signed-up account can get a note (lib/varsity/notesStore.ts), so a
-  rower who hasn't joined gets a one-line sheet saying so instead of an editor.
+  Only an approved account on the team can get a note, so a rower who hasn't
+  joined gets a one-line sheet saying so instead of an editor.
 */
 import { useEffect, useMemo, useState } from "react";
 import TeamScreen from "@/components/varsity/team/TeamScreen";
@@ -36,11 +36,7 @@ import Sheet from "@/components/varsity/Sheet";
 import { useMembership } from "@/components/varsity/useMembership";
 import { can, fetchSquad } from "@/lib/varsity/membership";
 import { rosterIdForName } from "@/lib/varsity/demoAthlete";
-import {
-  fetchTeamRoster,
-  fetchNotes,
-  type TeamMember,
-} from "@/lib/varsity/notesStore";
+import { fetchNotes, type TeamMember } from "@/lib/varsity/notesStore";
 import { IconPencil } from "@/components/icons";
 
 export default function CoachTeamPage() {
@@ -50,10 +46,17 @@ export default function CoachTeamPage() {
   const writesNotes = !!role && can.writeNotes(role);
   // roster id → the account id of the person who is that rower.
   const [accounts, setAccounts] = useState<Record<string, string>>({});
-  // Who can get a note, and the notes they already have (account id → note).
+  /* Who can get a note: every approved account on the team, by the name they
+     joined with, the same list `accounts` comes from. It used to be every
+     account that had finished the STUDENT onboarding (get_team_roster), which
+     a rower who joins through the team's invite never does, so no rower on the
+     team could be sent one (2026-10-18). */
   const [members, setMembers] = useState<TeamMember[]>([]);
-  const [membersRead, setMembersRead] = useState(false);
+  const [squadRead, setSquadRead] = useState(false);
+  // The notes they already have (account id → note).
   const [notes, setNotes] = useState<Record<string, string>>({});
+  const [notesRead, setNotesRead] = useState(false);
+  const membersRead = squadRead && notesRead;
   const [writing, setWriting] = useState<TeamMember | null>(null);
   const [notJoined, setNotJoined] = useState<string | null>(null);
 
@@ -63,12 +66,16 @@ export default function CoachTeamPage() {
     fetchSquad(teamId).then((squad) => {
       if (!active) return;
       const map: Record<string, string> = {};
+      const approved: TeamMember[] = [];
       for (const m of squad) {
         if (m.status !== "approved") continue;
+        approved.push({ id: m.userId, name: m.name });
         const id = rosterIdForName(m.name);
         if (id) map[id] = m.userId;
       }
       setAccounts(map);
+      setMembers(approved);
+      setSquadRead(true);
     });
     return () => {
       active = false;
@@ -78,11 +85,10 @@ export default function CoachTeamPage() {
   useEffect(() => {
     if (!writesNotes) return;
     let active = true;
-    Promise.all([fetchTeamRoster(), fetchNotes()]).then(([r, n]) => {
+    fetchNotes().then((n) => {
       if (!active) return;
-      setMembers(r);
       setNotes(n);
-      setMembersRead(true);
+      setNotesRead(true);
     });
     return () => {
       active = false;
