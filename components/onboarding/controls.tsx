@@ -20,12 +20,16 @@ export function Pill({
   label: ReactNode;
   selected: boolean;
   onClick: () => void;
-  variant?: "crimson" | "gold";
+  /* "solid": the filter panels, where a picked value is full school colour
+     (owner, 2026-10-18: "that are applied will be red like full red"). */
+  variant?: "crimson" | "gold" | "solid";
 }) {
   const selectedClass =
     variant === "gold"
       ? "border-accent bg-accent-tint text-accent"
-      : "border-primary bg-primary-tint text-primary";
+      : variant === "solid"
+        ? "border-primary bg-primary text-primary-contrast"
+        : "border-primary bg-primary-tint text-primary";
 
   return (
     <button

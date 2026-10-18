@@ -107,6 +107,7 @@ export default function BoardFiltersSheet({
           <div className="flex flex-wrap gap-1.5">
             {buddyFocuses.map((f) => (
               <Pill
+                variant="solid"
                 key={f.key}
                 label={f.label}
                 selected={draft.focus === f.key}
@@ -121,6 +122,7 @@ export default function BoardFiltersSheet({
           <div className="flex flex-wrap gap-1.5">
             {weekDays.map((d) => (
               <Pill
+                variant="solid"
                 key={d.key}
                 label={d.label.slice(0, 3)}
                 selected={draft.day === d.key}
@@ -135,6 +137,7 @@ export default function BoardFiltersSheet({
           <div className="flex flex-wrap gap-1.5">
             {buddyTimesOfDay.map((t) => (
               <Pill
+                variant="solid"
                 key={t.key}
                 label={t.label}
                 selected={draft.timeOfDay === t.key}

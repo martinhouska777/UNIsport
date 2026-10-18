@@ -52,6 +52,10 @@ own words, the date. Newest at the bottom of each part.
    Gyms list (main gyms: the school crest; houses: crest + left stripe). (2026-10-18: "i dont like
    how it is poster style a little bit", "I like the D with houses having stripes but on left not
    top".)
+   What you share or have picked is SOLID school colour with white words, never the light tint:
+   the shared hours, the interests you share on someone's profile, the applied filters, a filter
+   tab with something set and the value picked inside it. (2026-10-18: "for interests i think it
+   would be good if they had full color aswell", "that are applied will be red like full red".)
 10. **Text people read is black.** Grey is only for marks (`var(--faint)`). Nothing white on
     white, nothing yellow on yellow. (2026-09-30: "je tam spoustu šedých písmen … udělat černé";
     2026-10-11: "make it so it's not white on white".)
@@ -61,7 +65,9 @@ own words, the date. Newest at the bottom of each part.
 12. **Fill the width, keep it compact, never cramped.** Content edge to edge, controls small,
     symmetrical, no lines, frames or boxes that do nothing. (2026-09-15: "the gray line on the
     top that doesn't do anything"; 2026-09-22: "so much empty space"; 2026-10-02: "they're
-    crammed".)
+    crammed".) Tabs and the options they open are clearly apart: a line across the whole panel
+    and room on both sides of it. (2026-10-18: "in filters we want to split more the top and
+    bottom".)
 13. **Every new screen reuses a pattern the app already has** (Messages is the model). Familiar
     things copy WhatsApp, Instagram, Hevy or Strava closely. (2026-09-14: "just look at WhatsApp
     how he does it and copy it"; 2026-09-27: "I like how it is done on messages".)

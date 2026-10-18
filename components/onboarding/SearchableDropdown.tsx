@@ -45,6 +45,8 @@ type MultiProps = BaseProps & {
   onChange: (v: string[]) => void;
   hideSelected?: boolean;
   locked?: string[];
+  /** The chips above in full school colour (the Match filters). */
+  solidChips?: boolean;
 };
 type Props = SingleProps | MultiProps;
 
@@ -62,6 +64,7 @@ export default function SearchableDropdown(props: Props) {
   const single = multiple ? "" : props.value;
   const locked = multiple ? (props.locked ?? []) : [];
   const hideSelected = multiple ? props.hideSelected === true : false;
+  const solidChips = multiple ? props.solidChips === true : false;
 
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -126,7 +129,9 @@ export default function SearchableDropdown(props: Props) {
                 className={`flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs ${
                   fixed
                     ? "border-border bg-surface text-muted"
-                    : "border-primary bg-primary-tint text-primary"
+                    : solidChips
+                      ? "border-primary bg-primary text-primary-contrast"
+                      : "border-primary bg-primary-tint text-primary"
                 }`}
               >
                 {s}

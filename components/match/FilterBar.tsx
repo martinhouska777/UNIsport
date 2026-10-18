@@ -111,7 +111,7 @@ export function FilterRow({
               type="button"
               onClick={() => onClear(c.key)}
               aria-label={`Clear filter ${c.label}`}
-              className="tap44 flex flex-shrink-0 items-center gap-1 rounded-full border border-primary bg-primary-tint px-3 py-1.5 text-[12px] text-primary"
+              className="tap44 flex flex-shrink-0 items-center gap-1 rounded-full border border-primary bg-primary px-3 py-1.5 text-[12px] text-primary-contrast"
             >
               {c.label}
               <span className="text-[13px] leading-none">×</span>
@@ -201,7 +201,7 @@ export default function FilterBar({
               type="button"
               onClick={() => onClear(c.key)}
               aria-label={`Clear filter ${c.label}`}
-              className="tap44 flex flex-shrink-0 items-center gap-1 rounded-full border border-primary bg-primary-tint px-3 py-1.5 text-[12px] text-primary"
+              className="tap44 flex flex-shrink-0 items-center gap-1 rounded-full border border-primary bg-primary px-3 py-1.5 text-[12px] text-primary-contrast"
             >
               {c.label}
               <span className="text-[13px] leading-none">×</span>

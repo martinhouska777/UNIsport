@@ -415,9 +415,11 @@ function PersonProfile() {
               </div>
             </div>
 
-            {/* INTERESTS — chips that fit their word. The school's colour only
-                on the ones you ACTUALLY share (m.facts.interests is that
-                overlap); the rest stay grey, same shape. */}
+            {/* INTERESTS — chips that fit their word. The ones you ACTUALLY
+                share (m.facts.interests is that overlap) are SOLID school
+                colour, like the red rectangles of the hours (owner,
+                2026-10-18: "for interests … full color as well"); the rest
+                stay white, same shape. */}
             {user.interests.length > 0 && (
               <div className="rounded-2xl border border-border bg-surface p-3.5">
                 <SectionLabel>Interests</SectionLabel>
@@ -430,7 +432,7 @@ function PersonProfile() {
                         title={shared ? "You both like this" : undefined}
                         className={`flex items-center gap-1 rounded-md border px-2.5 py-1.5 text-[12px] font-medium ${
                           shared
-                            ? "border-primary-line bg-primary-tint text-primary"
+                            ? "border-primary bg-primary text-primary-contrast"
                             : "border-border text-muted"
                         }`}
                       >

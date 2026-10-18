@@ -150,8 +150,9 @@ type TabKey = keyof MatchFilters;
   name on the left, the picked value far off on the right — so it took most of
   the screen before you had chosen anything. Now each filter is a small tab in a
   row that wraps; tapping one shows its options underneath, tapping it again
-  hides them. A tab that already has something picked is tinted and carries a
-  dot, so you can see what is set without opening anything.
+  hides them. A tab that already has something picked is SOLID school colour
+  (owner, 2026-10-18: "that are applied will be red like full red"), so you can
+  see what is set without opening anything; open, it is black with a dot.
 */
 function FilterTab({
   label,
@@ -173,17 +174,12 @@ function FilterTab({
         open
           ? "border-text bg-text text-background"
           : set
-            ? "border-primary bg-primary-tint text-primary"
+            ? "border-primary bg-primary text-primary-contrast"
             : "border-border bg-surface text-muted"
       }`}
     >
       {label}
-      {set && (
-        <span
-          aria-hidden
-          className={`h-1.5 w-1.5 rounded-full ${open ? "bg-background" : "bg-primary"}`}
-        />
-      )}
+      {set && open && <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-background" />}
     </button>
   );
 }
@@ -204,7 +200,7 @@ function MineButton({
       onClick={onClick}
       className={`tap44 mb-2 rounded-full border px-3 py-1.5 text-[12px] ${
         active
-          ? "border-primary bg-primary-tint text-primary"
+          ? "border-primary bg-primary text-primary-contrast"
           : "border-border bg-surface text-muted"
       }`}
     >
@@ -310,12 +306,16 @@ export default function FiltersSheet({
         ))}
       </div>
 
+      {/* The open tab's options, split off from the tabs by a line across the
+          whole panel and more room on both sides of it (owner, 2026-10-18:
+          "split more the top and bottom"). */}
       {openTab && (
-        <div className="mt-3 border-t border-border pt-3">
+        <div className="-mx-3.5 mt-4 border-t border-border px-3.5 pt-4">
           {openTab === "activity" && (
             <div className="flex flex-wrap gap-1.5">
               {primaryActivities.map((a) => (
                 <Pill
+                  variant="solid"
                   key={a.key}
                   label={a.label}
                   selected={draft.activity === a.key}
@@ -365,6 +365,7 @@ export default function FiltersSheet({
                    both places at once — as a chip above and still as an option
                    below — which reads as though the tap didn't take. */
                 hideSelected
+                solidChips
                 options={interestOptions}
                 value={interests}
                 onChange={(v) => set({ interests: v.length > 0 ? v : null })}
@@ -379,6 +380,7 @@ export default function FiltersSheet({
             <div className="flex flex-wrap gap-1.5">
               {verifiedGyms.map((g) => (
                 <Pill
+                  variant="solid"
                   key={g}
                   label={g}
                   selected={draft.gym === g}
@@ -392,6 +394,7 @@ export default function FiltersSheet({
             <div className="flex flex-wrap gap-1.5">
               {experienceLevels.map((l) => (
                 <Pill
+                  variant="solid"
                   key={l.key}
                   label={l.name}
                   selected={draft.level === l.key}
@@ -405,6 +408,7 @@ export default function FiltersSheet({
             <div className="flex flex-wrap gap-1.5">
               {genderOptions.map((g) => (
                 <Pill
+                  variant="solid"
                   key={g.key}
                   label={g.label}
                   selected={draft.gender === g.key}
@@ -420,6 +424,7 @@ export default function FiltersSheet({
             <div className="flex flex-wrap gap-1.5">
               {classYears.map((y) => (
                 <Pill
+                  variant="solid"
                   key={y}
                   label={yearPill(y)}
                   selected={draft.classYear === y}
