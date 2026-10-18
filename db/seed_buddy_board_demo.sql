@@ -8,6 +8,10 @@
 -- expire the day after their date (db/buddy_board.sql), so these are gone
 -- within a week by themselves. db/seed_buddy_board_demo_undo.sql deletes them
 -- sooner. SAFE TO RE-RUN: an author already posted on that date is skipped.
+--
+-- 2026-10-18, run again for the final walk recording on martinhouska701: a
+-- post for today at an hour already gone in Cambridge moves to next week, so
+-- the board never shows a session that has passed.
 -- ============================================================================
 
 insert into public.buddy_posts
@@ -33,7 +37,14 @@ from (values
   ('de11a008-0000-4000-8000-000000000008'::uuid, 'back',   'sun', 15.0, 'Hemenway Gymnasium',     'Deadlifts.',                                               130),
   ('de11a020-0000-4000-8000-000000000020'::uuid, 'arms',   'mon', 18.5, 'Winthrop',               null,                                                       500)
 ) as t(author, focus, day, hour, gym, note, mins)
-cross join lateral (select public.buddy_next_date(t.day) as dt) d
+cross join lateral (
+  select case
+    when public.buddy_next_date(t.day) = (now() at time zone 'America/New_York')::date
+     and t.hour <= extract(hour from now() at time zone 'America/New_York')
+                 + extract(minute from now() at time zone 'America/New_York') / 60
+    then public.buddy_next_date(t.day) + 7
+    else public.buddy_next_date(t.day)
+  end as dt) d
 where exists (select 1 from public.profiles p where p.id = t.author)
   and not exists (
     select 1 from public.buddy_posts b
