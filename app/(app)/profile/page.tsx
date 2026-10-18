@@ -396,11 +396,11 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* WHITE FROM THE TOP DOWN TO THE CALENDAR (owner, 2026-10-18: "make
-          the top in profile white … until the calendar"): who you are, the
-          tags waiting for your yes, upcoming sessions and the leaderboard row
-          sit on white like the top bar; the page colour starts at the
-          calendar. */}
+      {/* WHO YOU ARE SITS ON WHITE, like the top bar (owner, 2026-10-18:
+          "make the top in profile white", then "calendar and leaderboards
+          will have grey background only the top will have white"): the photo,
+          name, counts, badges and bio. Everything from "Did this happen?" on
+          (the leaderboards and the calendar too) stays on the page colour. */}
       <div className="bg-surface">
         {/*
           1 · WHO YOU ARE — the photo on the left, and beside it your name with
@@ -607,66 +607,66 @@ export default function ProfilePage() {
           ) : null
           /* No bio, no sentence about the pencil: Edit is where it always is. */}
         </div>
+      </div>
 
-        {/* "Did you train with Sam today?" — a partner tag waiting for your yes.
-            High up, because it is the one thing on this page someone else is
-            waiting on; saying yes also puts the session on YOUR calendar. Hidden
-            when there is nothing to answer. */}
-        <PartnerRequests onChanged={reloadLogs} />
+      {/* "Did you train with Sam today?" — a partner tag waiting for your yes.
+          High up, because it is the one thing on this page someone else is
+          waiting on; saying yes also puts the session on YOUR calendar. Hidden
+          when there is nothing to answer. */}
+      <PartnerRequests onChanged={reloadLogs} />
 
-        {/* Upcoming accepted sessions (chat-planned) — a date in your diary
-            belongs above the fold. Hides itself when there is none. */}
-        <UpcomingSessions
-          key={plansKey}
-          onChanged={reloadLogs}
-          onLogPlan={(p) => {
-            setLogPrefill({
-              date: planCampusDay(p.scheduledAt),
-              gym: p.place ?? undefined,
-              activity: p.activity,
-              partner: { name: p.otherName, id: p.otherId },
-              plan: { planId: p.planId, conversationId: p.conversationId, scheduledAt: p.scheduledAt },
-            });
-            setLogging(true);
-          }}
-        />
+      {/* Upcoming accepted sessions (chat-planned) — a date in your diary
+          belongs above the fold. Hides itself when there is none. */}
+      <UpcomingSessions
+        key={plansKey}
+        onChanged={reloadLogs}
+        onLogPlan={(p) => {
+          setLogPrefill({
+            date: planCampusDay(p.scheduledAt),
+            gym: p.place ?? undefined,
+            activity: p.activity,
+            partner: { name: p.otherName, id: p.otherId },
+            plan: { planId: p.planId, conversationId: p.conversationId, scheduledAt: p.scheduledAt },
+          });
+          setLogging(true);
+        }}
+      />
 
-        {/* 2 · WHERE YOU STAND, AND THE BUTTON THAT MOVES YOU — straight under
-            the bio, where it swapped places with Memories (owner, 2026-09-14).
-            It shares its line with "Log a session", which puts the rank and the
-            one action that changes it side by side.
+      {/* 2 · WHERE YOU STAND, AND THE BUTTON THAT MOVES YOU — straight under
+          the bio, where it swapped places with Memories (owner, 2026-09-14).
+          It shares its line with "Log a session", which puts the rank and the
+          one action that changes it side by side.
 
-            The compact card drops the middle number (your HOUSE's own rank) so
-            two numbers and the button fit a phone: what's left is where you sit
-            among your housemates and where you sit on campus — both about you.
+          The compact card drops the middle number (your HOUSE's own rank) so
+          two numbers and the button fit a phone: what's left is where you sit
+          among your housemates and where you sit on campus — both about you.
 
-            A profile with nothing logged yet gets the starter card full width
-            instead: there is no rank to show, and the card says the same thing
-            the empty boards would. */}
-        <div className="border-b border-border px-3.5 py-3">
-          {brandNew ? (
-            <button
-              type="button"
-              onClick={() => setLogging(true)}
-              data-tour="profile-log"
-              className="w-full rounded-xl border border-border bg-surface px-3.5 py-3 text-left active:bg-surface-2"
-            >
-              <div className="text-[13px] font-semibold text-text">Log your first session</div>
-            </button>
-          ) : (
-            /* ONE GREY BAR (option 3 of the owner's previews): the ranks on the
-               left, a short "Log" button docked inside on the right. Two
-               siblings in a grey box rather than a button inside the link, so
-               tapping Log never also opens the boards.
-               data-tour: the Profile tour opens on this button (lib/tour.ts). */
-            <div className="flex items-center gap-2.5 rounded-2xl border border-border bg-surface py-2.5 pl-3 pr-2.5">
-              <LeaderboardStrip compact />
-              <Button data-tour="profile-log" size="md" className="h-11! shrink-0" onClick={() => setLogging(true)}>
-                <IconPlus size={15} /> Log
-              </Button>
-            </div>
-          )}
-        </div>
+          A profile with nothing logged yet gets the starter card full width
+          instead: there is no rank to show, and the card says the same thing
+          the empty boards would. */}
+      <div className="border-b border-border px-3.5 py-3">
+        {brandNew ? (
+          <button
+            type="button"
+            onClick={() => setLogging(true)}
+            data-tour="profile-log"
+            className="w-full rounded-xl border border-border bg-surface px-3.5 py-3 text-left active:bg-surface-2"
+          >
+            <div className="text-[13px] font-semibold text-text">Log your first session</div>
+          </button>
+        ) : (
+          /* ONE GREY BAR (option 3 of the owner's previews): the ranks on the
+             left, a short "Log" button docked inside on the right. Two
+             siblings in a grey box rather than a button inside the link, so
+             tapping Log never also opens the boards.
+             data-tour: the Profile tour opens on this button (lib/tour.ts). */
+          <div className="flex items-center gap-2.5 rounded-2xl border border-border bg-surface py-2.5 pl-3 pr-2.5">
+            <LeaderboardStrip compact />
+            <Button data-tour="profile-log" size="md" className="h-11! shrink-0" onClick={() => setLogging(true)}>
+              <IconPlus size={15} /> Log
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* 3 · YOUR TRAINING — this week, or the whole month, with arrows or a

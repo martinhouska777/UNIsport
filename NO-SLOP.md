@@ -57,8 +57,10 @@ own words, the date. Newest at the bottom of each part.
    tab with something set and the value picked inside it. (2026-10-18: "for interests i think it
    would be good if they had full color aswell", "that are applied will be red like full red".)
    Content laid out as plain lines, with no card around it, sits on white like the top bar, not
-   on the page colour: the Profile tab is white from the top down to its calendar. (2026-10-18:
-   "make the top in profile white", "until the calendar".)
+   on the page colour; cards stay on the page colour. On the Profile tab only the top is white
+   (photo, name, counts, badges, bio); "Did this happen?", the leaderboards and the calendar sit
+   on the page colour. (2026-10-18: "make the top in profile white", "calendar and leaderboards
+   will have grey background only the top will have white".)
 10. **Text people read is black.** Grey is only for marks (`var(--faint)`). Nothing white on
     white, nothing yellow on yellow. (2026-09-30: "je tam spoustu šedých písmen … udělat černé";
     2026-10-11: "make it so it's not white on white".)
