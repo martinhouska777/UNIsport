@@ -36,6 +36,9 @@ own words, the date. Newest at the bottom of each part.
    "Search by name or date"; "Publish", not "Unpublish, tell the team". An obvious icon beats a
    word: the pencil, not "Edit"; an open or closed eye, not "Shown to others". (2026-09-13:
    "I don't want there to be Team on top left"; 2026-09-15; 2026-09-16.)
+   A preview card says the short version: a gym on the Gyms list shows its rating and how many
+   are going ("3 going"), never which day or hour; those are on the gym page. (2026-10-18:
+   "in the gym preview can you show rating and just how many people are going and not when".)
 8. **Words never used**: "squad" (say team), "missed" (say Log), "outing", "Strong fit",
    "Example" tags everywhere, "optional" (mark required fields with a red asterisk instead).
    (2026-10-11: "Don't ever mention squad again"; 2026-10-04: "nedávej všude example";

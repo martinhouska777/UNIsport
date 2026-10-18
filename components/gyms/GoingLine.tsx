@@ -38,12 +38,14 @@ export default function GoingLine({
   if (compact) {
     // Inside a card that is already a link — a nested <a> is not allowed, so
     // this is text; the whole card goes to the gym page, which has the door.
+    // How many, never when: "3 going", not "3 going tonight, 5pm, 7pm" (owner,
+    // 2026-10-18). The days and hours are on the gym page.
     return (
       <span className="flex items-center gap-1 text-xs">
         <span className="text-primary">
           <IconUser size={13} />
         </span>
-        {text}
+        <span className="font-medium text-primary">{going.people} going</span>
       </span>
     );
   }

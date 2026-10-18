@@ -198,6 +198,10 @@ export type GoingSummary = {
   times: string;
   /** Posts on later days than the one the headline is about. */
   more: number;
+  /** How many different people have posted, on any day: the Gyms list's
+      "3 going" (owner, 2026-10-18: "just how many people are going and not
+      when"). */
+  people: number;
   /** Every post at this gym, nearest first. */
   posts: GoingPost[];
 };
@@ -244,6 +248,7 @@ export function goingSummary(posts: GoingPost[], today = new Date()): GoingSumma
     headline: `${onDay.length} going ${when}`,
     times: hours.map(compactHour).join(", "),
     more: sorted.length - onDay.length,
+    people: new Set(sorted.map((p) => p.authorId)).size,
     posts: sorted,
   };
 }

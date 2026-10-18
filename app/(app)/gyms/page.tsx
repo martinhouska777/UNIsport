@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { gymsFor, type Gym } from "@/lib/gyms";
 import { useAppState } from "@/components/AppState";
@@ -11,10 +11,12 @@ import OpenNow from "@/components/gyms/OpenNow";
 import GoingLine from "@/components/gyms/GoingLine";
 import { useBoardByGym } from "@/lib/gymGoing";
 import type { GoingSummary } from "@/lib/buddyBoard";
+import { gymScores, scoreLabel, type GymScore } from "@/lib/supabase/gymReviews";
 import {
   IconSearch,
   IconHeart,
   IconChevronRight,
+  IconStar,
   HouseSigil,
 } from "@/components/icons";
 import UniversityCrest from "@/components/UniversityCrest";
@@ -67,6 +69,8 @@ type CardProps = {
   onToggleFav: () => void;
   now: Clock | null;
   going: GoingSummary | null;
+  /** What students gave it (db/gym_reviews.sql); null until someone has. */
+  score: number | null;
   /* The tour presses the first card to open a gym in front of you, rather than
      arriving there behind your back (lib/tour.ts). Only that card gets one. */
   tour?: string;
@@ -97,6 +101,7 @@ function GymRow({
   onToggleFav,
   now,
   going,
+  score,
   tour,
   crest,
   tint,
@@ -121,11 +126,23 @@ function GymRow({
           <div className="mt-0.5 text-xs text-muted">
             <OpenNow hours={gym.hours} now={now} size={12} />
           </div>
-          {going ? (
-            <div className="mt-0.5">
-              <GoingLine going={going} gymName={gym.name} compact />
+          {/* The rating and how many are going, side by side (owner,
+              2026-10-18: "show rating and just how many people are going and
+              not when"). Only real ratings: a gym nobody has rated shows none
+              rather than the made-up numbers in lib/gyms.ts. */}
+          {(score !== null || going) && (
+            <div className="mt-0.5 flex items-center gap-3">
+              {score !== null && (
+                <span className="flex items-center gap-1 text-xs font-medium text-text">
+                  <span className="text-podium-1">
+                    <IconStar size={13} />
+                  </span>
+                  {scoreLabel(score)}
+                </span>
+              )}
+              {going && <GoingLine going={going} gymName={gym.name} compact />}
             </div>
-          ) : null}
+          )}
         </div>
         <FavHeart fav={fav} onToggle={onToggleFav} />
         <span className="flex-shrink-0 text-muted">
@@ -164,6 +181,23 @@ export default function GymsPage() {
   const { isFavorite, toggle } = useFavorites(userId);
   // The Buddy Board by gym — "3 going tonight" on the card people choose from.
   const { goingFor, loaded: boardLoaded } = useBoardByGym(userId);
+  // Every gym's rating in one read, the same summary the gym page shows.
+  const [scores, setScores] = useState<Record<string, GymScore> | null>(null);
+  useEffect(() => {
+    if (!userId) return;
+    let active = true;
+    gymScores(userId)
+      // A failed read is a card without a rating, not a broken list.
+      .catch(() => ({}))
+      .then((s) => active && setScores(s));
+    return () => {
+      active = false;
+    };
+  }, [userId]);
+  const scoreFor = (slug: string) => {
+    const s = scores?.[slug];
+    return s && s.reviews > 0 ? s.score : null;
+  };
   // One clock for the whole list, so every card agrees on what time it is.
   const now = useClock();
   const [filter, setFilter] = useState<Filter>("all");
@@ -220,7 +254,7 @@ export default function GymsPage() {
       <h1 className="sr-only">Gyms</h1>
       {/* For the app walk (components/tour/TourOverlay): the first card is on
           screen but its "going" line is still loading, and will grow it. */}
-      {!boardLoaded && <span hidden data-tour-pending="gyms-first-card" />}
+      {(!boardLoaded || (userId && !scores)) && <span hidden data-tour-pending="gyms-first-card" />}
 
       {/* Search bar — filters the list as you type */}
       <div className="px-3 pt-3">
@@ -283,6 +317,7 @@ export default function GymsPage() {
             onToggleFav={() => toggle(g.slug)}
             now={now}
             going={goingFor(g.name)}
+            score={scoreFor(g.slug)}
             tour={idx === 0 ? "gyms-first-card" : undefined}
           />
         ))}
@@ -304,6 +339,7 @@ export default function GymsPage() {
             onToggleFav={() => toggle(g.slug)}
             now={now}
             going={goingFor(g.name)}
+            score={scoreFor(g.slug)}
           />
         ))}
 
