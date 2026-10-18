@@ -36,7 +36,7 @@ export default function SideNav() {
       items={tabs.map((tab) => ({
         href: tab.href,
         label: tab.label,
-        icon: tab.icon,
+        icon: tabActive(tab, pathname) ? tab.iconActive : tab.icon,
         active: tabActive(tab, pathname),
         /* Same anchor name BottomNav uses — see lib/tour.ts. */
         tour: `tab-${tab.href}`,

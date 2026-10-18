@@ -58,8 +58,10 @@ export default function SideRail({
               aria-current={item.active ? "page" : undefined}
               data-tour={item.tour}
               className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium transition-colors ${
+                /* The tab you are on just turns red, no pink pill behind it,
+                   the same as the phone bars (owner, 2026-10-18). */
                 item.active
-                  ? "bg-primary-tint text-primary"
+                  ? "font-semibold text-primary"
                   : "text-muted hover:bg-surface-2 hover:text-text"
               }`}
             >

@@ -66,8 +66,10 @@ function NavItem({
       href={tab.href}
       onClick={onClick}
       aria-current={active ? "page" : undefined}
-      className={`flex flex-col items-center rounded-full py-1.5 text-[10px] font-semibold transition-[color,background-color,transform] duration-150 active:scale-90 ${
-        active ? "bg-primary-tint text-primary" : "text-muted"
+      /* The tab you are on just turns red, no pink pill behind it, the same
+         as the student bar (owner, 2026-10-18: "just turn red"). */
+      className={`flex flex-col items-center rounded-full py-1.5 text-[10px] font-semibold transition-[color,transform] duration-150 active:scale-90 ${
+        active ? "text-primary" : "text-muted"
       }`}
     >
       {/* The tour rings the icon and its label, not the quarter-width cell —
@@ -98,7 +100,7 @@ export default function VarsityNav() {
     /*
       Phone and tablet only — from `lg` up VarsitySideNav takes over.
       The same floating capsule as the student app's BottomNav: a pill held off
-      the screen's edges, the current tab lit as a smaller pill inside it. The
+      the screen's edges, the current tab in red. The
       Log (+) button sits INSIDE the capsule as a filled circle instead of
       floating above the bar.
     */

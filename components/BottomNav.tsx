@@ -12,6 +12,8 @@ type Tab = {
   href: string;
   label: string;
   icon: ReactNode;
+  /** The same drawing, solid, for the tab you are on (Strava's way). */
+  iconActive: ReactNode;
   /* The inner pages that belong to this tab, so it stays lit on them: a gym's
      own page is still Gyms, a person's profile is reached from Match, and
      Leaderboards and Memories open from the Profile tab. */
@@ -44,14 +46,34 @@ export const tabs: Tab[] = [
         <path d="M8.5 12h7" />
       </svg>
     ),
+    iconActive: (
+      <svg {...iconProps}>
+        <rect x="2" y="9.5" width="3" height="5" rx="1" fill="currentColor" />
+        <rect x="5" y="6.5" width="3.5" height="11" rx="1" fill="currentColor" />
+        <rect x="15.5" y="6.5" width="3.5" height="11" rx="1" fill="currentColor" />
+        <rect x="19" y="9.5" width="3" height="5" rx="1" fill="currentColor" />
+        <path d="M8.5 12h7" />
+      </svg>
+    ),
   },
   {
     href: "/match",
     label: "Match",
     owns: ["/people"],
+    /* TWO PEOPLE, Strava's drawing (owner, 2026-10-18: "match will be the 2
+       people from strava"). It was a heart. */
     icon: (
       <svg {...iconProps}>
-        <path d="M12 20s-7-4.4-7-9a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 4.6-7 9-7 9z" />
+        <circle cx="9" cy="8" r="3" />
+        <path d="M3 19a6 6 0 0 1 12 0" />
+        <path d="M16 6a3 3 0 0 1 0 6M21 19a6 6 0 0 0-5-5.9" />
+      </svg>
+    ),
+    iconActive: (
+      <svg {...iconProps}>
+        <circle cx="9" cy="8" r="3" fill="currentColor" />
+        <path d="M3 19a6 6 0 0 1 12 0z" fill="currentColor" />
+        <path d="M16 6a3 3 0 0 1 0 6M21 19a6 6 0 0 0-5-5.9" />
       </svg>
     ),
   },
@@ -63,6 +85,11 @@ export const tabs: Tab[] = [
         <path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.2A8 8 0 1 1 21 12z" />
       </svg>
     ),
+    iconActive: (
+      <svg {...iconProps}>
+        <path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.2A8 8 0 1 1 21 12z" fill="currentColor" />
+      </svg>
+    ),
   },
   {
     href: "/profile",
@@ -72,6 +99,12 @@ export const tabs: Tab[] = [
       <svg {...iconProps}>
         <circle cx="12" cy="8" r="3.5" />
         <path d="M5 20a7 7 0 0 1 14 0" />
+      </svg>
+    ),
+    iconActive: (
+      <svg {...iconProps}>
+        <circle cx="12" cy="8" r="3.5" fill="currentColor" />
+        <path d="M5 20a7 7 0 0 1 14 0z" fill="currentColor" />
       </svg>
     ),
   },
@@ -127,8 +160,10 @@ export default function BottomNav() {
 
   return (
     /* A floating capsule, Instagram-style: the bar is a pill held off the
-       screen's edges (and above the iPhone home indicator), with the current
-       tab lit as a smaller pill inside it. */
+       screen's edges (and above the iPhone home indicator). The tab you are on
+       just turns red, its icon solid, the way Strava does it (owner,
+       2026-10-18: "make it just turn red not like we have but the strava
+       type"); it used to sit in a smaller pink pill. */
     <nav className="sticky bottom-0 z-10 bg-background px-4 pb-[max(env(safe-area-inset-bottom),10px)] pt-1.5 lg:hidden">
       <ul className="mx-auto flex max-w-sm items-stretch gap-1 rounded-full border border-border bg-surface p-1.5 shadow-overlay">
         {tabs.map((tab) => {
@@ -139,8 +174,8 @@ export default function BottomNav() {
                 href={tab.href}
                 onClick={tab.href === "/profile" ? profileDoubleTap : undefined}
                 aria-current={active ? "page" : undefined}
-                className={`flex flex-col items-center rounded-full py-1.5 text-[10px] font-semibold transition-[color,background-color,transform] duration-150 active:scale-90 ${
-                  active ? "bg-primary-tint text-primary" : "text-muted"
+                className={`flex flex-col items-center rounded-full py-1.5 text-[10px] font-semibold transition-[color,transform] duration-150 active:scale-90 ${
+                  active ? "text-primary" : "text-muted"
                 }`}
               >
                 {/*
@@ -154,7 +189,7 @@ export default function BottomNav() {
                 */}
                 <span data-tour={`tab-${tab.href}`} className="flex flex-col items-center gap-1">
                   <span className="relative">
-                    {tab.icon}
+                    {active ? tab.iconActive : tab.icon}
                     {tab.href === "/messages" && unread > 0 && (
                       <span
                         aria-label={`${unread} unread messages`}

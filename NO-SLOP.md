@@ -83,6 +83,10 @@ own words, the date. Newest at the bottom of each part.
     match, keeps its ticks: no icon per row. Why you match is a done checklist, solid
     school-colour square ticks on a white card with the title in the school's colour.
     (2026-10-18: "i dont want icons just better ticks and color", picked B of four.)
+    The tab you are on, in every bar and sidebar, just turns red with its icon solid, the way
+    Strava does it: no pink pill behind it. Match's icon is Strava's two people.
+    (2026-10-18: "match will be the 2 people from strava", "make it just turn red not like
+    we have but the strava type".)
 14. **Light mode is the main mode**; the landing page is light only. (2026-09-15, 2026-09-20.)
 15. **Animation is quick and one continuous motion.** (2026-09-13: "it takes too long … I just
     want to see the thing".)
