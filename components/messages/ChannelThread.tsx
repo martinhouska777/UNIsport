@@ -13,28 +13,15 @@ import {
 } from "@/lib/supabase/messages";
 import {
   IconArrowLeft,
-  IconBarbell,
-  IconBulb,
-  IconActivity,
-  IconStar,
-  IconRun,
-  IconMessage,
   IconLock,
 } from "@/components/icons";
 import Avatar from "./Avatar";
+import ChannelBadge from "./ChannelBadge";
 import Composer from "./Composer";
 import { useAppState } from "@/components/AppState";
 import { teamFor } from "@/lib/cohorts";
 import ChannelInfo from "./ChannelInfo";
 import { dayLabel, sameDay } from "./dayLabel";
-
-const CHANNEL_ICONS: Record<string, (p: { size?: number }) => React.ReactElement> = {
-  barbell: IconBarbell,
-  bulb: IconBulb,
-  activity: IconActivity,
-  star: IconStar,
-  run: IconRun,
-};
 
 /*
   Community channel thread. Each message shows the sender's name, house + class
@@ -82,7 +69,6 @@ export default function ChannelThread({
   const [joined, setJoined] = useState(joinedInitial);
   const [joining, setJoining] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
-  const Glyph = CHANNEL_ICONS[icon] ?? IconMessage;
 
   const join = async () => {
     if (joining) return;
@@ -154,9 +140,7 @@ export default function ChannelThread({
           aria-label="Channel info"
           className="flex min-w-0 flex-1 items-center gap-3 text-left active:opacity-70"
         >
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] border border-primary bg-primary-tint text-primary">
-            <Glyph size={16} />
-          </div>
+          <ChannelBadge icon={icon} channelId={channelId} size={36} />
           <span className="truncate text-[13px] font-medium text-text">#&nbsp;{name}</span>
           {isPrivate && (
             <span className="shrink-0 text-muted" aria-label="Private">

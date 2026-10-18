@@ -24,6 +24,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { SkeletonRows } from "@/components/ui/Skeleton";
 import Avatar from "./Avatar";
+import ChannelBadge from "./ChannelBadge";
 import { AddMembers } from "./NewChannel";
 import {
   addChannelMembers,
@@ -42,26 +43,12 @@ import {
 } from "@/lib/supabase/messages";
 import { residenceLabel } from "@/lib/onboarding";
 import {
-  IconActivity,
   IconArrowLeft,
-  IconBarbell,
-  IconBulb,
   IconCheck,
-  IconMessage,
   IconPencil,
   IconPlus,
-  IconRun,
-  IconStar,
   IconX,
 } from "@/components/icons";
-
-const CHANNEL_ICONS: Record<string, (p: { size?: number }) => React.ReactElement> = {
-  barbell: IconBarbell,
-  bulb: IconBulb,
-  activity: IconActivity,
-  star: IconStar,
-  run: IconRun,
-};
 
 export default function ChannelInfo({
   channelId,
@@ -90,7 +77,6 @@ export default function ChannelInfo({
   const [renaming, setRenaming] = useState<string | null>(null);
   const [menuFor, setMenuFor] = useState<ChannelMember | null>(null);
   const [confirm, setConfirm] = useState<"leave" | "delete" | null>(null);
-  const Glyph = CHANNEL_ICONS[icon] ?? IconMessage;
 
   const load = useCallback(
     () =>
@@ -161,9 +147,7 @@ export default function ChannelInfo({
       <div className="min-h-0 flex-1 overflow-y-auto pb-8">
         {/* THE CHANNEL */}
         <div className="flex flex-col items-center bg-surface px-4 pb-5 pt-6">
-          <div className="flex h-24 w-24 items-center justify-center rounded-full border-2 border-primary bg-primary-tint text-primary">
-            <Glyph size={40} />
-          </div>
+          <ChannelBadge icon={icon} channelId={channelId} size={96} />
           {renaming !== null ? (
             <form
               className="mt-4 flex w-full max-w-xs flex-col items-center gap-2"

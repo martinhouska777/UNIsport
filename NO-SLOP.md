@@ -73,6 +73,10 @@ own words, the date. Newest at the bottom of each part.
 13. **Every new screen reuses a pattern the app already has** (Messages is the model). Familiar
     things copy WhatsApp, Instagram, Hevy or Strava closely. (2026-09-14: "just look at WhatsApp
     how he does it and copy it"; 2026-09-27: "I like how it is done on messages".)
+    A pale pink tile with a thin red line icon looks generated. Community channels are a solid
+    circle in the channel's own colour with a white icon, like Apple Reminders lists, the same
+    mark in the list, the chat header and Channel info (`components/messages/ChannelBadge.tsx`).
+    (2026-10-18: "they look really ai", direction D of five.)
 14. **Light mode is the main mode**; the landing page is light only. (2026-09-15, 2026-09-20.)
 15. **Animation is quick and one continuous motion.** (2026-09-13: "it takes too long … I just
     want to see the thing".)

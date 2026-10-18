@@ -18,35 +18,17 @@ import {
 } from "@/lib/supabase/messages";
 import {
   IconSearch,
-  IconBarbell,
-  IconBulb,
-  IconActivity,
-  IconStar,
-  IconRun,
-  IconMessage,
   IconPlus,
   IconLock,
 } from "@/components/icons";
 import Avatar from "./Avatar";
+import ChannelBadge from "./ChannelBadge";
 import ReadTicks from "./ReadTicks";
 import { teamFor } from "@/lib/cohorts";
 import type { HouseColors } from "@/lib/gyms";
 import { listPendingInvites } from "@/lib/supabase/sessionPlans";
 import { useTourRunning } from "@/lib/tour";
 import { isTourExample, tourExampleChat, useTourExample } from "@/lib/tourExample";
-
-// Channel icon keys (seeded in db/messages.sql) → icon components.
-const CHANNEL_ICONS: Record<string, (p: { size?: number }) => React.ReactElement> = {
-  barbell: IconBarbell,
-  bulb: IconBulb,
-  activity: IconActivity,
-  star: IconStar,
-  run: IconRun,
-};
-function ChannelGlyph({ icon, size }: { icon: string; size: number }) {
-  const C = CHANNEL_ICONS[icon] ?? IconMessage;
-  return <C size={size} />;
-}
 
 export type MessagesTab = "direct" | "community";
 type Tab = MessagesTab;
@@ -396,7 +378,7 @@ function CommunityList({
               className="flex w-full items-stretch gap-3 pl-3.5 text-left active:bg-surface-2"
             >
               <span className="flex items-center py-2.5">
-                <ChannelTile icon={c.icon} />
+                <ChannelBadge icon={c.icon} channelId={c.channelId} size={44} />
               </span>
               <span className="flex min-w-0 flex-1 items-center gap-3 border-b border-border py-2.5 pr-3.5">
                 <span className="min-w-0 flex-1">
@@ -460,7 +442,7 @@ function CommunityList({
                 tabIndex={-1}
                 className="flex items-center py-2.5"
               >
-                <ChannelTile icon={c.icon} />
+                <ChannelBadge icon={c.icon} channelId={c.channelId} size={44} />
               </button>
               <div className="flex min-w-0 flex-1 items-center gap-3 border-b border-border py-2.5 pr-3.5">
                 <button
@@ -516,14 +498,6 @@ function SectionHeader({ children }: { children: React.ReactNode }) {
   return (
     <div className="px-3.5 pb-1 pt-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
       {children}
-    </div>
-  );
-}
-
-function ChannelTile({ icon }: { icon: string }) {
-  return (
-    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-primary bg-primary-tint text-primary">
-      <ChannelGlyph icon={icon} size={20} />
     </div>
   );
 }
