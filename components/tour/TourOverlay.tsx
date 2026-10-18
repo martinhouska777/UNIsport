@@ -342,6 +342,12 @@ export default function TourOverlay({
   /* A control you already pressed yourself, through the light (`answer`): the
      step it leads to doesn't press it again. Keyed to that step. */
   const pressedRef = useRef<{ step: number; name: string } | null>(null);
+  /* The biggest the light has been since you first tapped the control a step
+     lets you play with (`live`). Keyed to the step, so it never carries a
+     light over from the one before. */
+  const grownRef = useRef<{ step: number; box: Box } | null>(null);
+  // The light's box as last drawn (`apply` below keeps it).
+  const boxRef = useRef<Box | null>(null);
   const titleId = useId();
   const bodyId = useId();
 
@@ -412,7 +418,10 @@ export default function TourOverlay({
       const root = rootRef.current;
       const hit = root ? underTap(root, e.clientX, e.clientY) : null;
       const on = (name?: string) => (name && hit?.closest(`[data-tour~="${name}"]`)) || null;
-      if (hit && on(step.live)) return passTap(hit, e.clientX, e.clientY);
+      if (hit && on(step.live)) {
+        if (boxRef.current && grownRef.current?.step !== i) grownRef.current = { step: i, box: boxRef.current };
+        return passTap(hit, e.clientX, e.clientY);
+      }
       const answer = on(step.answer);
       if (hit && answer) {
         passTap(hit, e.clientX, e.clientY);
@@ -447,7 +456,6 @@ export default function TourOverlay({
     runs on every frame; without this it would re-render on each one and keep
     restarting the hole's CSS travel.
   */
-  const boxRef = useRef<Box | null>(null);
   const apply = useCallback((next: Box | null) => {
     if (same(boxRef.current, next)) return;
     boxRef.current = next;
@@ -708,8 +716,26 @@ export default function TourOverlay({
     if (step.alsoAnchor && !also && boxRef.current && declaredPending(step.alsoAnchor)) return;
     bringIntoView(el, also);
     noteState(el.getAttribute("data-tour-state"));
-    light(el, boxAround(el, also));
-  }, [step, light, noteState]);
+    /*
+      ON A STEP YOU PLAY WITH, THE LIGHT ONLY GROWS once you have started.
+      Each board the arrows land on has its own height (Years is 60px shorter
+      than Houses), so the light used to shrink and grow under your finger and
+      the caption under it snapped up and down by as much on every tap. From
+      your first tap it keeps the biggest size it has had, and neither of them
+      moves. (Not before it: the screen may still be sliding into place.)
+    */
+    let lit = boxAround(el, also);
+    const was = step.live && grownRef.current?.step === i ? grownRef.current.box : null;
+    if (was) {
+      const top = Math.min(was.top, lit.top);
+      const left = Math.min(was.left, lit.left);
+      const bottom = Math.max(was.top + was.height, lit.top + lit.height);
+      const right = Math.max(was.left + was.width, lit.left + lit.width);
+      lit = { top, left, width: right - left, height: bottom - top, radius: lit.radius };
+      grownRef.current = { step: i, box: lit };
+    }
+    light(el, lit);
+  }, [step, i, light, noteState]);
 
   /*
     Re-measure on every step, and whenever the page moves under it.
