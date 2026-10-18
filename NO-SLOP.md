@@ -67,7 +67,9 @@ own words, the date. Newest at the bottom of each part.
     top that doesn't do anything"; 2026-09-22: "so much empty space"; 2026-10-02: "they're
     crammed".) Tabs and the options they open are clearly apart: a line across the whole panel
     and room on both sides of it. (2026-10-18: "in filters we want to split more the top and
-    bottom".)
+    bottom".) A button that opens something (a calendar, a list) stands on its own: no card,
+    title or chips around it; what those said goes where it belongs. (2026-10-18: "see martin
+    calendar only the button".)
 13. **Every new screen reuses a pattern the app already has** (Messages is the model). Familiar
     things copy WhatsApp, Instagram, Hevy or Strava closely. (2026-09-14: "just look at WhatsApp
     how he does it and copy it"; 2026-09-27: "I like how it is done on messages".)

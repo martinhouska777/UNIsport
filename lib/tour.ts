@@ -160,14 +160,16 @@ export const tourSteps: TourStep[] = [
   /*
     INTO THE FIRST PERSON'S PROFILE (owner, 2026-10-02: "you click their
     profile and you see when you match and similar times"). The finger taps
-    View profile; the light covers "Why you match" and "When you're both free"
-    — the red chips of the hours you share. Someone with no reasons to list
-    has no first card, and the light is the times card alone.
+    View profile; the light covers "Why you match" (the red chips of the hours
+    you share are its last row since 2026-10-18) and the "See Sam's calendar"
+    button under it. A profile with nothing in common says so
+    (data-tour-absent) and the step is skipped; one with no times has no
+    button, and the light is the card alone.
   */
   {
     press: "match-first-card-view",
-    anchor: "person-times",
-    alsoAnchor: "person-why",
+    anchor: "person-why",
+    alsoAnchor: "person-times",
     title: "Why you match",
     body: "Open a profile to see what you have in common and when you’re both free.",
   },
