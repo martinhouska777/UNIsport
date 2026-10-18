@@ -17,11 +17,14 @@
   Who sends it and what it says is data, here (rule 7). The place is the
   school's first main gym, so it is a real gym at whichever school you are.
 
-  The walk's other example, the HOUSE RACE it ends on, is at the bottom.
+  The walk's other examples, the SESSIONS on Match's board and the HOUSE RACE
+  it ends on, are at the bottom.
 */
 import { useSyncExternalStore } from "react";
 import { gymsFor } from "@/lib/gyms";
 import type { GroupRow } from "@/lib/leaderboards";
+import { nextDays } from "@/lib/schedule";
+import type { BuddyPost } from "@/lib/supabase/buddyBoard";
 import type { DmConversation, DmMessage } from "@/lib/supabase/messages";
 import { planWhenLabel, type UpcomingPlan } from "@/lib/supabase/sessionPlans";
 import { activityLabel } from "@/lib/supabase/workouts";
@@ -143,6 +146,47 @@ export function tourExamplePlan(e: TourExample): UpcomingPlan {
     scheduledAt: e.scheduledAt,
   };
 }
+
+/*
+  THE EXAMPLE SESSIONS — Match → Sessions, when nobody has posted one yet
+  (owner, 2026-10-18: "for the sessions add data there"). The walk stops on
+  that board to show "Post your session", and an empty board under it showed
+  nobody what a post is.
+
+  Three made-up students, three different workouts, at the school's own main
+  gyms and one run with no gym, over the next three days. Shown only while
+  the walk is on screen, only in place of a board with no posts on it
+  (components/match/BuddyBoard.tsx); their buttons do nothing, and they are
+  gone when the walk ends.
+*/
+const EXAMPLE_POSTS: { name: string; focus: string; inDays: number; hour: number; gym: number | null; note: string }[] = [
+  { name: "Priya Raman", focus: "legs", inDays: 1, hour: 7, gym: 0, note: "Squats and deadlifts, happy to share a rack" },
+  { name: "Jonah Mitchell", focus: "run", inDays: 1, hour: 17.5, gym: null, note: "Easy 5 miles along the river" },
+  { name: "Chloe Danvers", focus: "push", inDays: 2, hour: 16, gym: 1, note: "Bench day, could use a spotter" },
+];
+
+const timeOfDayOf = (hour: number) => (hour < 12 ? "morning" : hour < 17 ? "afternoon" : "evening");
+
+export function tourExamplePosts(universityKey: string): BuddyPost[] {
+  const mains = gymsFor(universityKey).filter((g) => g.kind === "main");
+  const days = nextDays(3);
+  return EXAMPLE_POSTS.map((p, i) => ({
+    id: `${TOUR_EXAMPLE_ID}-post-${i}`,
+    author: `${TOUR_EXAMPLE_ID}-poster-${i}`,
+    focus: p.focus,
+    date: days[p.inDays].iso,
+    day: days[p.inDays].dayKey,
+    hour: p.hour,
+    timeOfDay: timeOfDayOf(p.hour),
+    gym: p.gym === null ? null : (mains[p.gym % Math.max(1, mains.length)]?.name ?? null),
+    note: p.note,
+    createdAt: new Date().toISOString(),
+    authorName: p.name,
+    authorPhoto: null,
+  }));
+}
+
+export const isTourExamplePost = (id: string) => id.startsWith(`${TOUR_EXAMPLE_ID}-post-`);
 
 /*
   THE EXAMPLE HOUSE RACE — the board the walk ends on, when the real one has

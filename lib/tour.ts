@@ -46,7 +46,10 @@ export type TourStep = {
   /** Press this `data-tour` to reach the step — tapped visibly, then clicked.
       A list is pressed in order; one that isn't on screen when a later one
       is gets passed over (the profile's Back arrow, when no profile was
-      opened). A link to the page you are already on is never pressed. */
+      opened). A link to the page you are already on is never pressed.
+      `wait:<name>` in the list is a pause, not a press: the walk waits for
+      that `data-tour` to show, lights the card it sits on for a moment and
+      presses on ("You're on", between the Accept and the Profile tab). */
   press?: string | string[];
   /** Where that lands. Also the fallback if the control never turns up. */
   route?: string;
@@ -72,6 +75,19 @@ export type TourStep = {
   /** Press the `press` control this many times (default once) — the
       list of competitions wraps, so a step can be taken more than once. */
   pressTimes?: number;
+  /*
+    A TAP ON WHAT IS LIT DOES WHAT IT SAYS (owner, 2026-10-18: "add tap on the
+    message", "when you click the competition it clicked badly"). Normally
+    the light is one big Next button laid over the screen, so a tap on the
+    real control under it never reached it.
+      answer  on a step that asks (`next`), a tap on this control inside the
+              light is the answer: it is pressed for real and the walk moves
+              on, the same as its own button. The invite card's Accept.
+      live    a tap on this control inside the light reaches it, and the walk
+              stays where it is. The leaderboards' Competition and Period.
+  */
+  answer?: string;
+  live?: string;
   /** The forward button's word when it isn't "Next" — the opening card's
       "Show me", the invite's "Accept". A step with one is a question, so a tap
       on the lit area doesn't answer it; only the button does. */
@@ -178,9 +194,12 @@ export const tourSteps: TourStep[] = [
     route: "/match",
     /* The Sessions tab on top AND the post row under it, in one light
        (owner, 2026-09-30: "highlight the tab on top and just see the Post
-       your session"). */
+       your session"), down to the first post on the board, so the light
+       shows what a post is (2026-10-18: "for the sessions add data there").
+       A board nobody has posted to shows the walk's example sessions
+       (lib/tourExample.ts). */
     anchor: "match-tab-sessions",
-    alsoAnchor: "board-actions",
+    alsoAnchor: "board-first-post",
     title: "Sessions",
     body: "Post your session: what you’re training and when. Or use Search by time to find someone going when you are.",
   },
@@ -208,6 +227,14 @@ export const tourSteps: TourStep[] = [
       calendar was a step of its own until the owner cut it (2026-10-03: "I
       only wanted to show the upcoming sessions in profile").
 
+    ONE GO FROM ACCEPT TO THE PROFILE (owner, 2026-10-18: "when you tap add to
+    calendar i want it to go all the way automatically"). The Accept is
+    answered with the caption's button or with a tap on the card's own Accept
+    ("add tap on the message"); after that nothing waits for a Next: the
+    finger taps Accept, the card says "You're on" for a moment, the finger
+    taps Profile, and the next stop is Upcoming sessions. "You're on" was a
+    stop of its own with its own Next until then.
+
     With no invite waiting — every brand-new student, and a demo account
     after its first run, since the accept is real — the same three steps run
     on an EXAMPLE chat instead (lib/tourExample.ts, started by
@@ -226,18 +253,11 @@ export const tourSteps: TourStep[] = [
     title: "Someone planned a session with you",
     body: "Accept it and it goes in your calendar.",
     next: "Accept",
+    answer: "plan-accept",
   },
   {
-    press: "plan-accept",
-    // Lit once the card says "You're on" — i.e. once the answer is saved.
-    anchor: "plan-on",
-    alsoAnchor: "dm-plan",
-    group: "chat",
-    title: "You’re on",
-    body: "It stays accepted in the chat, and it’s on your Profile now.",
-  },
-  {
-    press: "tab-/profile",
+    // "You're on" shows once the answer is saved; the Profile tab waits for it.
+    press: ["plan-accept", "wait:plan-on", "tab-/profile"],
     route: "/profile",
     anchor: "profile-upcoming",
     group: "chat",
@@ -281,24 +301,30 @@ export const tourSteps: TourStep[] = [
     route: "/leaderboards",
     anchor: "lb-controls",
     alsoAnchor: "lb-podium",
+    // The arrows switch the competition and the period for real.
+    live: "lb-controls",
     title: "Leaderboards",
     body: `Your workouts earn points for you and your house: ${sessionPoints.solo} on your own, ${sessionPoints.partner} with a partner, ${sessionPoints.newPartner} with someone new.`,
   },
   // No "pick the competition" step after this (owner, 2026-09-30: "we don't need
   // it twice") — the card above already lights the same controls and podium.
   /*
-    THE END IS ON MATCH, never the leaderboards (owner, 2026-10-03: "make sure
-    it doesn't end on the Harvard Honor Code"): the honour code waits while a
-    walk runs and would be the first thing left on screen. The finger taps
-    Match and the closing card sits over it. A walk skipped part-way lands
-    there too (`endRoute` below).
+    THE CLOSING CARD IS ON THE LEADERBOARDS, and Done takes you to Match
+    (owner, 2026-10-18: "at the end you stay in the leaderboards and say that
+    is all … dont tap the match after that … it will go back there
+    automatically"). No finger on the Match tab any more: `endRoute` below
+    carries you there once the walk is over, and the walk stays up until you
+    have arrived, so the honour code the leaderboards keep waiting never gets
+    a moment on screen (owner, 2026-10-03: "make sure it doesn't end on the
+    Harvard Honor Code"). A walk skipped part-way lands on Match too.
+
+    "Find your ideal training partner" is the owner's own line from the
+    landing page (lib/landingCopy.ts).
   */
   {
-    press: "tab-/match",
-    route: "/match",
     anchor: null,
-    title: "That’s it",
-    body: "See it again anytime: Settings → Take the tour.",
+    title: "That’s the whole app",
+    body: "Now find your ideal training partner. See it again anytime: Settings → Take the tour.",
   },
 ];
 

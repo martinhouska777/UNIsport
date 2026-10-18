@@ -49,6 +49,9 @@ import BoardFiltersSheet, {
 import Avatar from "@/components/messages/Avatar";
 import { announceBoardChange } from "@/lib/gymGoing";
 import { IconMapPin, IconSearch, IconX } from "@/components/icons";
+import { useAppState } from "@/components/AppState";
+import { useTourRunning } from "@/lib/tour";
+import { isTourExamplePost, tourExamplePosts } from "@/lib/tourExample";
 
 function dayShort(key: string): string {
   return weekDays.find((d) => d.key === key)?.label.slice(0, 3) ?? key;
@@ -336,10 +339,17 @@ export default function BuddyBoard({
 
   const anyFilter = boardFilterCount(filters) > 0;
 
+  /* The walk's example sessions (lib/tourExample.ts), on a board nobody has
+     posted to yet, and only while the walk is on screen. */
+  const { universityKey } = useAppState();
+  const touring = useTourRunning();
+  const example = touring && board?.length === 0 && !anyFilter && !timeSearch;
+  const posts = example ? tourExamplePosts(universityKey) : board;
+
   // The board as shown: everything, or only what answers the time search.
   const found =
-    board && timeSearch ? postsForSearch(board, timeSearch, SESSION_WINDOW_HOURS) : null;
-  const shown = found ? found.posts : board;
+    posts && timeSearch ? postsForSearch(posts, timeSearch, SESSION_WINDOW_HOURS) : null;
+  const shown = found ? found.posts : posts;
 
   return (
     <div className="px-3 pb-4">
@@ -537,7 +547,16 @@ export default function BuddyBoard({
       {/* BOARD LIST — no "OPEN POSTS · N posts" heading; the posts speak for
           themselves, and the count shows above only while a filter is set. */}
       {boardErr && <Status>Couldn’t load the board: {boardErr}</Status>}
-      {!boardErr && board === null && <SkeletonRows count={4} />}
+      {/* data-tour-pending / -absent: the walk lights the first post with the
+          buttons above it, so it waits for the board, and doesn't for a board
+          with nothing on it (TourOverlay). */}
+      {!boardErr && board === null && (
+        <>
+          <span hidden data-tour-pending="board-first-post" />
+          <SkeletonRows count={4} />
+        </>
+      )}
+      {(boardErr || (shown && shown.length === 0)) && <span hidden data-tour-absent="board-first-post" />}
       {!boardErr && shown && shown.length === 0 && (
         <Status>
           {timeSearch
@@ -557,16 +576,21 @@ export default function BuddyBoard({
               Nothing at {sessionTimeLabel(timeSearch.hour)}
             </p>
           )}
-          {shown.map((p) => (
-            <PostCard
-              key={p.id}
-              post={p}
-              busy={messagingId === p.id}
-              onAccept={canJoin(p) ? () => imIn(p) : null}
-              onMessage={() => message(p)}
-              onOpenProfile={() => router.push(`/people/${p.author}`)}
-            />
-          ))}
+          {shown.map((p, i) => {
+            // The walk's example: nobody to message, nothing to accept.
+            const real = !isTourExamplePost(p.id);
+            return (
+              <div key={p.id} data-tour={i === 0 ? "board-first-post" : undefined}>
+                <PostCard
+                  post={p}
+                  busy={messagingId === p.id}
+                  onAccept={canJoin(p) ? () => real && imIn(p) : null}
+                  onMessage={() => real && message(p)}
+                  onOpenProfile={() => real && router.push(`/people/${p.author}`)}
+                />
+              </div>
+            );
+          })}
         </div>
       )}
 

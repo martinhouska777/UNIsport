@@ -145,3 +145,17 @@ own words, the date. Newest at the bottom of each part.
     except the connecting moment. Real downloaded sounds, never synthesised. No speed changes.
     (2026-09-22: "dont want the sounds to be aggressive rather … smooth"; 2026-09-27: "skip all
     sound effects because they're distracting".)
+
+## Walks (the tutorials)
+
+29. **What a walk lights works when you tap it.** A tap on the lit control does what it says
+    (the invite card's Accept accepts, the leaderboards' arrows switch the competition), never
+    a silent Next. After an answer the walk runs on by itself to where the answer lands: Accept
+    goes straight through "You're on" to Upcoming sessions on the Profile, no Next in between.
+    The app walk's closing card stays on the leaderboards, and Done takes you to Match; the
+    finger never taps Match. A screen the walk stops on is never empty: with nothing real on
+    it, the walk shows example data (Sessions board, house race, invite chat) that is gone
+    when the walk ends. (2026-10-18: "add tap on the message", "when you tap add to calendar
+    i want it to go all the way automatically", "when you click the competition it clicked
+    badly", "at the end you stay in the leaderboards and say that is all … dont tap the match
+    after that", "for the sessions add data there".)

@@ -55,6 +55,8 @@ const GRACE = 6; // beats to let a pressed control do its work before forcing th
 const ALSO_WAIT = 10; // beats a step waits for its `alsoAnchor` once its anchor is there (~1.5s)
 const DEMO_WAIT = 800; // a demo step waits for its hole (and any scroll) to settle first
 const SHOT_LAND = 36; // the demo photo's size once it lands in Memories (the row's h-9 tiles)
+const WAIT = "wait:"; // a pause in a step's press list, not a press (lib/tour.ts)
+const PAUSE_HOLD = 1200; // how long what the pause waited for stays lit before the walk presses on
 
 /*
   THE FINGER. A pointing hand drawn in the theme's own surface and text colours,
@@ -161,6 +163,25 @@ function declaredAbsent(anchor: string) {
 */
 function declaredPending(anchor: string) {
   return !!document.querySelector(`[data-tour-pending~="${anchor}"]`);
+}
+
+/*
+  What is under a tap on the light, in the app below. The overlay is stood
+  aside for the one look (children inherit `pointer-events: none`), so the
+  answer is the app's own element, not the hole laid over it.
+*/
+function underTap(overlay: HTMLElement, x: number, y: number): Element | null {
+  const was = overlay.style.pointerEvents;
+  overlay.style.pointerEvents = "none";
+  const el = document.elementFromPoint(x, y);
+  overlay.style.pointerEvents = was;
+  return el;
+}
+
+/* A tap passed on to that element: a real click, which bubbles to React the
+   way a finger's would. An arrow's icon is an SVG, which has no .click(). */
+function passTap(el: Element, x: number, y: number) {
+  el.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, view: window, clientX: x, clientY: y }));
 }
 
 /*
@@ -317,6 +338,10 @@ export default function TourOverlay({
   const litStateRef = useRef<string | null>(null);
   const captionRef = useRef<HTMLDivElement | null>(null);
   const nextRef = useRef<HTMLButtonElement | null>(null);
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  /* A control you already pressed yourself, through the light (`answer`): the
+     step it leads to doesn't press it again. Keyed to that step. */
+  const pressedRef = useRef<{ step: number; name: string } | null>(null);
   const titleId = useId();
   const bodyId = useId();
 
@@ -374,6 +399,30 @@ export default function TourOverlay({
     if (i >= steps.length - 1) finish();
     else setI((n) => n + 1);
   }, [i, steps, finish]);
+
+  /*
+    A TAP ON THE LIGHT. On most steps it is Next. But a tap on the control the
+    step names (lib/tour.ts) reaches that control: the invite card's Accept
+    accepts and moves on (`answer`), the leaderboards' arrows switch the
+    competition and stay (`live`). On a step that asks, any other tap in the
+    light does nothing, so a tap on Decline is never taken as an Accept.
+  */
+  const tapLight = useCallback(
+    (e: React.MouseEvent) => {
+      const root = rootRef.current;
+      const hit = root ? underTap(root, e.clientX, e.clientY) : null;
+      const on = (name?: string) => (name && hit?.closest(`[data-tour~="${name}"]`)) || null;
+      if (hit && on(step.live)) return passTap(hit, e.clientX, e.clientY);
+      const answer = on(step.answer);
+      if (hit && answer) {
+        passTap(hit, e.clientX, e.clientY);
+        pressedRef.current = { step: i + 1, name: step.answer! };
+        return next();
+      }
+      if (!step.next) next();
+    },
+    [step, i, next],
+  );
 
   /*
     A step whose target never appeared. On its own that costs one step — but a
@@ -469,10 +518,14 @@ export default function TourOverlay({
       : Array.isArray(step.press)
         ? [...step.press]
         : Array.from({ length: step.pressTimes ?? 1 }, () => step.press as string);
+    // Pressed already, by you, through the light of the step before.
+    const pressed = pressedRef.current;
+    if (pressed?.step === i) queue = queue.filter((name) => name !== pressed.name);
     let pushed = false;
     let beats = 0;
     let alsoBeats = 0;
     let pendingBeats = 0;
+    let waitBeats = 0;
     let timer: ReturnType<typeof setTimeout>;
 
     /*
@@ -481,9 +534,14 @@ export default function TourOverlay({
       profile to open). A link to the page you are already on is dropped, not
       pressed — the Profile tab tapped while on the Profile did nothing you
       could see, and only left you wondering what the finger was for.
+      A pause (`wait:`) is never passed over: the search stops there.
     */
     const nextControl = (): HTMLElement | null => {
       for (let k = 0; k < queue.length; k++) {
+        if (queue[k].startsWith(WAIT)) {
+          queue = queue.slice(k);
+          return null;
+        }
         const el = visibleAnchor(queue[k]);
         if (!el) continue;
         queue = queue.slice(k + 1);
@@ -527,6 +585,23 @@ export default function TourOverlay({
             attempt();
           }, TAP_HOLD);
         }, TAP_LEAD);
+        return;
+      }
+
+      /* 2a. A pause between presses (`wait:` in lib/tour.ts): what the last
+         press brought about — "You're on" on the card the finger accepted —
+         is lit with the card around it for a moment, then the walk presses
+         on. One that never shows is let go after the usual wait. */
+      if (queue[0]?.startsWith(WAIT)) {
+        const shown = visibleAnchor(queue[0].slice(WAIT.length));
+        if (shown || ++waitBeats >= PATIENCE) {
+          queue = queue.slice(1);
+          if (shown) {
+            const card = shown.parentElement?.closest<HTMLElement>("[data-tour]") ?? shown;
+            light(card, boxAround(card, null));
+          }
+          timer = setTimeout(attempt, shown ? PAUSE_HOLD : 0);
+        } else timer = setTimeout(attempt, BEAT);
         return;
       }
 
@@ -837,6 +912,7 @@ export default function TourOverlay({
         both. The wrapper this lives in is `relative` with no z-index, so it
         creates no stacking context and this really does compete at the root.
       */
+      ref={rootRef}
       className="fixed inset-0 z-[80]"
       role="dialog"
       aria-modal="true"
@@ -870,14 +946,15 @@ export default function TourOverlay({
 
           EXCEPT on a step that asks (its own `next` word): there only the
           button answers. The invite card is lit whole, Decline included, and
-          a tap on Decline must never come out as an Accept.
+          a tap on Decline must never come out as an Accept. A tap on the
+          control the step names does reach it (`tapLight` above).
         */
         <button
           type="button"
           aria-hidden="true"
           tabIndex={-1}
-          onClick={step.next ? undefined : next}
-          className={`tour-hole absolute ${step.next ? "" : "cursor-pointer"}`}
+          onClick={tapLight}
+          className={`tour-hole absolute ${step.next && !step.answer ? "" : "cursor-pointer"}`}
           style={{
             top: box.top,
             left: box.left,
