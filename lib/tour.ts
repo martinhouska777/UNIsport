@@ -84,7 +84,9 @@ export type TourStep = {
               light is the answer: it is pressed for real and the walk moves
               on, the same as its own button. The invite card's Accept.
       live    a tap on this control inside the light reaches it, and the walk
-              stays where it is. The leaderboards' Competition and Period.
+              stays where it is. Any other tap in the light does nothing;
+              the caption's Next moves on. The leaderboards' Competition and
+              Period.
   */
   answer?: string;
   live?: string;

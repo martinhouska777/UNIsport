@@ -129,8 +129,9 @@ own words, the date. Newest at the bottom of each part.
     "I don't just want everything Malkin … i want different stuff".)
     The account a walk or a video is shot on has a made-up name, and so does anyone called
     Martin Houska it meets (the first card on Match): Lucas Bennett, Ethan Hale, Oliver
-    Grant, through `db/shoot_names.sql`. (2026-10-18: "do a fake name and not Martin
-    Houska, then we will shoot it".)
+    Grant, through `db/shoot_names.sql`. The owner's name is never on the Match tab twice.
+    (2026-10-18: "do a fake name and not Martin Houska, then we will shoot it", "also make
+    sure that my name is not there twice".)
 
 ## Coach screens
 
@@ -172,5 +173,6 @@ own words, the date. Newest at the bottom of each part.
     after that", "for the sessions add data there".)
     A tap on the leaderboards' arrows switches the board and the light stays where it is,
     also while the new board is counting and on a board with nobody on it: it never shrinks
-    to the arrows and grows back. (2026-10-18: "when you're supposed to click on leaderboards
+    to the arrows and grows back, and the caption never jumps. A stray tap elsewhere in that
+    light (a house, the gap beside an arrow) does nothing; Next moves on. (2026-10-18: "when you're supposed to click on leaderboards
     it clicks differently, so fix that and make sure it's smooth".)

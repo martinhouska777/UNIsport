@@ -410,8 +410,9 @@ export default function TourOverlay({
     A TAP ON THE LIGHT. On most steps it is Next. But a tap on the control the
     step names (lib/tour.ts) reaches that control: the invite card's Accept
     accepts and moves on (`answer`), the leaderboards' arrows switch the
-    competition and stay (`live`). On a step that asks, any other tap in the
-    light does nothing, so a tap on Decline is never taken as an Accept.
+    competition and stay (`live`). On a step that asks, or one you play with,
+    any other tap in the light does nothing, so a tap on Decline is never
+    taken as an Accept.
   */
   const tapLight = useCallback(
     (e: React.MouseEvent) => {
@@ -428,7 +429,11 @@ export default function TourOverlay({
         pressedRef.current = { step: i + 1, name: step.answer! };
         return next();
       }
-      if (!step.next) next();
+      /* A step you play with (`live`) doesn't end on a stray tap either: a
+         tap on a house on the podium, or just beside an arrow, jumped
+         straight to the closing card (owner, 2026-10-18: "it clicks
+         differently"). Its own Next moves on. */
+      if (!step.next && !step.live) next();
     },
     [step, i, next],
   );
