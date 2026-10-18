@@ -39,7 +39,8 @@ import { useProfileData } from "@/components/profile/useProfileData";
 import { dateLabel } from "@/lib/schedule";
 import { useSharedHooks } from "@/components/match/useSharedHooks";
 import HookChip from "@/components/match/HookChip";
-import { IconArrowLeft, IconCheck, IconHeart, IconMapPin } from "@/components/icons";
+import { IconArrowLeft, IconCheck, IconHeart, IconMapPin, HouseSigil } from "@/components/icons";
+import UniversityCrest from "@/components/UniversityCrest";
 
 export default function GymProfile({ gym }: { gym: Gym }) {
   const { userId, universityKey } = useAppState();
@@ -98,17 +99,34 @@ export default function GymProfile({ gym }: { gym: Gym }) {
           hours are right there and saying it twice is saying it twice. The
           address is a way of GETTING there, so it opens a map.
         */}
-        <div className="rounded-2xl border border-border bg-surface p-3.5">
-          <h1 className="text-[19px] font-semibold tracking-[-0.01em] text-text">{gym.name}</h1>
-          <div className="mt-2.5 flex flex-col gap-2 text-[14px] text-text">
-            <a
-              href={mapsHref}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="press-icon flex w-fit items-center gap-1.5 underline decoration-border underline-offset-4"
-            >
-              <IconMapPin size={16} /> {gym.address}
-            </a>
+        {/* The gym's crest beside its name, on a square tinted in its colour:
+            the same mark as its row on the Gyms list (owner, 2026-10-18,
+            version D). The colour is in the crest, never a band. */}
+        <div className="flex items-center gap-3 rounded-2xl border border-border bg-surface p-3.5">
+          <span
+            className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-xl"
+            style={{
+              background: `color-mix(in oklab, ${gym.houseColors?.primary ?? "var(--primary)"} 14%, var(--surface))`,
+            }}
+          >
+            {gym.houseColors ? (
+              <HouseSigil primary={gym.houseColors.primary} secondary={gym.houseColors.secondary} size={30} />
+            ) : (
+              <UniversityCrest size={32} />
+            )}
+          </span>
+          <div className="min-w-0">
+            <h1 className="text-[19px] font-semibold tracking-[-0.01em] text-text">{gym.name}</h1>
+            <div className="mt-1.5 flex flex-col gap-2 text-[14px] text-text">
+              <a
+                href={mapsHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="press-icon flex w-fit items-center gap-1.5 underline decoration-border underline-offset-4"
+              >
+                <IconMapPin size={16} /> {gym.address}
+              </a>
+            </div>
           </div>
         </div>
 

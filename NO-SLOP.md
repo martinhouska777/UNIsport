@@ -47,6 +47,11 @@ own words, the date. Newest at the bottom of each part.
    grey or dark-grey tiles, no gradients, no black borders, no glow. Plain white alone looks
    unfinished. (2026-09-22: "its just grey everywhere"; 2026-09-27: "Now it's just white, and I
    don't like how it looks", "nedělej ty černé okraje"; 2026-10-11: three app-wide sweeps.)
+   No poster style either: never a solid block of the school colour with white words on it as a
+   card's header. The colour sits in a crest tile or a thin stripe down the left edge, like the
+   Gyms list (main gyms: the school crest; houses: crest + left stripe). (2026-10-18: "i dont like
+   how it is poster style a little bit", "I like the D with houses having stripes but on left not
+   top".)
 10. **Text people read is black.** Grey is only for marks (`var(--faint)`). Nothing white on
     white, nothing yellow on yellow. (2026-09-30: "je tam spoustu šedých písmen … udělat černé";
     2026-10-11: "make it so it's not white on white".)

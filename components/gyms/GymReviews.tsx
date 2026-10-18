@@ -48,7 +48,7 @@ function ScoreBar({ label, value }: { label: string; value: number | null }) {
     <div className="flex items-center gap-2.5">
       <span className="w-[86px] shrink-0 text-[12px] text-muted">{label}</span>
       <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-2">
-        <span className="block h-full rounded-full bg-accent" style={{ width: `${pct}%` }} />
+        <span className="block h-full rounded-full bg-podium-1" style={{ width: `${pct}%` }} />
       </span>
       <span className="w-[26px] shrink-0 text-right text-[12px] tabular-nums text-text">
         {scoreLabel(value)}
@@ -241,8 +241,10 @@ export default function GymReviews({
                       {r.mine ? "You" : r.authorName}
                     </span>
                     {r.overall !== null && (
-                      <span className="flex shrink-0 items-center gap-1 text-[12px] tabular-nums text-accent">
-                        <IconStar size={11} />
+                      <span className="flex shrink-0 items-center gap-1 text-[12px] tabular-nums text-text">
+                        <span className="text-podium-1">
+                          <IconStar size={11} />
+                        </span>
                         {scoreLabel(r.overall)}
                       </span>
                     )}

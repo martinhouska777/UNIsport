@@ -3,7 +3,7 @@
 /*
   Shared rating + crowd UI, reused by the gyms list, the gym profile, and the
   post-workout check-in prompt. All color is theme tokens (rule 1): gold stars
-  (text-accent) and the green→gold→amber→red crowd tones from CROWD_LEVELS.
+  (text-podium-1, the medal gold; an empty star is text-faint) and the green→gold→amber→red crowd tones from CROWD_LEVELS.
 */
 import {
   CROWD_LEVELS,
@@ -50,7 +50,7 @@ export function StarRater({
             onRate?.(n);
           }}
           aria-label={`Rate ${n} star${n > 1 ? "s" : ""}`}
-          className={`tap44 press-icon ${n <= value ? "text-accent" : "text-text-3"} ${
+          className={`tap44 press-icon ${n <= value ? "text-podium-1" : "text-faint"} ${
             onRate ? "" : "cursor-default"
           }`}
         >
@@ -110,7 +110,7 @@ export function RatingValue({ value, count }: { value: number; count: number }) 
   if (!count) return null;
   return (
     <span className="flex items-center gap-1">
-      <IconStar size={13} className="text-accent" />
+      <IconStar size={13} className="text-podium-1" />
       <span className="text-text">{value.toFixed(1)}</span>
       <span className="text-text-3">({count})</span>
     </span>

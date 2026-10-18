@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { gymsFor, type Gym } from "@/lib/gyms";
 import { useAppState } from "@/components/AppState";
@@ -17,6 +17,7 @@ import {
   IconChevronRight,
   HouseSigil,
 } from "@/components/icons";
+import UniversityCrest from "@/components/UniversityCrest";
 
 type Filter = "all" | "fav" | "main" | "house";
 
@@ -31,27 +32,13 @@ const filters: { key: Filter; label: string }[] = [
   Heart toggle that sits on a gym card without triggering the card's link.
   `taps` exists purely so the pop plays when you favourite something and NOT on
   every render of an already-favourited gym: bumping it changes the inner span's
-  key, which remounts it and restarts the animation from the top.
-
-  Two places, two looks: `band` floats in the corner of a main gym's colour
-  band, in the band's own contrast colour; `row` sits in line at the end of a
-  house row, before the chevron. (A third, `cover`, sat on a gym's photo until
-  gym photos went on 2026-10-02.)
+  key, which remounts it and restarts the animation from the top. It sits in
+  line at the end of the row, before the chevron. (It also floated in the
+  corner of a main gym's red band until those went on 2026-10-18, and on a
+  gym's photo until gym photos went on 2026-10-02.)
 */
-function FavHeart({
-  fav,
-  onToggle,
-  place,
-}: {
-  fav: boolean;
-  onToggle: () => void;
-  place: "band" | "row";
-}) {
+function FavHeart({ fav, onToggle }: { fav: boolean; onToggle: () => void }) {
   const [taps, setTaps] = useState(0);
-  const look =
-    place === "band"
-      ? "absolute right-2 top-2 z-10 h-7 w-7 bg-primary-contrast/15 text-primary-contrast"
-      : `h-7 w-7 flex-shrink-0 ${fav ? "text-primary-live" : "text-text-3"}`;
   return (
     <button
       type="button"
@@ -63,48 +50,14 @@ function FavHeart({
       }}
       aria-label={fav ? "Remove from favourites" : "Add to favourites"}
       aria-pressed={fav}
-      className={`tap44 press-icon flex items-center justify-center rounded-full ${look}`}
+      className={`tap44 press-icon flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full ${
+        fav ? "text-primary-live" : "text-text-3"
+      }`}
     >
       <span key={taps} className={taps > 0 && fav ? "react-pop block" : "block"}>
         <IconHeart size={15} filled={fav} />
       </span>
     </button>
-  );
-}
-
-function StatsRow({
-  gym,
-  now,
-  going,
-}: {
-  gym: Gym;
-  now: Clock | null;
-  going: GoingSummary | null;
-}) {
-  return (
-    /* The card's white foot under the colour band, a hairline above it. It was
-       a grey `ink` strip until 2026-09-27; the owner picked this look off five
-       drawn options ("neater and better looking"). */
-    <div className="flex flex-col gap-1.5 border-t border-border bg-surface px-3.5 py-2.5">
-      {/* The Buddy Board, one line: who has already said they're going here.
-          Nothing is drawn when nobody has — see GoingLine. */}
-      <GoingLine going={going} gymName={gym.name} compact />
-    <div className="flex items-center justify-between gap-2">
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
-        {/* Can you walk in right now — the one thing the timetable was hiding */}
-        <OpenNow hours={gym.hours} now={now} />
-        {/* No star average here. gym.rating / gym.ratingCount in lib/gyms.ts are
-            placeholder numbers, and "4.8 · 142 ratings" on a real named gym is
-            a claim nobody made. They come back when real ratings exist. */}
-        {/* No "how busy" either (owner, 2026-09-22): a card says when the gym
-            is open and where it is, and that is the whole of it. The crowd
-            reporting it came from went off the gym page the same day. */}
-      </div>
-      <span className="flex-shrink-0 text-muted">
-        <IconChevronRight size={16} />
-      </span>
-    </div>
-    </div>
   );
 }
 
@@ -119,73 +72,52 @@ type CardProps = {
   tour?: string;
 };
 
-/* The card chassis both kinds share: white, a hairline edge, the soft lift. */
+/* The card chassis: white, a hairline edge, the soft lift. */
 const CARD =
-  "relative block overflow-hidden rounded-2xl border border-border bg-surface shadow-[var(--card-shadow)]";
-
-function MainCard({ gym, fav, onToggleFav, now, going, tour }: CardProps) {
-  return (
-    <Link href={`/gyms/${gym.slug}`} data-tour={tour} className={CARD}>
-      <FavHeart fav={fav} onToggle={onToggleFav} place="band" />
-      {/*
-        A SOLID BAND OF THE SCHOOL'S COLOUR with the name in white (owner,
-        2026-09-27, option 3 of five drawn: "the top from 3"). It replaced a
-        wash that took turns down the list through the school's palette
-        (`gymCardColors` in lib/themes.ts, no longer read here), which left
-        Harvard's list striped pink, white, pink. Every card is now the same
-        `--primary` with `--primary-contrast` on it — tokens, so Yale's band is
-        blue and Princeton's orange without a line of code (rules 1, 2).
-        Until 2026-10-02 a student's photo of the gym could replace the band;
-        gym photos are gone (owner: "only in memories and later in feed").
-      */}
-      <div className="flex h-[68px] items-center bg-primary px-3.5 pr-11">
-        <div className="min-w-0">
-          <div className="truncate text-[15px] font-semibold text-primary-contrast">{gym.name}</div>
-          <div className="truncate text-[12px] text-primary-contrast/75">{gym.address}</div>
-        </div>
-      </div>
-      <StatsRow gym={gym} now={now} going={going} />
-    </Link>
-  );
-}
+  "relative flex overflow-hidden rounded-2xl border border-border bg-surface shadow-[var(--card-shadow)]";
 
 /*
-  A house gym is one compact ROW (owner, 2026-09-27: "the list from 4 for the
-  house teams"): the house's crest on a square tinted in its own colour, the
-  name, when it is open, the heart, the chevron. Each house keeps its own card
-  with a gap between (the spacing of option 3), and ONE colour runs along the
-  top: the house's main colour, the one everybody knows (owner, 2026-09-27 —
-  "Adams just yellow, Cabot red, Quincy just red"). That is `primary`; the
-  crest keeps both.
+  EVERY GYM IS ONE ROW (owner, 2026-10-18, version D of four drawn: "I like the
+  D with houses having stripes but on left not top"; "i dont like how it is
+  poster style"). A crest on a square tinted in the gym's colour, the name,
+  the address for a main gym, when it is open, who is going, the heart, the
+  chevron. The main gyms used to be a solid band of the school colour with the
+  name in white (2026-09-27), which read as three posters stacked over the
+  houses; now the school's crest carries the colour, the same way a house's
+  crest carries its own.
+  A house also wears its main colour as a stripe down the LEFT edge (it ran
+  along the top until 2026-10-18): "Adams just yellow, Cabot red, Quincy just
+  red" (owner, 2026-09-27). A main gym has no stripe.
   House colours are per-entity CONTENT from lib/gyms.ts, applied inline
-  (rule 1's data exception).
+  (rule 1's data exception); a main gym's colour is the theme's --primary.
 */
-function HouseCard({ gym, fav, onToggleFav, now, going }: CardProps) {
-  const colors = gym.houseColors;
+function GymRow({
+  gym,
+  fav,
+  onToggleFav,
+  now,
+  going,
+  tour,
+  crest,
+  tint,
+  stripe,
+  address,
+}: CardProps & { crest: ReactNode; tint: string; stripe?: string; address?: string }) {
   return (
-    <Link href={`/gyms/${gym.slug}`} className={CARD}>
-      {colors ? (
-        <div className="h-1.5" style={{ background: colors.primary }} />
-      ) : (
-        <div className="h-1.5 bg-accent" />
-      )}
-      <div className="flex items-center gap-3 px-3 py-2.5">
+    <Link href={`/gyms/${gym.slug}`} data-tour={tour} className={CARD}>
+      {stripe && <div className="w-1 flex-shrink-0" style={{ background: stripe }} />}
+      <div className="flex min-w-0 flex-1 items-center gap-3 px-3 py-2.5">
         <span
-          className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-xl bg-surface-2"
-          style={
-            colors
-              ? { background: `color-mix(in oklab, ${colors.primary} 14%, var(--surface))` }
-              : undefined
-          }
+          className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-xl"
+          style={{ background: `color-mix(in oklab, ${tint} 14%, var(--surface))` }}
         >
-          {colors ? (
-            <HouseSigil primary={colors.primary} secondary={colors.secondary} size={30} />
-          ) : null}
+          {crest}
         </span>
-        {/* Just the name — no "House gym" / "Dorm gym" under it; the section
+        {/* Just the name: no "House gym" / "Dorm gym" under it; the section
             heading above the cards already says what they are. */}
         <div className="min-w-0 flex-1">
           <div className="truncate text-[15px] font-semibold text-text">{gym.name}</div>
+          {address && <div className="truncate text-[12px] text-text">{address}</div>}
           <div className="mt-0.5 text-xs text-muted">
             <OpenNow hours={gym.hours} now={now} size={12} />
           </div>
@@ -195,12 +127,35 @@ function HouseCard({ gym, fav, onToggleFav, now, going }: CardProps) {
             </div>
           ) : null}
         </div>
-        <FavHeart fav={fav} onToggle={onToggleFav} place="row" />
+        <FavHeart fav={fav} onToggle={onToggleFav} />
         <span className="flex-shrink-0 text-muted">
           <IconChevronRight size={16} />
         </span>
       </div>
     </Link>
+  );
+}
+
+function MainCard(props: CardProps) {
+  return (
+    <GymRow
+      {...props}
+      crest={<UniversityCrest size={32} />}
+      tint="var(--primary)"
+      address={props.gym.address}
+    />
+  );
+}
+
+function HouseCard(props: CardProps) {
+  const colors = props.gym.houseColors;
+  return (
+    <GymRow
+      {...props}
+      crest={colors ? <HouseSigil primary={colors.primary} secondary={colors.secondary} size={30} /> : null}
+      tint={colors?.primary ?? "var(--accent)"}
+      stripe={colors?.primary ?? "var(--accent)"}
+    />
   );
 }
 
