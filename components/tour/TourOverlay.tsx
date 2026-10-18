@@ -698,6 +698,14 @@ export default function TourOverlay({
       eats taps, so nobody can scroll to them.
     */
     const also = step.alsoAnchor ? visibleAnchor(step.alsoAnchor) : null;
+    /*
+      Its partner gone for a moment and on its way back (`data-tour-pending`):
+      the podium, while the board you just switched to with the arrows is
+      counting. The light holds where it was. It used to shrink to the arrows
+      and grow back over the new board, the caption jumping up and down with
+      it, on every tap (owner, 2026-10-18: "it clicks differently").
+    */
+    if (step.alsoAnchor && !also && boxRef.current && declaredPending(step.alsoAnchor)) return;
     bringIntoView(el, also);
     noteState(el.getAttribute("data-tour-state"));
     light(el, boxAround(el, also));

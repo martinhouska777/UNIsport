@@ -721,7 +721,13 @@ export default function LeaderboardsPage() {
               </div>
             ) : isGroupBoard ? (
               groups.length === 0 ? (
-                <div className="mt-3 rounded-xl border border-dashed border-border bg-surface px-4 py-10 text-center text-[12px] text-muted">
+                /* An empty board stands where the podium would, as far as the
+                   walk is concerned: the light keeps its size when the arrows
+                   land on one. */
+                <div
+                  data-tour="lb-podium"
+                  className="mt-3 rounded-xl border border-dashed border-border bg-surface px-4 py-10 text-center text-[12px] text-muted"
+                >
                   {def.empty}
                 </div>
               ) : (
@@ -764,7 +770,10 @@ export default function LeaderboardsPage() {
                 </>
               )
             ) : people.length === 0 ? (
-              <div className="mt-3 rounded-xl border border-dashed border-border bg-surface px-4 py-10 text-center text-[12px] text-muted">
+              <div
+                data-tour="lb-podium"
+                className="mt-3 rounded-xl border border-dashed border-border bg-surface px-4 py-10 text-center text-[12px] text-muted"
+              >
                 {def.empty}
               </div>
             ) : (

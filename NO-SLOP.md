@@ -166,3 +166,7 @@ own words, the date. Newest at the bottom of each part.
     i want it to go all the way automatically", "when you click the competition it clicked
     badly", "at the end you stay in the leaderboards and say that is all … dont tap the match
     after that", "for the sessions add data there".)
+    A tap on the leaderboards' arrows switches the board and the light stays where it is,
+    also while the new board is counting and on a board with nobody on it: it never shrinks
+    to the arrows and grows back. (2026-10-18: "when you're supposed to click on leaderboards
+    it clicks differently, so fix that and make sure it's smooth".)
