@@ -396,270 +396,277 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/*
-        1 · WHO YOU ARE — the photo on the left, and beside it your name with
-        the three counts under it, then the rest of you (owner, 2026-09-14,
-        picking the "lines only" preview and then Instagram's own arrangement,
-        where the name sits above the followers rather than above the photo):
+      {/* WHITE FROM THE TOP DOWN TO THE CALENDAR (owner, 2026-10-18: "make
+          the top in profile white … until the calendar"): who you are, the
+          tags waiting for your yes, upcoming sessions and the leaderboard row
+          sit on white like the top bar; the page colour starts at the
+          calendar. */}
+      <div className="bg-surface">
+        {/*
+          1 · WHO YOU ARE — the photo on the left, and beside it your name with
+          the three counts under it, then the rest of you (owner, 2026-09-14,
+          picking the "lines only" preview and then Instagram's own arrangement,
+          where the name sits above the followers rather than above the photo):
 
-          ( photo )   Martin Houska
-                      48 | 12 | 96
-                      workouts partners followers
+            ( photo )   Martin Houska
+                        48 | 12 | 96
+                        workouts partners followers
 
-          [VARSITY] [MENTOR]
-          a line of bio
-          ──────────────────────────
+            [VARSITY] [MENTOR]
+            a line of bio
+            ──────────────────────────
 
-        LINES ONLY is the point of it. Nothing in this block is a box: the
-        counts are separated by hairlines rather than sitting in a rounded
-        card, and the bio is plain text rather than a grey panel. A rule under
-        the bio closes the block off. Everything below it — the leaderboard row
-        included — is deliberately left exactly as it was.
+          LINES ONLY is the point of it. Nothing in this block is a box: the
+          counts are separated by hairlines rather than sitting in a rounded
+          card, and the bio is plain text rather than a grey panel. A rule under
+          the bio closes the block off. Everything below it — the leaderboard row
+          included — is deliberately left exactly as it was.
 
-        Photo, name and bio are still edited from the pencil in the top bar
-        (see editingTop); only the arrangement changed.
-      */}
-      <div className="flex items-center gap-4 px-3.5 pb-3 pt-4">
-        <div className="relative shrink-0">
-          {/* While editing, the photo itself is a tap target too, not just
-              the little camera on its edge. */}
-          <div
-            onClick={editingTop ? () => avatarInputRef.current?.click() : undefined}
-            className={`flex h-[76px] w-[76px] items-center justify-center overflow-hidden rounded-full border-2 border-primary bg-primary-tint text-primary ${
-              editingTop ? "cursor-pointer" : ""
-            }`}
-          >
-            {user.photo ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={user.photo} alt={user.name || "Profile photo"} className="h-full w-full object-cover" />
-            ) : (
-              <IconUser size={32} />
+          Photo, name and bio are still edited from the pencil in the top bar
+          (see editingTop); only the arrangement changed.
+        */}
+        <div className="flex items-center gap-4 px-3.5 pb-3 pt-4">
+          <div className="relative shrink-0">
+            {/* While editing, the photo itself is a tap target too, not just
+                the little camera on its edge. */}
+            <div
+              onClick={editingTop ? () => avatarInputRef.current?.click() : undefined}
+              className={`flex h-[76px] w-[76px] items-center justify-center overflow-hidden rounded-full border-2 border-primary bg-primary-tint text-primary ${
+                editingTop ? "cursor-pointer" : ""
+              }`}
+            >
+              {user.photo ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={user.photo} alt={user.name || "Profile photo"} className="h-full w-full object-cover" />
+              ) : (
+                <IconUser size={32} />
+              )}
+            </div>
+            <input
+              ref={avatarInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                pickAvatar(e.target.files?.[0]);
+                e.target.value = "";
+              }}
+            />
+            {editingTop && (
+              <button
+                type="button"
+                onClick={() => avatarInputRef.current?.click()}
+                aria-label={user.photo ? "Change photo" : "Add photo"}
+                className="tap44 press-icon absolute -bottom-0.5 -right-0.5 flex h-6 w-6 items-center justify-center rounded-full border border-border bg-surface-2 text-muted"
+              >
+                <IconCamera size={12} />
+              </button>
             )}
           </div>
-          <input
-            ref={avatarInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => {
-              pickAvatar(e.target.files?.[0]);
-              e.target.value = "";
-            }}
-          />
-          {editingTop && (
-            <button
-              type="button"
-              onClick={() => avatarInputRef.current?.click()}
-              aria-label={user.photo ? "Change photo" : "Add photo"}
-              className="tap44 press-icon absolute -bottom-0.5 -right-0.5 flex h-6 w-6 items-center justify-center rounded-full border border-border bg-surface-2 text-muted"
-            >
-              <IconCamera size={12} />
-            </button>
+
+          {/* THE RIGHT-HAND COLUMN — your name, and the three counts under it
+              (owner, 2026-09-14: on Instagram the name sits above the followers,
+              not above the picture). The photo is centred against the pair, so a
+              name long enough to wrap makes the row taller rather than pushing
+              anything sideways. */}
+          <div className="flex min-w-0 flex-1 flex-col gap-2.5">
+            {editingTop && editField === "name" ? (
+              <div>
+                <input
+                  autoFocus
+                  value={nameDraft}
+                  onChange={(e) => {
+                    setNameDraft(e.target.value);
+                    if (nameErr) setNameErr(null);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !nameError(nameDraft)) setEditField(null);
+                  }}
+                  maxLength={40}
+                  aria-label="Name"
+                  placeholder="Your name"
+                  aria-invalid={nameErr ? true : undefined}
+                  /* 16px so a phone doesn't zoom in on focus. Red only when
+                     something is actually wrong. */
+                  className={`w-full border-b bg-transparent text-base font-medium text-text focus:outline-none ${
+                    nameErr ? "border-danger" : "border-border"
+                  }`}
+                />
+                {/* The name everyone else sees — it has to be one (lib/onboarding). */}
+                {nameErr && <span className="mt-1 block text-[11px] text-danger">{nameErr}</span>}
+              </div>
+            ) : editingTop ? (
+              <button
+                type="button"
+                onClick={() => setEditField("name")}
+                aria-label="Edit name"
+                className="w-full text-left text-base font-medium text-text"
+              >
+                {/* No pencil on the name itself (owner, 2026-09-20). You already
+                    pressed Edit in the top bar to get here; a second pencil on
+                    every line is the same offer made twice. The name is the
+                    tap target. */}
+                {nameDraft || "Your name"}
+              </button>
+            ) : (
+              <div className="text-base font-medium text-text">{user.name || "Your name"}</div>
+            )}
+
+            {/* Three EQUAL columns, so the two hairlines land at exactly a third
+                and two thirds. They show a dash until the numbers have landed, so
+                the row never jumps. The labels are BLACK 12px words, the number
+                bold (owner, 2026-10-04: "make it so the text is more visible") —
+                they were 10px capitals, Partners and Followers in thin school
+                colour. Black on all three: the tap still opens the lists. */}
+            <div className="grid grid-cols-3">
+              {stats.map((s, i) => {
+                const body = (
+                  <>
+                    <div className="text-[18px] font-bold tabular-nums text-text">
+                      {statsReady ? s.value : "—"}
+                    </div>
+                    <div className="mt-0.5 truncate text-[12px] font-medium text-text">
+                      {s.label}
+                    </div>
+                  </>
+                );
+                return (
+                  <div
+                    key={s.label}
+                    className={`flex min-w-0 items-stretch ${i > 0 ? "border-l border-border" : ""}`}
+                  >
+                    {s.onClick ? (
+                      <button
+                        type="button"
+                        onClick={s.onClick}
+                        className="w-full min-w-0 rounded-md px-0.5 text-center transition-colors active:bg-surface-2"
+                      >
+                        {body}
+                      </button>
+                    ) : (
+                      <div className="w-full min-w-0 px-0.5 text-center">{body}</div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* WHAT YOU ARE — VARSITY and MENTOR, left-aligned under your name.
+
+            The "House · Class of ____" line that used to sit here is GONE from
+            your own profile (owner, 2026-09-14): you know where you live, and the
+            Leaderboards card a little further down already names your team. It
+            still shows on SOMEBODY ELSE's profile, where it tells you something
+            you didn't know — see app/(app)/people/[id]/page.tsx. */}
+        <div className="flex flex-col gap-1.5 px-3.5">
+          {/* On your OWN profile the varsity badge comes from live membership:
+              profiles.data has no record of it (the squad lives in its own
+              table), so unlike a profile you're viewing, it can't come through
+              profileFromOnboarding. */}
+          {(isMember || user.badges.mentor) && (
+            <div className="flex items-center gap-1.5">
+              {/* Like a small Log button: school colour for Varsity, dark green for Mentor (owner,
+                  2026-09-16) — colours in lib/badges.ts. */}
+              {isMember && <ProfileBadge kind="varsity" />}
+              {user.badges.mentor && <ProfileBadge kind="mentor" />}
+            </div>
           )}
         </div>
 
-        {/* THE RIGHT-HAND COLUMN — your name, and the three counts under it
-            (owner, 2026-09-14: on Instagram the name sits above the followers,
-            not above the picture). The photo is centred against the pair, so a
-            name long enough to wrap makes the row taller rather than pushing
-            anything sideways. */}
-        <div className="flex min-w-0 flex-1 flex-col gap-2.5">
-          {editingTop && editField === "name" ? (
+        {/* BIO — plain text, no card. The grey panel it used to sit in was the
+            last box in this block, and the whole point of the lines-only look is
+            that there are none. The rule underneath is what closes the block. */}
+        <div className="border-b border-border px-3.5 pb-3.5 pt-2">
+          {editingTop && editField === "bio" ? (
             <div>
-              <input
+              <textarea
                 autoFocus
-                value={nameDraft}
-                onChange={(e) => {
-                  setNameDraft(e.target.value);
-                  if (nameErr) setNameErr(null);
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !nameError(nameDraft)) setEditField(null);
-                }}
-                maxLength={40}
-                aria-label="Name"
-                placeholder="Your name"
-                aria-invalid={nameErr ? true : undefined}
-                /* 16px so a phone doesn't zoom in on focus. Red only when
-                   something is actually wrong. */
-                className={`w-full border-b bg-transparent text-base font-medium text-text focus:outline-none ${
-                  nameErr ? "border-danger" : "border-border"
-                }`}
+                value={bioDraft}
+                onChange={(e) => setBioDraft(e.target.value)}
+                maxLength={160}
+                aria-label="Bio"
+                placeholder="Add a short bio"
+                className="min-h-[96px] w-full resize-none rounded-lg border border-border bg-surface px-3 py-2 text-base text-text focus:outline-none"
               />
-              {/* The name everyone else sees — it has to be one (lib/onboarding). */}
-              {nameErr && <span className="mt-1 block text-[11px] text-danger">{nameErr}</span>}
+              <div className="mt-1 text-right text-[11px] text-muted">{bioDraft.length} / 160</div>
             </div>
           ) : editingTop ? (
             <button
               type="button"
-              onClick={() => setEditField("name")}
-              aria-label="Edit name"
-              className="w-full text-left text-base font-medium text-text"
+              onClick={() => setEditField("bio")}
+              aria-label="Edit bio"
+              className="w-full text-left text-[13px] leading-relaxed text-text-2"
             >
-              {/* No pencil on the name itself (owner, 2026-09-20). You already
-                  pressed Edit in the top bar to get here; a second pencil on
-                  every line is the same offer made twice. The name is the
-                  tap target. */}
-              {nameDraft || "Your name"}
+              {/* Tap the bio, not a pencil beside it — same as the name. */}
+              {bioDraft || "Add a short bio"}
+            </button>
+          ) : user.bio ? (
+            <p className="text-[13px] leading-relaxed text-text-2">{user.bio}</p>
+          ) : null
+          /* No bio, no sentence about the pencil: Edit is where it always is. */}
+        </div>
+
+        {/* "Did you train with Sam today?" — a partner tag waiting for your yes.
+            High up, because it is the one thing on this page someone else is
+            waiting on; saying yes also puts the session on YOUR calendar. Hidden
+            when there is nothing to answer. */}
+        <PartnerRequests onChanged={reloadLogs} />
+
+        {/* Upcoming accepted sessions (chat-planned) — a date in your diary
+            belongs above the fold. Hides itself when there is none. */}
+        <UpcomingSessions
+          key={plansKey}
+          onChanged={reloadLogs}
+          onLogPlan={(p) => {
+            setLogPrefill({
+              date: planCampusDay(p.scheduledAt),
+              gym: p.place ?? undefined,
+              activity: p.activity,
+              partner: { name: p.otherName, id: p.otherId },
+              plan: { planId: p.planId, conversationId: p.conversationId, scheduledAt: p.scheduledAt },
+            });
+            setLogging(true);
+          }}
+        />
+
+        {/* 2 · WHERE YOU STAND, AND THE BUTTON THAT MOVES YOU — straight under
+            the bio, where it swapped places with Memories (owner, 2026-09-14).
+            It shares its line with "Log a session", which puts the rank and the
+            one action that changes it side by side.
+
+            The compact card drops the middle number (your HOUSE's own rank) so
+            two numbers and the button fit a phone: what's left is where you sit
+            among your housemates and where you sit on campus — both about you.
+
+            A profile with nothing logged yet gets the starter card full width
+            instead: there is no rank to show, and the card says the same thing
+            the empty boards would. */}
+        <div className="border-b border-border px-3.5 py-3">
+          {brandNew ? (
+            <button
+              type="button"
+              onClick={() => setLogging(true)}
+              data-tour="profile-log"
+              className="w-full rounded-xl border border-border bg-surface px-3.5 py-3 text-left active:bg-surface-2"
+            >
+              <div className="text-[13px] font-semibold text-text">Log your first session</div>
             </button>
           ) : (
-            <div className="text-base font-medium text-text">{user.name || "Your name"}</div>
+            /* ONE GREY BAR (option 3 of the owner's previews): the ranks on the
+               left, a short "Log" button docked inside on the right. Two
+               siblings in a grey box rather than a button inside the link, so
+               tapping Log never also opens the boards.
+               data-tour: the Profile tour opens on this button (lib/tour.ts). */
+            <div className="flex items-center gap-2.5 rounded-2xl border border-border bg-surface py-2.5 pl-3 pr-2.5">
+              <LeaderboardStrip compact />
+              <Button data-tour="profile-log" size="md" className="h-11! shrink-0" onClick={() => setLogging(true)}>
+                <IconPlus size={15} /> Log
+              </Button>
+            </div>
           )}
-
-          {/* Three EQUAL columns, so the two hairlines land at exactly a third
-              and two thirds. They show a dash until the numbers have landed, so
-              the row never jumps. The labels are BLACK 12px words, the number
-              bold (owner, 2026-10-04: "make it so the text is more visible") —
-              they were 10px capitals, Partners and Followers in thin school
-              colour. Black on all three: the tap still opens the lists. */}
-          <div className="grid grid-cols-3">
-            {stats.map((s, i) => {
-              const body = (
-                <>
-                  <div className="text-[18px] font-bold tabular-nums text-text">
-                    {statsReady ? s.value : "—"}
-                  </div>
-                  <div className="mt-0.5 truncate text-[12px] font-medium text-text">
-                    {s.label}
-                  </div>
-                </>
-              );
-              return (
-                <div
-                  key={s.label}
-                  className={`flex min-w-0 items-stretch ${i > 0 ? "border-l border-border" : ""}`}
-                >
-                  {s.onClick ? (
-                    <button
-                      type="button"
-                      onClick={s.onClick}
-                      className="w-full min-w-0 rounded-md px-0.5 text-center transition-colors active:bg-surface-2"
-                    >
-                      {body}
-                    </button>
-                  ) : (
-                    <div className="w-full min-w-0 px-0.5 text-center">{body}</div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
         </div>
-      </div>
-
-      {/* WHAT YOU ARE — VARSITY and MENTOR, left-aligned under your name.
-
-          The "House · Class of ____" line that used to sit here is GONE from
-          your own profile (owner, 2026-09-14): you know where you live, and the
-          Leaderboards card a little further down already names your team. It
-          still shows on SOMEBODY ELSE's profile, where it tells you something
-          you didn't know — see app/(app)/people/[id]/page.tsx. */}
-      <div className="flex flex-col gap-1.5 px-3.5">
-        {/* On your OWN profile the varsity badge comes from live membership:
-            profiles.data has no record of it (the squad lives in its own
-            table), so unlike a profile you're viewing, it can't come through
-            profileFromOnboarding. */}
-        {(isMember || user.badges.mentor) && (
-          <div className="flex items-center gap-1.5">
-            {/* Like a small Log button: school colour for Varsity, dark green for Mentor (owner,
-                2026-09-16) — colours in lib/badges.ts. */}
-            {isMember && <ProfileBadge kind="varsity" />}
-            {user.badges.mentor && <ProfileBadge kind="mentor" />}
-          </div>
-        )}
-      </div>
-
-      {/* BIO — plain text, no card. The grey panel it used to sit in was the
-          last box in this block, and the whole point of the lines-only look is
-          that there are none. The rule underneath is what closes the block. */}
-      <div className="border-b border-border px-3.5 pb-3.5 pt-2">
-        {editingTop && editField === "bio" ? (
-          <div>
-            <textarea
-              autoFocus
-              value={bioDraft}
-              onChange={(e) => setBioDraft(e.target.value)}
-              maxLength={160}
-              aria-label="Bio"
-              placeholder="Add a short bio"
-              className="min-h-[96px] w-full resize-none rounded-lg border border-border bg-surface px-3 py-2 text-base text-text focus:outline-none"
-            />
-            <div className="mt-1 text-right text-[11px] text-muted">{bioDraft.length} / 160</div>
-          </div>
-        ) : editingTop ? (
-          <button
-            type="button"
-            onClick={() => setEditField("bio")}
-            aria-label="Edit bio"
-            className="w-full text-left text-[13px] leading-relaxed text-text-2"
-          >
-            {/* Tap the bio, not a pencil beside it — same as the name. */}
-            {bioDraft || "Add a short bio"}
-          </button>
-        ) : user.bio ? (
-          <p className="text-[13px] leading-relaxed text-text-2">{user.bio}</p>
-        ) : null
-        /* No bio, no sentence about the pencil: Edit is where it always is. */}
-      </div>
-
-      {/* "Did you train with Sam today?" — a partner tag waiting for your yes.
-          High up, because it is the one thing on this page someone else is
-          waiting on; saying yes also puts the session on YOUR calendar. Hidden
-          when there is nothing to answer. */}
-      <PartnerRequests onChanged={reloadLogs} />
-
-      {/* Upcoming accepted sessions (chat-planned) — a date in your diary
-          belongs above the fold. Hides itself when there is none. */}
-      <UpcomingSessions
-        key={plansKey}
-        onChanged={reloadLogs}
-        onLogPlan={(p) => {
-          setLogPrefill({
-            date: planCampusDay(p.scheduledAt),
-            gym: p.place ?? undefined,
-            activity: p.activity,
-            partner: { name: p.otherName, id: p.otherId },
-            plan: { planId: p.planId, conversationId: p.conversationId, scheduledAt: p.scheduledAt },
-          });
-          setLogging(true);
-        }}
-      />
-
-      {/* 2 · WHERE YOU STAND, AND THE BUTTON THAT MOVES YOU — straight under
-          the bio, where it swapped places with Memories (owner, 2026-09-14).
-          It shares its line with "Log a session", which puts the rank and the
-          one action that changes it side by side.
-
-          The compact card drops the middle number (your HOUSE's own rank) so
-          two numbers and the button fit a phone: what's left is where you sit
-          among your housemates and where you sit on campus — both about you.
-
-          A profile with nothing logged yet gets the starter card full width
-          instead: there is no rank to show, and the card says the same thing
-          the empty boards would. */}
-      <div className="border-b border-border px-3.5 py-3">
-        {brandNew ? (
-          <button
-            type="button"
-            onClick={() => setLogging(true)}
-            data-tour="profile-log"
-            className="w-full rounded-xl border border-border bg-surface px-3.5 py-3 text-left active:bg-surface-2"
-          >
-            <div className="text-[13px] font-semibold text-text">Log your first session</div>
-          </button>
-        ) : (
-          /* ONE GREY BAR (option 3 of the owner's previews): the ranks on the
-             left, a short "Log" button docked inside on the right. Two
-             siblings in a grey box rather than a button inside the link, so
-             tapping Log never also opens the boards.
-             data-tour: the Profile tour opens on this button (lib/tour.ts). */
-          <div className="flex items-center gap-2.5 rounded-2xl border border-border bg-surface py-2.5 pl-3 pr-2.5">
-            <LeaderboardStrip compact />
-            <Button data-tour="profile-log" size="md" className="h-11! shrink-0" onClick={() => setLogging(true)}>
-              <IconPlus size={15} /> Log
-            </Button>
-          </div>
-        )}
       </div>
 
       {/* 3 · YOUR TRAINING — this week, or the whole month, with arrows or a
