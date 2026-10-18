@@ -107,9 +107,13 @@ function SlotCard({ slot }: { slot: TodaySlot }) {
       {mark && <div className="w-1 flex-shrink-0" style={{ background: mark }} />}
       <div className="min-w-0 flex-1">
       <div className="flex items-center justify-between gap-2 px-3.5 pt-3">
+        {/* The time already says the half of the day ("7:00 AM"); "AM" in
+            front of it said it twice (2026-10-18). */}
         <span className="flex items-baseline gap-2">
-          <span className="text-[12px] font-bold tracking-[0.1em] text-text">{slot.period}</span>
-          <span className="text-[12px] text-muted">{slot.time}</span>
+          {!/(AM|PM)$/i.test(slot.time.trim()) && (
+            <span className="text-[12px] font-bold tracking-[0.1em] text-text">{slot.period}</span>
+          )}
+          <span className="text-[12px] font-semibold text-text">{slot.time}</span>
         </span>
         <LineupPill slot={slot} />
       </div>
@@ -119,9 +123,13 @@ function SlotCard({ slot }: { slot: TodaySlot }) {
           <div className="text-[16px] font-semibold leading-snug text-text">
             {s.description || s.label}
           </div>
-          <div className="mt-1 flex">
-            <KindTag label={s.label} color={mark ?? s.color} />
-          </div>
+          {/* The kind only under a workout the coach wrote: with none, the
+              title IS the kind, and "Off" over "Off" said it twice. */}
+          {s.description && (
+            <div className="mt-1 flex">
+              <KindTag label={s.label} color={mark ?? s.color} />
+            </div>
+          )}
           {s.note && <div className="mt-1.5 text-[12px] leading-relaxed text-text">{s.note}</div>}
         </div>
       ) : (

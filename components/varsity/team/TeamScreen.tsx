@@ -530,11 +530,9 @@ export default function TeamScreen({
               please add a roster or something similar"). In the console the
               screen opens on the week's card, and the search bubble that
               followed it gave no clue that what came next was the squad. */}
-          <div className="mt-4 mb-2 flex items-baseline justify-between px-0.5">
+          {/* No head count beside it: nobody acts on "64" (NO-SLOP 5). */}
+          <div className="mt-4 mb-2 px-0.5">
             <h2 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">Roster</h2>
-            <span className="font-mono text-[10px] text-muted">
-              {rowers.length + coxes.length}
-            </span>
           </div>
 
           {/* SEARCH — a fully round bubble. It was a dark `bg-well` hole

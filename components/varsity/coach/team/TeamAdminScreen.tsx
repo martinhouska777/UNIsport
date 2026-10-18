@@ -292,7 +292,6 @@ export default function TeamAdminScreen({
             <Row
               icon={<IconUser size={20} />}
               label="Team"
-              detail={loading ? undefined : String(approved.length)}
               href="/varsity/coach/settings/squad"
             />
           </Group>

@@ -24,6 +24,7 @@
   from data applied via inline style (the rule-1 exception the plan screens use).
 */
 import Medal from "@/components/leaderboards/Medal";
+import { MetalRankBadge } from "@/components/varsity/team/RankBadge";
 import { useMemo, useState } from "react";
 import Sheet from "@/components/varsity/Sheet";
 import ExampleTag from "@/components/varsity/ExampleTag";
@@ -360,6 +361,7 @@ export default function WorkoutBoard({
             session={workout.session}
             ranked={ranked}
             water={water}
+            inConsole={inConsole}
           />
         </div>
       ) : (
@@ -393,8 +395,14 @@ export default function WorkoutBoard({
                    one the app's leaderboards use. Everyone else keeps the
                    number. */
                 row.rank != null && row.rank <= 3 ? (
+                  /* In the console, gold, silver and bronze numbers instead:
+                     coach screens never wear medals (NO-SLOP 23). */
                   <span className="flex w-5 flex-shrink-0 justify-center">
-                    <Medal place={row.rank as 1 | 2 | 3} rank={row.rank} size={20} />
+                    {inConsole ? (
+                      <MetalRankBadge rank={row.rank} />
+                    ) : (
+                      <Medal place={row.rank as 1 | 2 | 3} rank={row.rank} size={20} />
+                    )}
                   </span>
                 ) : (
                   <span className="w-5 flex-shrink-0 text-center text-[12px] font-semibold text-muted">

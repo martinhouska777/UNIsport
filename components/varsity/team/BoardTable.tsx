@@ -21,6 +21,7 @@
   All colours are theme tokens.
 */
 import Medal from "@/components/leaderboards/Medal";
+import { MetalRankBadge } from "@/components/varsity/team/RankBadge";
 import { useUnits } from "@/components/useUnits";
 import { formatWeight } from "@/lib/varsity/units";
 import { secToSplit, secToClock, deriveWatts, wattsPerKg } from "@/lib/varsity/ergMath";
@@ -41,6 +42,7 @@ export default function BoardTable({
   session,
   ranked,
   water = false,
+  inConsole = false,
 }: {
   rows: BoardRow[];
   /* The piece's own result column — TIME on a 2K, METRES on a 30' piece. It
@@ -57,6 +59,8 @@ export default function BoardTable({
      power reading, and the weight is only here to explain the W/kg beside it
      (teamBoard.ts → onTheWater). */
   water?: boolean;
+  /* The Coach Console: gold, silver and bronze numbers, never medals. */
+  inConsole?: boolean;
 }) {
   const { units } = useUnits();
 
@@ -125,7 +129,11 @@ export default function BoardTable({
                            line (owner, 2026-09-13): right-aligned, 4…9 sat to
                            the right of the medals above them. */
                         <span className="flex w-5 flex-shrink-0 justify-center">
-                          <Medal place={row.rank as 1 | 2 | 3} rank={row.rank} size={18} />
+                          {inConsole ? (
+                            <MetalRankBadge rank={row.rank} />
+                          ) : (
+                            <Medal place={row.rank as 1 | 2 | 3} rank={row.rank} size={18} />
+                          )}
                         </span>
                       ) : (
                         <span className="w-5 flex-shrink-0 text-center text-[12px] font-semibold text-muted">

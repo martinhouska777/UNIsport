@@ -256,6 +256,15 @@ function statusOf(
   return { status: iso < todayIso ? "missed" : "upcoming" };
 }
 
+/* The chip on a session card: its clock ("7:00 AM"), which already says the
+   half of the day. The bare "AM" / "PM" only when there is no clock, or the
+   clock doesn't say it. "AM 7:00 AM" said it twice (2026-10-18). */
+function periodChip(period: string, clock: string | undefined): string {
+  const c = clock?.trim();
+  if (!c) return period;
+  return /(AM|PM)$/i.test(c) ? c : `${period} ${c}`;
+}
+
 /*
   A day-strip session, drawn as a full session card.
 
@@ -267,7 +276,7 @@ function statusOf(
 */
 export function daySessionToCard(s: DaySession, iso: string): TodaySession {
   return {
-    period: s.clock ? `${s.time} ${s.clock}` : s.time,
+    period: periodChip(s.time, s.clock),
     // "ALL" is a whole-day entry and belongs to neither half; it can't own a
     // boat, so it falls to AM rather than inventing a third period.
     periodKey: s.time === "PM" ? "PM" : "AM",
@@ -356,7 +365,7 @@ export function buildAthleteHome(
         const desc = s.description.trim();
         return [
           {
-            period: `${p} ${s.time}`,
+            period: periodChip(p, s.time),
             periodKey: p,
             dayKey,
             iso: todayIso,

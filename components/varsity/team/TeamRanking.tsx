@@ -53,7 +53,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Dropdown from "@/components/varsity/profile/Dropdown";
 import DatesSheet, { type Dates } from "@/components/varsity/team/DatesSheet";
-import RankBadge from "@/components/varsity/team/RankBadge";
+import { MetalRankBadge } from "@/components/varsity/team/RankBadge";
 import Segmented from "@/components/ui/Segmented";
 import Avatar from "@/components/messages/Avatar";
 import Sheet from "@/components/varsity/Sheet";
@@ -107,9 +107,9 @@ const EMPTY = "rounded-2xl border border-dashed border-border bg-surface px-4 py
 const noneIn = (key: string, label: string) =>
   key === "month" ? "the last month" : key === "semester" ? "the semester" : label;
 
-/* The three metals: a solid fill for a place in the list, a wash behind a
-   place in a piece. Literal class names, so the stylesheet keeps them. */
-const METAL_FILL: Record<number, string> = { 1: "bg-podium-1", 2: "bg-podium-2", 3: "bg-podium-3" };
+/* The three metals as a wash behind a place in a piece (the solid fill for a
+   place in the list is MetalRankBadge). Literal class names, so the
+   stylesheet keeps them. */
 const METAL_TINT: Record<number, string> = { 1: "bg-podium-1-tint", 2: "bg-podium-2-tint", 3: "bg-podium-3-tint" };
 
 /* A place in the list: 1, 2 and 3 on gold, silver and bronze, the race
@@ -118,15 +118,7 @@ const METAL_TINT: Record<number, string> = { 1: "bg-podium-1-tint", 2: "bg-podiu
    place to hand out (the leaderboards' own rule). */
 function Place({ rank, scored }: { rank: number; scored: boolean }) {
   if (!scored) return <span className="flex h-[22px] w-[22px] items-center justify-center text-[12px] text-muted">–</span>;
-  const fill = METAL_FILL[rank];
-  if (!fill) return <RankBadge rank={rank} />;
-  return (
-    <span
-      className={`flex h-[22px] w-[22px] flex-shrink-0 items-center justify-center rounded-full text-[11px] font-bold tabular-nums text-podium-ink ${fill}`}
-    >
-      {rank}
-    </span>
-  );
+  return <MetalRankBadge rank={rank} />;
 }
 
 /* A person: the Messages avatar and the name. */

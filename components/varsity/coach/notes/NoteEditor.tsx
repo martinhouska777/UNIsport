@@ -149,7 +149,7 @@ export default function NoteEditor({
             <IconCheck size={16} />
             {busy
               ? "Sending…"
-              : text.trim()
+              : text.trim() || !initialNote.trim()
                 ? `Send to ${member.name.split(/\s+/)[0]}`
                 : "Clear the note"}
           </Button>
