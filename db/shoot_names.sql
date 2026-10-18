@@ -13,18 +13,19 @@
 --
 -- Each keeps its old name under data.nameBeforeShoot, and
 -- db/shoot_names_undo.sql puts it back. Safe to run twice: a profile that is
--- no longer called Martin Houska is left alone.
+-- no longer called Martin Houska is left alone (a space after the name counts
+-- as Martin Houska: the first one is saved as "Martin Houska ").
 -- ============================================================================
 
 update public.profiles
 set data = data || jsonb_build_object('name', 'Ethan Hale', 'nameBeforeShoot', data->>'name')
 where id = 'aa51da80-664c-41ff-aca2-3d11d2688d41'
-  and data->>'name' = 'Martin Houska';
+  and trim(data->>'name') = 'Martin Houska';
 
 update public.profiles
 set data = data || jsonb_build_object('name', 'Oliver Grant', 'nameBeforeShoot', data->>'name')
 where id = 'de11a015-0000-4000-8000-000000000015'
-  and data->>'name' = 'Martin Houska';
+  and trim(data->>'name') = 'Martin Houska';
 
 -- What it did: both rows, with the new name and the one kept for the undo.
 select id, data->>'name' as name, data->>'nameBeforeShoot' as before
