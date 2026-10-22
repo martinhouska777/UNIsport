@@ -455,7 +455,7 @@ two-people icon, Why you match as a ticked list, the Gyms rows with crests, the 
 Profile top. The demo account is Lucas Bennett and the first card is Ethan Hale (made-up
 names, NO-SLOP 22). The small labels above the headlines ("01 Match", "Browse", "Why you match")
 are gone (owner, the same day: "smaž to match nahoře … ten malý text") and the lines
-are dashed with an arrowhead. Yale, Princeton and Dartmouth on the colours slide were shot from a local copy with
+end in an arrowhead. Yale, Princeton and Dartmouth on the colours slide were shot from a local copy with
 the Harvard pin off; the live app shows only Harvard. The screens and their card boxes
 are in `mockups/social/screens/launch/`.
 
@@ -554,10 +554,11 @@ The long U only stretches the mark's flat bottom: heads, strokes and curves keep
 proportions (14 px a unit on a 3240 × 1440 row). The rule across all four: **the logo
 crosses from one post into the next; the phones never do.**
 
-**Lines to the screen are thin, black and dashed, ending in an arrowhead** (owner,
-2026-10-22: "udělej tu šipku šipkou na konec a udělej ji přerušovaně tu čáru"): a 2 px
-dashed black line on a hairline of white, ending in a small solid arrowhead whose tip
-touches the spot, never the words. Before that it was a solid line ending in a dot
+**Lines to the screen are thin, black and solid, ending in an arrowhead** (owner,
+2026-10-22: "udělej tu šipku šipkou na konec"): a 2 px solid black line on a hairline of
+white, ending in a small solid arrowhead whose tip touches the spot, never the words. They
+were dashed for a few hours the same day, until "actually do it full lines". Before that
+it was a solid line ending in a dot
 (2026-09-28: "make the arrows black … so that it's not that visible. It's just tied to
 it"), and before that a blue line with an open arrowhead. No line goes to a button that says what it does: slide 3's
 "Message" label came off on 2026-09-28 ("don't say 'message', so you don't need to point

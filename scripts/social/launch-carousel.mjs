@@ -374,11 +374,12 @@ const render = (s) => {
    each line from the label's inner edge to its point: a curve that leaves
    the label level and lands on the point.
 
-   The line is thin, black and DASHED, and ends in a small solid arrowhead
+   The line is thin, black and SOLID, and ends in a small solid arrowhead
    whose tip touches the spot (owner, 2026-10-22: "udělej tu šipku šipkou na
-   konec a udělej ji přerušovaně tu čáru"). Before that it was a solid line
-   ending in a dot (2026-09-28: "make the arrows black, like when you make
-   comments in Word, so that it's not that visible"), and before that blue. A
+   konec", then the same day, after a few hours of it dashed: "actually do
+   it full lines"). Before that it was a solid line ending in a dot
+   (2026-09-28: "make the arrows black, like when you make comments in
+   Word, so that it's not that visible"), and before that blue. A
    hairline of white under it keeps it whole where it crosses the phone's
    black bezel. A label with `rise` stands that much higher than its spot and
    the line comes down onto it, to clear something level with the spot. */
@@ -417,7 +418,7 @@ function layOut(LINE) {
       const dx = tx - sx, dy = ty - sy;
       const c1 = [sx + dx * 0.55, sy], c2 = +l.dataset.rise ? [tx - dx * 0.3, ty - dy * 0.5] : [tx - dx * 0.3, ty];
       /* the head points along the line's last stretch, its tip on the spot;
-         the line stops inside the head so no dash pokes past the tip */
+         the line stops inside the head so nothing pokes past the tip */
       const len = Math.hypot(tx - c2[0], ty - c2[1]) || 1;
       const ux = (tx - c2[0]) / len, uy = (ty - c2[1]) / len;
       const HL = 14, HW = 6;
@@ -428,7 +429,6 @@ function layOut(LINE) {
         const p = document.createElementNS(NS, "path");
         p.setAttribute("d", d); p.setAttribute("fill", "none");
         p.setAttribute("stroke", colour); p.setAttribute("stroke-width", width);
-        p.setAttribute("stroke-dasharray", "9 7");
         svg.appendChild(p);
         const h = document.createElementNS(NS, "path");
         h.setAttribute("d", head); h.setAttribute("fill", colour);

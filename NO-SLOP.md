@@ -150,7 +150,8 @@ own words, the date. Newest at the bottom of each part.
 26. **The app is described by matching first, for every student**, never as a rowing app.
     (2026-09-20.)
 27. **Social images: white ground, the real current screen in light mode, a whole phone held
-    straight, no logo.** Arrows are thin, black and dashed, end in a small arrowhead whose
+    straight, no logo.** Arrows are thin, black and solid (a full line, never dashed: tried
+    for a few hours on 2026-10-22, then "actually do it full lines"), end in a small arrowhead whose
     tip touches the spot, and never point at obvious buttons (Message, Follow). No small
     label above a slide's headline ("01 Match", "Browse", "Why you match"): the slide opens
     on its headline. (2026-09-22: "Don't put the logo there", "these are old ones";
