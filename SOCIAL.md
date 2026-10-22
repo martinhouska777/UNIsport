@@ -465,7 +465,7 @@ log workouts to earn points and memories. and then the leaderboards"):
 
 | Post | Slides | Where |
 |---|---|---|
-| Match, 6 | Match list (Browse, Mentors), a profile (Why you match), both weeks compared, Sessions (Find by time), the plan in the chat, the waitlist | `mockups/social/post-match/` |
+| Match, 5 | Match list (Browse, Mentors), a profile (Why you match, Compare calendars), Sessions (Find by time), the plan in the chat, the waitlist | `mockups/social/post-match/` |
 | Profile, 4 | Profile (Log, Calendar, Memories), the Log sheet (points, Add a photo), Leaderboards (Points, Competition), the waitlist | `mockups/social/post-profile/` |
 
 Both come from `node scripts/social/launch-carousel.mjs post-match` / `post-profile`. Lines

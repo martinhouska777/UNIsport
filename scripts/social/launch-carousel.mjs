@@ -54,8 +54,10 @@
   then message with plan workout. This would be one post. Then second will
   be profile with log workouts, calendar etc., then log workouts to earn
   points and memories, and then the leaderboards"):
-    post-match    Match, a profile, both weeks compared, Sessions, the plan
-                  in the chat, the waitlist
+    post-match    Match, a profile (its calendars a label), Sessions, the
+                  plan in the chat, the waitlist. The both-weeks slide was
+                  cut (2026-10-22: "cut 3 and just describe calendar on
+                  second image with arrow").
     post-profile  Profile, the Log sheet (points and a photo), Leaderboards,
                   the waitlist
   Their lines are the website's, or the app walk's own captions (lib/tour.ts)
@@ -160,11 +162,10 @@ const POST_MATCH = [
   { kind: "feature", img: "person", head: "Find your ideal", em: "training partner.",
     labels: [
       { side: "L", title: "Why you match", text: "Get matched with people based on your interests, hobbies, concentrations, level, language, hometown or much more.", at: [44, 676] },
+      /* the calendars, on the button that opens them (the walk's "when
+         you’re both free"); they had a slide of their own until 2026-10-22 */
+      { side: "R", title: "Compare calendars", text: "See when you’re both free to train.", at: [1119, 1824] },
     ] },
-  /* the walk's caption for the profile (lib/tour.ts, "Why you match");
-     the phone says the rest, so no labels */
-  { kind: "feature", img: "person-calendars", head: "Open a profile to see what you have in common and", em: "when you’re both free.",
-    labels: [] },
   /* Sessions: posting is the headline, Search by time the label */
   { kind: "feature", img: "board", head: "Post your session and", em: "see who wants to join.",
     labels: [

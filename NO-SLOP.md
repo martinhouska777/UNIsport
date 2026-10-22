@@ -157,6 +157,9 @@ own words, the date. Newest at the bottom of each part.
     2026-09-28: "just make the phone straight … realistic"; 2026-10-22: "smaž to match
     nahoře to z té webovky ten malý text a udělej tu šipku šipkou na konec a udělej ji
     přerušovaně tu čáru".)
+    A part of a screen another slide already shows (the calendars on the profile) is a label
+    with an arrow on that slide, never a slide of its own. (2026-10-22: "cut 3 and jsut
+    describe calendar on second image with arrow".)
 28. **Video sound is soft**: instrumental songs only, no aggressive sound effects, none at all
     except the connecting moment. Real downloaded sounds, never synthesised. No speed changes.
     (2026-09-22: "dont want the sounds to be aggressive rather … smooth"; 2026-09-27: "skip all
