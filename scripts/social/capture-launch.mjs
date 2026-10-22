@@ -60,6 +60,40 @@ await page.evaluateOnNewDocument(() => {
   try { window.localStorage.setItem("uniThemeMode", "light"); } catch {}
 });
 
+/* THE CHAT ENDS ON A PLAN ARJUN SENT THAT YOU HAVE JUST ACCEPTED (owner,
+   2026-10-22: "for the messages show something when you just accepted from
+   other guy and say it goes to both of your calendars"). The demo thread has
+   no plan from him that is still ahead, so his line and his plan, accepted,
+   are added to dm_thread's answer in this browser only, before the app reads
+   it. The card is the app's own; nothing is written anywhere. */
+await page.evaluateOnNewDocument(() => {
+  const real = window.fetch.bind(window);
+  window.fetch = async (input, init) => {
+    const res = await real(input, init);
+    const url = String(input instanceof Request ? input.url : input); // Next passes URL objects
+    if (!url.includes("/rpc/dm_thread") || !res.ok) return res;
+    const rows = await res.clone().json();
+    const said = rows.find((r) => r.sender_name === "Arjun Mehta" && r.kind !== "plan");
+    const plan = rows.find((r) => r.kind === "plan");
+    if (!said || !plan) return res;
+    const ago = (min) => new Date(Date.now() - min * 60000).toISOString();
+    const tomorrow4pm = new Date();
+    tomorrow4pm.setDate(tomorrow4pm.getDate() + 1);
+    tomorrow4pm.setHours(16, 0, 0, 0);
+    const add = [
+      { ...said, id: "shoot-said", body: "Chest tomorrow at 4?", created_at: ago(6) },
+      { ...plan, id: "shoot-plan", sender_id: said.sender_id, sender_name: said.sender_name, created_at: ago(5),
+        plan_id: "shoot-plan", plan_activity: "gym", plan_place: "Murr Center",
+        plan_scheduled_at: tomorrow4pm.toISOString(), plan_status: "accepted",
+        plan_proposer_answer: null, plan_recipient_answer: null },
+    ];
+    const headers = new Headers(res.headers);
+    headers.delete("content-length");
+    headers.delete("content-encoding");
+    return new Response(JSON.stringify([...rows, ...add]), { status: res.status, statusText: res.statusText, headers });
+  };
+});
+
 /* the school for the next load (null = the account's own). Set on the app's
    own origin before the load, where the app reads it. */
 let school = null;
@@ -212,6 +246,13 @@ for (const [name, run] of Object.entries(SCREENS)) {
   school = null;
   try { await run(); await shoot(name); }
   catch (e) { console.log("  " + name + ": FAILED — " + e.message); }
+}
+/* a load past the hour swaps the session for a new one and spends the old
+   refresh token, so the file gets what the app left in this browser */
+const kept = (await browser.cookies()).find((c) => c.name === "sb-wavxyrgtaotrhnyepyor-auth-token");
+if (kept && kept.value !== COOKIE) {
+  writeFileSync(path.join(ROOT, "scripts/landing/session-cookie.txt"), kept.value);
+  console.log("  session renewed in session-cookie.txt");
 }
 await browser.close();
 console.log("\nwrote " + OUT);

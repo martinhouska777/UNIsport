@@ -120,11 +120,14 @@ const LAUNCH = [
     labels: [
       { side: "L", title: "Why you match", text: "Get matched with people based on your interests, hobbies, concentrations, level, language, hometown or much more.", at: [44, 676] },
     ] },
+  /* the chat ends on a plan Arjun sent that you have just accepted
+     (capture-launch.mjs), and Both calendars points at its "You're on". No
+     Plan card label: the card says its gym, day and time itself (owner,
+     2026-10-22: "dont put the plan card text that is easy") */
   { kind: "feature", img: "chat", head: "Plan sessions easily", em: "in the chat.",
     labels: [
       { side: "R", title: "Plan", text: "Simply tap the calendar button in the chat and set up a time.", at: [1166, 84] },
-      { side: "L", title: "Plan card", text: "Send the gym, the day and the time.", at: [110, 1190] },
-      { side: "L", title: "Both calendars", text: "Once they accept, it goes into both of your calendars.", at: [110, 1962] },
+      { side: "L", title: "Both calendars", text: "Once you accept, it goes into both of your calendars.", at: [109, 1836] },
     ] },
   { kind: "feature", img: "profile", head: "Track your statistics.", em: "See how you do in the leaderboards.",
     labels: [
@@ -154,8 +157,12 @@ const CLOSER = LAUNCH[LAUNCH.length - 1];
 
 /* THE MATCH POST: the walk through Match, tap by tap */
 const POST_MATCH = [
+  /* Match first, top right, on its People and Sessions switch (owner,
+     2026-10-22: "do match on top right ... browse people or post your
+     session, that is the basic"), then Browse and Mentors */
   { kind: "feature", img: "match", head: "Find training partners.", em: "Make friends.",
     labels: [
+      { side: "R", title: "Match", text: "Browse people or post your session.", at: [1167, 99] },
       { side: "L", title: "Browse", text: "Everyone sorted by how well you fit: interests, concentration, level and hours.", at: [44, 97] },
       { side: "L", title: "Mentors", text: "Get help from an experienced student or an upperclassman in your concentration.", at: [236, 1435] },
     ] },
@@ -165,11 +172,20 @@ const POST_MATCH = [
       /* the calendars, on the button that opens them (the walk's "when
          you’re both free"); they had a slide of their own until 2026-10-22 */
       { side: "R", title: "Compare calendars", text: "See when you’re both free to train.", at: [1119, 1824] },
+      /* Message is labelled here for what it leads to (owner, 2026-10-22:
+         "in second do that like message to set up something") */
+      { side: "R", title: "Message", text: "Set up a session together.", at: [1158, 2259] },
     ] },
-  /* Sessions: posting is the headline, Search by time the label */
+  /* Sessions: posting is the headline; the labels are every feature on the
+     board worth knowing (owner, 2026-10-22: "put all the features you think
+     are worth doing"). Post's line is the walk's; Accept sends the poster a
+     plan with the post's time and gym (BuddyBoard.tsx) */
   { kind: "feature", img: "board", head: "Post your session and", em: "see who wants to join.",
     labels: [
+      { side: "L", title: "Post", text: "Say what you’re training and when.", at: [36, 258] },
+      { side: "L", title: "Filters", text: "Narrow it to your gym, your day or what you want to train.", at: [39, 419] },
       { side: "R", title: "Find by time", text: "Pick when you want to train and see who goes then.", at: [1168, 258] },
+      { side: "R", title: "Accept", text: "Sends them a plan with the time and the gym already on it.", at: [1124, 720] },
     ] },
   LAUNCH.find((s) => s.img === "chat"),
   CLOSER,
@@ -184,9 +200,12 @@ const POST_PROFILE = [
       { side: "R", title: "Memories", text: "Photos from your sessions, saved to come back to.", at: [1164, 1496] },
     ] },
   /* the Log sheet with two muscle groups picked; its words are the walk's
-     ("Log your workouts", "Add a photo") */
+     ("Log your workouts", "Add a photo"). Add exercise opens the exercise
+     library, with your own when it isn't there (ExercisePicker.tsx; owner,
+     2026-10-22: "put there arrow to the add exercise") */
   { kind: "feature", img: "log", head: "Log the session", em: "without leaving the app.",
     labels: [
+      { side: "L", title: "Add exercise", text: "Search the exercises or add your own.", at: [48, 948] },
       { side: "L", title: "Log your workouts", text: "Every workout you log earns points.", at: [48, 2480] },
       { side: "R", title: "Add a photo", text: "Take a picture with your training partner and make memories.", at: [308, 2140] },
     ] },

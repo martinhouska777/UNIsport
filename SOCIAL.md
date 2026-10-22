@@ -465,13 +465,16 @@ log workouts to earn points and memories. and then the leaderboards"):
 
 | Post | Slides | Where |
 |---|---|---|
-| Match, 5 | Match list (Browse, Mentors), a profile (Why you match, Compare calendars), Sessions (Find by time), the plan in the chat, the waitlist | `mockups/social/post-match/` |
-| Profile, 4 | Profile (Log, Calendar, Memories), the Log sheet (points, Add a photo), Leaderboards (Points, Competition), the waitlist | `mockups/social/post-profile/` |
+| Match, 5 | Match list (Match, Browse, Mentors), a profile (Why you match, Compare calendars, Message), Sessions (Post, Filters, Find by time, Accept), the chat ending on a plan from Arjun you just accepted (Plan, Both calendars), the waitlist | `mockups/social/post-match/` |
+| Profile, 4 | Profile (Log, Calendar, Memories), the Log sheet (Add exercise, points, Add a photo), Leaderboards (Points, Competition), the waitlist | `mockups/social/post-profile/` |
 
 Both come from `node scripts/social/launch-carousel.mjs post-match` / `post-profile`. Lines
 are the website's, or the app walk's captions (`lib/tour.ts`) where the site has none.
 There is no Memories screen: the demo account has no photos, so memories are on the Log
-sheet's photo tile and the Profile's Memories row.
+sheet's photo tile and the Profile's Memories row. Arjun's accepted plan at the end of the
+chat ("Chest tomorrow at 4?", Murr Center) is added in the shoot's browser only
+(`capture-launch.mjs`); nothing is written. The launch carousel's chat slide is the same
+slide, so it changed with it.
 
 **The posts:** 01 waitlist ("Get in on day one." + the link) · 02 the headline
 ("Your campus. Your gym. Your people.") · 03 Match · 04 Why you match · 05 Plan in the

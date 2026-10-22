@@ -1,25 +1,9 @@
 [
  {
-  "text": "SEP 27 Gym Sunday at 8:00 AM Malkin Athletic Center SESSION PLAN Verified",
-  "radius": 42,
-  "x": 109,
-  "y": -134,
-  "w": 987,
-  "h": 390
- },
- {
-  "text": "OCT 1 Gym Thursday at 5:00 PM Malkin Athletic Center SESSION PLAN Waiting for Arjun Mehta",
-  "radius": 42,
-  "x": 109,
-  "y": 377,
-  "w": 987,
-  "h": 386
- },
- {
   "text": "Legs tomorrow at 8? Sending you a plan 👇 10:10 AM",
   "radius": 48,
   "x": 42,
-  "y": 884,
+  "y": 56,
   "w": 875,
   "h": 152
  },
@@ -27,7 +11,7 @@
   "text": "OCT 12 Gym Monday at 8:00 AM Malkin Athletic Center SESSION PLAN Did this happen? Yes, we trained No-show",
   "radius": 42,
   "x": 109,
-  "y": 1060,
+  "y": 232,
   "w": 987,
   "h": 510
  },
@@ -35,9 +19,17 @@
   "text": "OCT 20 Gym Tuesday at 5:00 PM SESSION PLAN Waiting for Arjun Mehta Reschedule Cancel",
   "radius": 42,
   "x": 109,
-  "y": 1691,
+  "y": 863,
   "w": 987,
   "h": 414
+ },
+ {
+  "text": "OCT 23 Gym Tomorrow at 4:00 PM Murr Center SESSION PLAN You're on, see you there Add to calendar Cancel",
+  "radius": 42,
+  "x": 109,
+  "y": 1517,
+  "w": 987,
+  "h": 590
  },
  {
   "text": "Gyms Match 5 Messages Profile",

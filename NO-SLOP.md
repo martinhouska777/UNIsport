@@ -152,7 +152,9 @@ own words, the date. Newest at the bottom of each part.
 27. **Social images: white ground, the real current screen in light mode, a whole phone held
     straight, no logo.** Arrows are thin, black and solid (a full line, never dashed: tried
     for a few hours on 2026-10-22, then "actually do it full lines"), end in a small arrowhead whose
-    tip touches the spot, and never point at obvious buttons (Message, Follow). No small
+    tip touches the spot, and never point at what explains itself: Follow, or a plan card's
+    gym, day and time (2026-10-22: "dont put the plan card text that is easy"). Message gets
+    a label only on a profile, for what it leads to: setting up a session (2026-10-22). No small
     label above a slide's headline ("01 Match", "Browse", "Why you match"): the slide opens
     on its headline. (2026-09-22: "Don't put the logo there", "these are old ones";
     2026-09-28: "just make the phone straight … realistic"; 2026-10-22: "smaž to match
@@ -161,6 +163,11 @@ own words, the date. Newest at the bottom of each part.
     A part of a screen another slide already shows (the calendars on the profile) is a label
     with an arrow on that slide, never a slide of its own. (2026-10-22: "cut 3 and jsut
     describe calendar on second image with arrow".)
+    A feature slide labels every feature on it worth knowing, not just one (the Sessions slide:
+    Post, Filters, Find by time, Accept), and the screen shows what a label says: "goes into
+    both of your calendars" points at a plan just accepted, never one still waiting.
+    (2026-10-22: "put all the features you think are worth doing", "show something when you
+    just accepted from other guy and say it goes to both of your calendars".)
 28. **Video sound is soft**: instrumental songs only, no aggressive sound effects, none at all
     except the connecting moment. Real downloaded sounds, never synthesised. No speed changes.
     (2026-09-22: "dont want the sounds to be aggressive rather … smooth"; 2026-09-27: "skip all
