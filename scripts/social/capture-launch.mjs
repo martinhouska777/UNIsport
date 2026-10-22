@@ -13,7 +13,12 @@
   2. OTHER SCHOOLS. The app is white-label; the Settings switcher's choice
      (localStorage "unisport.university") wins over the signed-in address, so
      planting it before a load shows that school's REAL gyms in its colours
-     (the trick scripts/landing/capture-schools.mjs is built on).
+     (the trick scripts/landing/capture-schools.mjs is built on). Since
+     2026-09-20 the live app is pinned to Harvard (LIVE_UNIVERSITY in
+     lib/themes.ts), so the three schools come from a throwaway local copy
+     with the pin set to null (the worktree recipe in
+     scripts/social/varsity-shoot/README.md, step 1, on port 3001):
+       node scripts/social/capture-launch.mjs --base http://localhost:3001 gyms-yale gyms-princeton gyms-dartmouth
 
   Needs a fresh session: node scripts/landing/save-cookie.mjs --fresh (the
   owner logs in to the Chrome window himself). Use it within the hour.
@@ -27,7 +32,9 @@ import path from "node:path";
 
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname).replace(/^\//, ""), "../..");
 const COOKIE = readFileSync(path.join(ROOT, "scripts/landing/session-cookie.txt"), "utf8").trim();
-const BASE = "https://un-isport.vercel.app";
+const at = process.argv.indexOf("--base");
+const BASE = at > 0 ? process.argv[at + 1] : "https://un-isport.vercel.app";
+const HOST = new URL(BASE).hostname;
 const OUT = path.join(ROOT, "mockups/social/screens/launch");
 mkdirSync(OUT, { recursive: true });
 
@@ -46,8 +53,8 @@ await page.setUserAgent(
 await page.setViewport({ width: W, height: H, deviceScaleFactor: DSF, isMobile: true, hasTouch: true });
 await browser.setCookie({
   name: "sb-wavxyrgtaotrhnyepyor-auth-token",
-  value: COOKIE, domain: "un-isport.vercel.app", path: "/",
-  secure: true, sameSite: "Lax", expires: Math.floor(Date.now() / 1000) + 3600,
+  value: COOKIE, domain: HOST, path: "/",
+  secure: BASE.startsWith("https"), sameSite: "Lax", expires: Math.floor(Date.now() / 1000) + 3600,
 });
 await page.evaluateOnNewDocument(() => {
   try { window.localStorage.setItem("uniThemeMode", "light"); } catch {}
@@ -62,6 +69,15 @@ const go = async (p, ms = 3500) => {
   }, school);
   await page.goto(BASE + p, { waitUntil: "networkidle2", timeout: 60000 });
   await wait(ms);
+  /* "Take a quick tour?" comes back for every new school, and its Skip can
+     land on Match: press it, and load the page again if it moved */
+  if (await clickText(/^skip$/)) {
+    await wait(1500);
+    if (!page.url().includes(p.split("?")[0])) {
+      await page.goto(BASE + p, { waitUntil: "networkidle2", timeout: 60000 });
+      await wait(ms);
+    }
+  }
   const url = page.url();
   if (!url.includes(p.split("?")[0])) throw new Error("landed on " + url + " (session gone?)");
 };
@@ -118,13 +134,20 @@ const SCREENS = {
     if (!(await clickText(/arjun mehta/))) throw new Error("no Arjun Mehta thread");
     await wait(2800);
   },
-  /* one week back: the demo account's sessions are in the week before this one */
+  /* back to the newest week with three logged days: the demo account's
+     sessions are weeks old by now (on 22 Oct: 28 Sep to 4 Oct) */
   profile: async () => {
     await go("/profile");
-    await page.evaluate(() => document.querySelector('button[aria-label="Previous week"]')?.click());
-    await wait(2000);
+    for (let i = 0; i < 10; i++) {
+      const logged = await page.evaluate(() => [...document.querySelectorAll("button,div")]
+        .filter((el) => /^[MTWFS]\s+\d{1,2}\s+\S/.test(el.innerText.trim()) && el.innerText.trim().split(/\s+/).length <= 4)
+        .filter((el, _, all) => !all.some((o) => o !== el && el.contains(o))).length);
+      if (logged >= 3) return;
+      await page.evaluate(() => document.querySelector('button[aria-label="Previous week"]')?.click());
+      await wait(1800);
+    }
+    throw new Error("no week with three logged days");
   },
-  leaderboards: async () => { await go("/leaderboards"); },
   "gyms-yale": async () => { school = "yale"; await go("/gyms"); },
   "gyms-princeton": async () => { school = "princeton"; await go("/gyms"); },
   "gyms-dartmouth": async () => { school = "dartmouth"; await go("/gyms"); },

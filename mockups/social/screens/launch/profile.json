@@ -1,0 +1,50 @@
+[
+ {
+  "text": "H LEADERBOARDS 2nd Adams H #5 Campus Log",
+  "radius": 42,
+  "x": 42,
+  "y": 645,
+  "w": 1122,
+  "h": 225
+ },
+ {
+  "text": "Memories",
+  "radius": 42,
+  "x": 42,
+  "y": 1397,
+  "w": 1122,
+  "h": 198
+ },
+ {
+  "text": "Bench Press 100 kg",
+  "radius": 100663200,
+  "x": 42,
+  "y": 2487,
+  "w": 469,
+  "h": 108
+ },
+ {
+  "text": "Squat 140 kg",
+  "radius": 100663200,
+  "x": 529,
+  "y": 2487,
+  "w": 361,
+  "h": 108
+ },
+ {
+  "text": "Deadlift 180 kg",
+  "radius": 100663200,
+  "x": 42,
+  "y": 2613,
+  "w": 397,
+  "h": 108
+ },
+ {
+  "text": "Gyms Match 5 Messages Profile",
+  "radius": 100663200,
+  "x": 48,
+  "y": 2385,
+  "w": 1110,
+  "h": 207
+ }
+]

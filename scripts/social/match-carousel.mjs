@@ -38,9 +38,10 @@ const COPY = {
   door: ["Sport is better", "with friends."],                                  // the Student door, split at its full stop
   doorSub: "Match with people who train like you and share your interests.",
   why: "Why you match",                                                          // the screen's own heading
-  /* four of the six reasons on the Why-you-match screen (person.png), as it
-     writes them; the gym line names a real building, so it stays in the phone */
-  reasons: ["You both lift", "You’re both concentrating in Computer Science", "One of you offers to mentor, the other wants it", "You train at similar times of day"],
+  /* four of the seven reasons on the Why-you-match screen (person.png, reshot
+     22 Oct 2026), as it writes them; the gym line names a real building, so it
+     stays in the phone */
+  reasons: ["You both lift", "You’re both concentrating in Economics", "Shared interests: Film and Photography", "You train at similar times of day"],
   whyKicker: "Why I built it",                                                   // aboutWhy.headline + headlineEm
   quote: ["By creating a match system based on interests, hobbies, concentration, languages, hometowns, experience level and much more that are ",
           "not accessible anywhere else", ", I hope students will find not only somebody to train with, but also make great friendships or establish contacts for the future."],
@@ -54,7 +55,8 @@ const COPY = {
 };
 
 const SCR = {};
-const src = (n) => (SCR[n] ??= screen(n));
+/* the screens as the app is now (scripts/social/capture-launch.mjs) */
+const src = (n) => (SCR[n] ??= screen(n, "mockups/social/screens/launch"));
 
 const css = `
   body { background:#fff; color:${INK}; }
@@ -104,7 +106,7 @@ const SLIDES = [
     spec: { phones: pair("match", "person", 872, 984) } },
 
   { html: `<div class="abs mono" style="left:${M}px;top:94px">${COPY.why}</div>
-      <ul class="abs reasons" style="left:${M}px;top:176px;width:440px">${COPY.reasons.map((r) => `<li>${tick}<span>${r}</span></li>`).join("")}</ul>`,
+      <ul class="abs reasons" style="left:${M}px;top:176px;width:410px">${COPY.reasons.map((r) => `<li>${tick}<span>${r}</span></li>`).join("")}</ul>`,
     /* the whole phone inside the frame, straight, so its own list reads */
     spec: { phones: [{ src: src("person"), frame: "black", pos: cam.at(780, 742), scale: cam.scaleFor(1140) }] } },
 

@@ -449,6 +449,15 @@ The screens are shot signed in (`scripts/landing/save-cookie.mjs --fresh`, then
 | **The MATCHING carousel, 5 slides, 3:4, pure white, the PAIR look** (the owner's pick): what makes the app different — matched on who you are, and told why. 1 "Sport is better with friends." (two phones) · 2 Why you match, the screen's reasons in big type · 3 the owner's own "not accessible anywhere else" sentence from Why I built it · 4 Find training partners. Make friends. · 5 Get in on day one. + the bio link. Site words only (2026-09-27) | `mockups/social/match/` | `scripts/social/match-carousel.mjs` |
 | **The 9-post GRID** (NOT used: no logo on the grid, owner 2026-09-28, §6d) — the mark in 3D across nine posts, "Your campus. / Your gym. / Your people." down the middle column; light and dark. **Upload `post-1` first (bottom right), `post-9` last (top left); after it, post in threes** or drag new posts below it (grid rearranging, worldwide since 8 Jun 2026) | `mockups/social/grid/<light\|dark>/` (`profile.png` = the profile in a phone) | `scripts/social/grid-puzzle.mjs` |
 
+**Reshot 2026-10-22 ("can you reshoot how we have it in the app now"):** the launch and
+Match carousels keep the September look and now show the app as it is: the Match tab's
+two-people icon, Why you match as a ticked list, the Gyms rows with crests, the white
+Profile top. The demo account is Lucas Bennett and the first card is Ethan Hale (made-up
+names, NO-SLOP 22). The chapter labels lost their dots ("01  Match") and the badge its
+dot. Yale, Princeton and Dartmouth on the colours slide were shot from a local copy with
+the Harvard pin off; the live app shows only Harvard. The screens and their card boxes
+are in `mockups/social/screens/launch/`.
+
 **The posts:** 01 waitlist ("Get in on day one." + the link) · 02 the headline
 ("Your campus. Your gym. Your people.") · 03 Match · 04 Why you match · 05 Plan in the
 chat · 06 Leaderboards · 07 Gyms · 08 founder — a template with an empty photo slot for

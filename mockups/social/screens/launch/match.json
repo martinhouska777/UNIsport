@@ -1,0 +1,74 @@
+[
+ {
+  "text": "People Sessions",
+  "radius": 100663200,
+  "x": 36,
+  "y": 36,
+  "w": 1134,
+  "h": 126
+ },
+ {
+  "text": "People",
+  "radius": 100663200,
+  "x": 39,
+  "y": 39,
+  "w": 564,
+  "h": 120
+ },
+ {
+  "text": "EH VARSITY MENTOR Ethan Hale Sophomore in Quincy LiftsRuns Economics Film Photography Music Malkin Athletic Center Art View profile",
+  "radius": 42,
+  "x": 36,
+  "y": 318,
+  "w": 555,
+  "h": 864
+ },
+ {
+  "text": "AB MENTOR Anna Barros First-year in Weld Lifts Economics Cycling Malkin Athletic Center Art Languages Cooking View profile",
+  "radius": 42,
+  "x": 615,
+  "y": 318,
+  "w": 555,
+  "h": 864
+ },
+ {
+  "text": "OG MENTOR Oliver Grant Junior in Quincy LiftsCardio Economics Quincy Startups Finance AI Business View profile",
+  "radius": 42,
+  "x": 36,
+  "y": 1206,
+  "w": 555,
+  "h": 864
+ },
+ {
+  "text": "BW MENTOR Bella Whitfield First-year in Thayer Lifts Film Writing Music Physics Hiking Malkin Athletic Center View profile",
+  "radius": 42,
+  "x": 615,
+  "y": 1206,
+  "w": 555,
+  "h": 864
+ },
+ {
+  "text": "UK MENTOR Ulrich Kowalski Junior in Lowell Lifts Economics Film Lowell Chess Reading Gaming Sustainability View profile",
+  "radius": 42,
+  "x": 36,
+  "y": 2094,
+  "w": 555,
+  "h": 864
+ },
+ {
+  "text": "JB MENTOR Jonas Bergman Sophomore in Currier Lifts Film Photography Government Currier Martial Arts Foodie View profile",
+  "radius": 42,
+  "x": 615,
+  "y": 2094,
+  "w": 555,
+  "h": 864
+ },
+ {
+  "text": "Gyms Match 5 Messages Profile",
+  "radius": 100663200,
+  "x": 48,
+  "y": 2385,
+  "w": 1110,
+  "h": 207
+ }
+]

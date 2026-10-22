@@ -36,11 +36,16 @@
   black bezel, a status-bar row, the app's capture WHOLE, a gesture-bar row.
   No logo, no handle (the owner's rule for posts).
 
-  Screens: mockups/social/screens/light (scripts/social/capture.mjs, signed in
-  as the demo account). Every arrow's target is a point on that capture, in its
-  own pixels (1206 x 2622), read off the PNG with a ruler: a reshoot that moves
-  a button means re-reading its point. Slide 7 uses the site's own per-school
-  frames (public/landing/closers).
+  Screens: mockups/social/screens/launch (scripts/social/capture-launch.mjs,
+  signed in as the demo account; reshot 22 Oct 2026). Every arrow's target is
+  a point on that capture, in its own pixels (1206 x 2622), read off the PNG
+  over a grid and checked against the card boxes in <name>.json: a reshoot
+  that moves a button means re-reading its point. Slide 7 is the same Gyms
+  screen in three schools, shot from a local copy with the Harvard pin off
+  (see capture-launch.mjs).
+
+  No middle dot anywhere (owner, 2026-10-11): the chapter number and its name are
+  two pieces with a gap between them, and the badge has no dot in front.
 
   Run: node scripts/social/launch-carousel.mjs
   Out: mockups/social/launch/01.png … 08.png, and sheet.png with all eight
@@ -76,46 +81,46 @@ const SLIDES = [
      had to shrink to make room, and lost.) */
   { kind: "hero", img: "match", badge: "Free for students", head: "Your campus. Your gym.", em: "Your people.",
     labels: [
-      { side: "L", title: "Match with students.", at: [236, 465] },
-      { side: "L", title: "Find every gym on campus.", at: [146, 2466] },
-      { side: "R", title: "Plan the session in the chat.", at: [744, 2424] },
-      { side: "R", title: "Log it together and participate in your college leaderboards.", at: [1062, 2466] },
+      { side: "L", title: "Match with students.", at: [247, 432] },
+      { side: "L", title: "Find every gym on campus.", at: [140, 2458] },
+      { side: "R", title: "Plan the session in the chat.", at: [772, 2398] },
+      { side: "R", title: "Log it together and participate in your college leaderboards.", at: [1050, 2458] },
     ] },
 
   /* the student story's chapters (`storyBeats`) and their points */
-  { kind: "feature", img: "match", kicker: "01 · Match", head: "Find training partners.", em: "Make friends.",
+  { kind: "feature", img: "match", kicker: ["01", "Match"], head: "Find training partners.", em: "Make friends.",
     labels: [
-      { side: "L", title: "Browse", text: "Everyone sorted by how well you fit: interests, concentration, level and hours.", at: [58, 98] },
-      { side: "R", title: "Buddy Board", text: "Post your session and see who wants to join.", at: [1170, 98] },
-      { side: "L", title: "Mentors", text: "Get help from an experienced student or an upperclassman in your concentration.", at: [66, 920] },
+      { side: "L", title: "Browse", text: "Everyone sorted by how well you fit: interests, concentration, level and hours.", at: [44, 97] },
+      { side: "R", title: "Buddy Board", text: "Post your session and see who wants to join.", at: [1166, 97] },
+      { side: "L", title: "Mentors", text: "Get help from an experienced student or an upperclassman in your concentration.", at: [232, 1435] },
     ] },
-  { kind: "feature", img: "person", kicker: "02 · Why you match", head: "Find your ideal", em: "training partner.",
+  { kind: "feature", img: "person", kicker: ["02", "Why you match"], head: "Find your ideal", em: "training partner.",
     /* no line to the Message button (owner, 2026-09-27: "don't say
        'message', so you don't need to point there"): a button that says
        what it does gets no label */
     labels: [
-      { side: "L", title: "Why you match", text: "Get matched with people based on your interests, hobbies, concentrations, level, language, hometown or much more.", at: [40, 1170] },
+      { side: "L", title: "Why you match", text: "Get matched with people based on your interests, hobbies, concentrations, level, language, hometown or much more.", at: [44, 676] },
     ] },
-  { kind: "feature", img: "chat", kicker: "03 · Plan", head: "Plan sessions easily", em: "in the chat.",
+  { kind: "feature", img: "chat", kicker: ["03", "Plan"], head: "Plan sessions easily", em: "in the chat.",
     labels: [
-      { side: "R", title: "Plan", text: "Simply tap the calendar button in the chat and set up a time.", at: [1172, 82] },
-      { side: "L", title: "Plan card", text: "Send the gym, the day and the time.", at: [106, 1700] },
-      { side: "L", title: "Both calendars", text: "Once they accept, it goes into both of your calendars.", at: [146, 2010] },
+      { side: "R", title: "Plan", text: "Simply tap the calendar button in the chat and set up a time.", at: [1166, 84] },
+      { side: "L", title: "Plan card", text: "Send the gym, the day and the time.", at: [110, 1190] },
+      { side: "L", title: "Both calendars", text: "Once they accept, it goes into both of your calendars.", at: [110, 1962] },
     ] },
-  { kind: "feature", img: "profile", kicker: "04 · Profile", head: "Track your statistics.", em: "See how you do in the leaderboards.",
+  { kind: "feature", img: "profile", kicker: ["04", "Profile"], head: "Track your statistics.", em: "See how you do in the leaderboards.",
     labels: [
-      { side: "L", title: "Leaderboards", text: "See how you, your house and your year rank on campus.", at: [40, 935] },
-      { side: "R", title: "Log", text: "Pick the exercises and record the sets, reps and weight. No separate app needed.", at: [1134, 933] },
-      { side: "L", title: "Calendar", text: "Every session you log marks its day.", at: [40, 1380] },
-      { side: "R", title: "Memories", text: "Photos from your sessions, saved to come back to.", at: [1164, 1635] },
+      { side: "L", title: "Leaderboards", text: "See how you, your house and your year rank on campus.", at: [42, 757] },
+      { side: "R", title: "Log", text: "Pick the exercises and record the sets, reps and weight. No separate app needed.", at: [1132, 758] },
+      { side: "L", title: "Calendar", text: "Every session you log marks its day.", at: [42, 1240] },
+      { side: "R", title: "Memories", text: "Photos from your sessions, saved to come back to.", at: [1164, 1496] },
     ] },
   /* the Gyms chapter's own points (Photos, Ratings, How busy) are not on the
      list screen, so these are the list's own words */
-  { kind: "feature", img: "gyms", kicker: "05 · Gyms", head: "See every gym on your campus", em: "in one place.",
+  { kind: "feature", img: "gyms", kicker: ["05", "Gyms"], head: "See every gym on your campus", em: "in one place.",
     labels: [
-      { side: "L", title: "Main gyms", at: [34, 600] },
-      { side: "R", title: "Favourites", at: [1146, 474] },
-      { side: "L", title: "House gyms", at: [36, 1911] },
+      { side: "L", title: "Main gyms", at: [36, 547] },
+      { side: "R", title: "Favourites", at: [1006, 520] },
+      { side: "L", title: "House gyms", at: [36, 1536] },
     ] },
 
   /* Campus Colours (`closers.campus`) */
@@ -130,15 +135,17 @@ const SLIDES = [
 /* ── the screens ── */
 const b64 = (file) => "data:image/png;base64," + readFileSync(file).toString("base64");
 const SCREEN = {};
+const SHOTS = path.join(ROOT, "mockups/social/screens/launch");
 for (const s of SLIDES) if (s.img && !SCREEN[s.img]) {
-  const file = path.join(ROOT, "mockups/social/screens/light", s.img + ".png");
+  const file = path.join(SHOTS, s.img + ".png");
   const meta = await sharp(file).metadata();
   SCREEN[s.img] = { src: b64(file), w: meta.width, aspect: meta.height / meta.width };
 }
-const FRAME = {}; // school -> the site's gyms frame (900x1480 webp)
+const FRAME = {}; // school -> its Gyms screen (Harvard is the account's own)
 for (const s of SLIDES) if (s.schools) for (const k of s.schools) {
-  const buf = await sharp(path.join(ROOT, "public/landing/closers", `gyms-${k}.webp`)).png().toBuffer();
-  FRAME[k] = { src: "data:image/png;base64," + buf.toString("base64"), aspect: 1480 / 900 };
+  const file = path.join(SHOTS, k === "harvard" ? "gyms.png" : `gyms-${k}.png`);
+  const meta = await sharp(file).metadata();
+  FRAME[k] = { src: b64(file), aspect: meta.height / meta.width };
 }
 
 /* THE DEVICE, the website's (components/landing/Phone.tsx), in px from its
@@ -212,9 +219,9 @@ const css = `
   .mono { font-family:"Geist Mono", ui-monospace, monospace; font-weight:500; text-transform:uppercase; letter-spacing:.14em; }
   .top { position:absolute; left:${M}px; right:${M}px; text-align:center; }
   .kicker { font-size:24px; color:${BLUE}; }
-  .badge { display:inline-flex; align-items:center; gap:14px; font-size:22px; color:${BLUE};
+  .badge { display:inline-flex; align-items:center; font-size:22px; color:${BLUE};
            padding:14px 26px; border-radius:999px; background:${BLUE_DIM}; border:1.5px solid ${BLUE_SOFT}; }
-  .badge::before { content:""; width:10px; height:10px; border-radius:50%; background:${BLUE}; }
+  .kicker .num { margin-right:1.1em; }
   .sub { font-weight:500; line-height:1.4; color:${INK2}; text-wrap:pretty; }
 
   /* the labels: the name, then the site's line; they face the phone */
@@ -262,7 +269,7 @@ const render = (s) => {
 
   if (s.kind === "feature") {
     return `<div class="slide">
-      <div class="top mono kicker" style="top:${M - 6}px">${s.kicker}</div>
+      <div class="top mono kicker" style="top:${M - 6}px"><span class="num">${s.kicker[0]}</span>${s.kicker[1]}</div>
       <div class="top serif fit" style="top:${M + 44}px;font-size:84px">${s.head} ${em(s.em)}</div>
       ${stage(s, 352, H - 58)}
     </div>`;
