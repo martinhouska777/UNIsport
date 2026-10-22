@@ -1,0 +1,114 @@
+[
+ {
+  "text": "H LEADERBOARDS 2nd Adams H #5 Campus Log",
+  "radius": 42,
+  "x": 42,
+  "y": 645,
+  "w": 1122,
+  "h": 225
+ },
+ {
+  "text": "Memories",
+  "radius": 42,
+  "x": 42,
+  "y": 1397,
+  "w": 1122,
+  "h": 198
+ },
+ {
+  "text": "Bench Press 100 kg",
+  "radius": 100663200,
+  "x": 42,
+  "y": 2487,
+  "w": 469,
+  "h": 108
+ },
+ {
+  "text": "Squat 140 kg",
+  "radius": 100663200,
+  "x": 529,
+  "y": 2487,
+  "w": 361,
+  "h": 108
+ },
+ {
+  "text": "Deadlift 180 kg",
+  "radius": 100663200,
+  "x": 42,
+  "y": 2613,
+  "w": 397,
+  "h": 108
+ },
+ {
+  "text": "Gym Running Cardio Other",
+  "radius": 100663200,
+  "x": 48,
+  "y": -9,
+  "w": 1110,
+  "h": 126
+ },
+ {
+  "text": "Gym",
+  "radius": 100663200,
+  "x": 51,
+  "y": -6,
+  "w": 276,
+  "h": 120
+ },
+ {
+  "text": "Chest Back Shoulders Biceps Triceps Legs Glutes Calves Core Forearms",
+  "radius": 42,
+  "x": 48,
+  "y": 263,
+  "w": 1110,
+  "h": 464
+ },
+ {
+  "text": "Shoulders",
+  "radius": 100663200,
+  "x": 573,
+  "y": 302,
+  "w": 279,
+  "h": 113
+ },
+ {
+  "text": "Triceps",
+  "radius": 100663200,
+  "x": 87,
+  "y": 438,
+  "w": 275,
+  "h": 113
+ },
+ {
+  "text": "Add exercise",
+  "radius": 42,
+  "x": 48,
+  "y": 872,
+  "w": 1110,
+  "h": 153
+ },
+ {
+  "text": "Date Gym Partner Solo",
+  "radius": 42,
+  "x": 48,
+  "y": 1097,
+  "w": 1110,
+  "h": 474
+ },
+ {
+  "text": "Save session",
+  "radius": 42,
+  "x": 48,
+  "y": 2406,
+  "w": 1110,
+  "h": 144
+ },
+ {
+  "text": "Gyms Match 5 Messages Profile",
+  "radius": 100663200,
+  "x": 48,
+  "y": 2385,
+  "w": 1110,
+  "h": 207
+ }
+]

@@ -48,8 +48,23 @@
   ... ten malý text"): the chapter slides open on the headline itself. The
   cover's badge has no dot in front (2026-10-11, no "·" anywhere).
 
-  Run: node scripts/social/launch-carousel.mjs
-  Out: mockups/social/launch/01.png … 08.png, and sheet.png with all eight
+  TWO MORE POSTS in the same look (owner, 2026-10-22: "extensive carousel on
+  match first, so the basic screen, then click a profile to compare
+  calendars, then the sessions ... post workout or search by time in one,
+  then message with plan workout. This would be one post. Then second will
+  be profile with log workouts, calendar etc., then log workouts to earn
+  points and memories, and then the leaderboards"):
+    post-match    Match, a profile, both weeks compared, Sessions, the plan
+                  in the chat, the waitlist
+    post-profile  Profile, the Log sheet (points and a photo), Leaderboards,
+                  the waitlist
+  Their lines are the website's, or the app walk's own captions (lib/tour.ts)
+  where the site has none: the calendars, points and the photo. Memories is
+  covered by the Log sheet's photo tile and the Profile's Memories row: the
+  demo account has no photos, and an empty screen is never shown.
+
+  Run: node scripts/social/launch-carousel.mjs [launch|post-match|post-profile]
+  Out: mockups/social/<set>/01.png …, and sheet.png with all of them
 */
 import puppeteer from "puppeteer-core";
 import { readFileSync, mkdirSync } from "node:fs";
@@ -58,7 +73,8 @@ import sharp from "sharp";
 
 const CHROME = "C:/Program Files/Google/Chrome/Application/chrome.exe";
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname).replace(/^\//, ""), "../..");
-const OUT = path.join(ROOT, "mockups/social/launch");
+const SET = process.argv[2] || "launch";
+const OUT = path.join(ROOT, "mockups/social", SET);
 mkdirSync(OUT, { recursive: true });
 
 const W = 1080, H = 1440, M = 84;
@@ -72,7 +88,7 @@ const CRIMSON = "#a51c30";
    `side` which side of the phone the label stands on. Titles are the site's
    feature names (or the app's own word on the button); the lines under them
    are the site's, word for word. */
-const SLIDES = [
+const LAUNCH = [
   /* hero: badge, headline, and `hero.body` cut into its four actions: the
      people for "Match", the Gyms, Messages and Profile tabs for the rest. On
      the right the inner tab's label stands higher, so the two arrows fan into
@@ -132,6 +148,58 @@ const SLIDES = [
   { kind: "closer", head: "Get in on", em: "day one.", sub: "UNIsport opens at Harvard first. Get an email when the app launches.",
     url: "getunisport.com/waitlist" },
 ];
+const CLOSER = LAUNCH[LAUNCH.length - 1];
+
+/* THE MATCH POST: the walk through Match, tap by tap */
+const POST_MATCH = [
+  { kind: "feature", img: "match", head: "Find training partners.", em: "Make friends.",
+    labels: [
+      { side: "L", title: "Browse", text: "Everyone sorted by how well you fit: interests, concentration, level and hours.", at: [44, 97] },
+      { side: "L", title: "Mentors", text: "Get help from an experienced student or an upperclassman in your concentration.", at: [236, 1435] },
+    ] },
+  { kind: "feature", img: "person", head: "Find your ideal", em: "training partner.",
+    labels: [
+      { side: "L", title: "Why you match", text: "Get matched with people based on your interests, hobbies, concentrations, level, language, hometown or much more.", at: [44, 676] },
+    ] },
+  /* the walk's caption for the profile (lib/tour.ts, "Why you match");
+     the phone says the rest, so no labels */
+  { kind: "feature", img: "person-calendars", head: "Open a profile to see what you have in common and", em: "when you’re both free.",
+    labels: [] },
+  /* Sessions: posting is the headline, Search by time the label */
+  { kind: "feature", img: "board", head: "Post your session and", em: "see who wants to join.",
+    labels: [
+      { side: "R", title: "Find by time", text: "Pick when you want to train and see who goes then.", at: [1168, 258] },
+    ] },
+  LAUNCH.find((s) => s.img === "chat"),
+  CLOSER,
+];
+
+/* THE PROFILE POST: your own training, then the points it earns */
+const POST_PROFILE = [
+  { kind: "feature", img: "profile", head: "Track your statistics.", em: "See how you do in the leaderboards.",
+    labels: [
+      { side: "R", title: "Log", text: "Pick the exercises and record the sets, reps and weight. No separate app needed.", at: [1132, 758] },
+      { side: "L", title: "Calendar", text: "Every session you log marks its day.", at: [42, 1240] },
+      { side: "R", title: "Memories", text: "Photos from your sessions, saved to come back to.", at: [1164, 1496] },
+    ] },
+  /* the Log sheet with two muscle groups picked; its words are the walk's
+     ("Log your workouts", "Add a photo") */
+  { kind: "feature", img: "log", head: "Log the session", em: "without leaving the app.",
+    labels: [
+      { side: "L", title: "Log your workouts", text: "Every workout you log earns points.", at: [48, 2480] },
+      { side: "R", title: "Add a photo", text: "Take a picture with your training partner and make memories.", at: [308, 2140] },
+    ] },
+  /* the points line is the walk's (lib/tour.ts, with lib/points.ts's 10, 15, 25) */
+  { kind: "feature", img: "leaderboards", head: "Log it together and participate", em: "in your college leaderboards.",
+    labels: [
+      { side: "R", title: "Points", text: "Your workouts earn points for you and your house: 10 on your own, 15 with a partner, 25 with someone new.", at: [1162, 316] },
+      { side: "L", title: "Competition", text: "See how you, your house and your year rank on campus.", at: [48, 526] },
+    ] },
+  CLOSER,
+];
+
+const SLIDES = { launch: LAUNCH, "post-match": POST_MATCH, "post-profile": POST_PROFILE }[SET];
+if (!SLIDES) throw new Error("no set " + SET);
 
 /* ── the screens ── */
 const b64 = (file) => "data:image/png;base64," + readFileSync(file).toString("base64");
@@ -400,7 +468,7 @@ for (const [i, s] of SLIDES.entries()) {
 }
 await browser.close();
 
-/* all eight in order, for looking at the whole thing at once */
+/* all of them in order, for looking at the whole thing at once */
 const TW = 480, TH = Math.round(TW * H / W), GAP_S = 24, COLS = 4;
 const tiles = await Promise.all(files.map((f) => sharp(f).resize(TW, TH).png().toBuffer()));
 const rows = Math.ceil(files.length / COLS);

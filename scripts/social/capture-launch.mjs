@@ -121,6 +121,22 @@ await go("/gyms", 4000);
 console.log((await clickText(/^(skip|close)$/)) ? "tour dismissed" : "no tour");
 await wait(1200);
 
+/* scroll whatever scrolls the element whose text matches, until that
+   element's top is `y` CSS px from the top of the screen */
+const scrollTo = async (re, y) => {
+  const ok = await page.evaluate((src, y) => {
+    const rx = new RegExp(src, "i");
+    const el = [...document.querySelectorAll("h2,h3,h4,p,div,span,label")].find((e) => rx.test(e.textContent.trim()));
+    if (!el) return false;
+    let box = el.parentElement;
+    while (box && !(box.scrollHeight > box.clientHeight + 4 && /auto|scroll/.test(getComputedStyle(box).overflowY))) box = box.parentElement;
+    (box || document.scrollingElement).scrollBy(0, el.getBoundingClientRect().top - y);
+    return true;
+  }, re.source, y);
+  if (!ok) throw new Error("nothing matches " + re);
+  await wait(900);
+};
+
 const SCREENS = {
   gyms: async () => { await go("/gyms"); },
   match: async () => { await go("/match"); },
@@ -147,6 +163,43 @@ const SCREENS = {
       await wait(1800);
     }
     throw new Error("no week with three logged days");
+  },
+  /* the profile again, scrolled to When you're both free with the two weeks
+     open ("Compare our calendars") */
+  "person-calendars": async () => {
+    await SCREENS.person();
+    if (!(await clickText(/^compare our calendars$/))) throw new Error("no Compare our calendars");
+    await wait(900);
+    await scrollTo(/^when you.re both free$/i, 150);
+  },
+  /* Match, Sessions: the board, with Post and Search by time on it */
+  board: async () => {
+    await go("/match");
+    if (!(await clickText(/^sessions$/))) throw new Error("no Sessions tab");
+    await wait(3000);
+  },
+  /* + Log on the Profile: the sheet as it opens. Nothing is saved. */
+  log: async () => {
+    await SCREENS.profile();
+    if (!(await clickText(/^\+?\s*log$/))) throw new Error("no + Log");
+    await wait(1800);
+    /* two muscle groups picked, and the Photos tile above Save session */
+    for (const m of [/^chest$/, /^triceps$/]) { await clickText(m); await wait(300); }
+    await scrollTo(/^photos$/i, 600);
+  },
+  memories: async () => { await go("/memories"); },
+  /* the honor code is signed in this browser only (localStorage, keyed by
+     the account's id, which the tour's own flag already carries) */
+  leaderboards: async () => {
+    await go("/leaderboards");
+    const signed = await page.evaluate(() => {
+      const k = Object.keys(localStorage).find((x) => /:[0-9a-f]{8}-[0-9a-f-]{27}$/.test(x));
+      if (!k) return false;
+      localStorage.setItem("leagueHonorCode:" + k.split(":").pop(), "1");
+      return true;
+    });
+    if (!signed) throw new Error("no account id in this browser");
+    await go("/leaderboards");
   },
   "gyms-yale": async () => { school = "yale"; await go("/gyms"); },
   "gyms-princeton": async () => { school = "princeton"; await go("/gyms"); },

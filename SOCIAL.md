@@ -459,6 +459,20 @@ are dashed with an arrowhead. Yale, Princeton and Dartmouth on the colours slide
 the Harvard pin off; the live app shows only Harvard. The screens and their card boxes
 are in `mockups/social/screens/launch/`.
 
+**Two posts in the same look, 2026-10-22** (owner: "extensive carousel on match first ...
+this would be one post. then second will be profile with log workouts, calendar etc. then
+log workouts to earn points and memories. and then the leaderboards"):
+
+| Post | Slides | Where |
+|---|---|---|
+| Match, 6 | Match list (Browse, Mentors), a profile (Why you match), both weeks compared, Sessions (Find by time), the plan in the chat, the waitlist | `mockups/social/post-match/` |
+| Profile, 4 | Profile (Log, Calendar, Memories), the Log sheet (points, Add a photo), Leaderboards (Points, Competition), the waitlist | `mockups/social/post-profile/` |
+
+Both come from `node scripts/social/launch-carousel.mjs post-match` / `post-profile`. Lines
+are the website's, or the app walk's captions (`lib/tour.ts`) where the site has none.
+There is no Memories screen: the demo account has no photos, so memories are on the Log
+sheet's photo tile and the Profile's Memories row.
+
 **The posts:** 01 waitlist ("Get in on day one." + the link) · 02 the headline
 ("Your campus. Your gym. Your people.") · 03 Match · 04 Why you match · 05 Plan in the
 chat · 06 Leaderboards · 07 Gyms · 08 founder — a template with an empty photo slot for
