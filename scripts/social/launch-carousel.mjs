@@ -44,8 +44,9 @@
   screen in three schools, shot from a local copy with the Harvard pin off
   (see capture-launch.mjs).
 
-  No middle dot anywhere (owner, 2026-10-11): the chapter number and its name are
-  two pieces with a gap between them, and the badge has no dot in front.
+  No small label above a headline (owner, 2026-10-22: "smaž to match nahoře
+  ... ten malý text"): the chapter slides open on the headline itself. The
+  cover's badge has no dot in front (2026-10-11, no "·" anywhere).
 
   Run: node scripts/social/launch-carousel.mjs
   Out: mockups/social/launch/01.png … 08.png, and sheet.png with all eight
@@ -81,33 +82,33 @@ const SLIDES = [
      had to shrink to make room, and lost.) */
   { kind: "hero", img: "match", badge: "Free for students", head: "Your campus. Your gym.", em: "Your people.",
     labels: [
-      { side: "L", title: "Match with students.", at: [247, 432] },
-      { side: "L", title: "Find every gym on campus.", at: [140, 2458] },
-      { side: "R", title: "Plan the session in the chat.", at: [772, 2398] },
-      { side: "R", title: "Log it together and participate in your college leaderboards.", at: [1050, 2458] },
+      { side: "L", title: "Match with students.", at: [243, 432] },
+      { side: "L", title: "Find every gym on campus.", at: [160, 2458] },
+      { side: "R", title: "Plan the session in the chat.", at: [791, 2424] },
+      { side: "R", title: "Log it together and participate in your college leaderboards.", at: [1036, 2458] },
     ] },
 
   /* the student story's chapters (`storyBeats`) and their points */
-  { kind: "feature", img: "match", kicker: ["01", "Match"], head: "Find training partners.", em: "Make friends.",
+  { kind: "feature", img: "match", head: "Find training partners.", em: "Make friends.",
     labels: [
       { side: "L", title: "Browse", text: "Everyone sorted by how well you fit: interests, concentration, level and hours.", at: [44, 97] },
       { side: "R", title: "Buddy Board", text: "Post your session and see who wants to join.", at: [1166, 97] },
-      { side: "L", title: "Mentors", text: "Get help from an experienced student or an upperclassman in your concentration.", at: [232, 1435] },
+      { side: "L", title: "Mentors", text: "Get help from an experienced student or an upperclassman in your concentration.", at: [236, 1435] },
     ] },
-  { kind: "feature", img: "person", kicker: ["02", "Why you match"], head: "Find your ideal", em: "training partner.",
+  { kind: "feature", img: "person", head: "Find your ideal", em: "training partner.",
     /* no line to the Message button (owner, 2026-09-27: "don't say
        'message', so you don't need to point there"): a button that says
        what it does gets no label */
     labels: [
       { side: "L", title: "Why you match", text: "Get matched with people based on your interests, hobbies, concentrations, level, language, hometown or much more.", at: [44, 676] },
     ] },
-  { kind: "feature", img: "chat", kicker: ["03", "Plan"], head: "Plan sessions easily", em: "in the chat.",
+  { kind: "feature", img: "chat", head: "Plan sessions easily", em: "in the chat.",
     labels: [
       { side: "R", title: "Plan", text: "Simply tap the calendar button in the chat and set up a time.", at: [1166, 84] },
       { side: "L", title: "Plan card", text: "Send the gym, the day and the time.", at: [110, 1190] },
       { side: "L", title: "Both calendars", text: "Once they accept, it goes into both of your calendars.", at: [110, 1962] },
     ] },
-  { kind: "feature", img: "profile", kicker: ["04", "Profile"], head: "Track your statistics.", em: "See how you do in the leaderboards.",
+  { kind: "feature", img: "profile", head: "Track your statistics.", em: "See how you do in the leaderboards.",
     labels: [
       { side: "L", title: "Leaderboards", text: "See how you, your house and your year rank on campus.", at: [42, 757] },
       { side: "R", title: "Log", text: "Pick the exercises and record the sets, reps and weight. No separate app needed.", at: [1132, 758] },
@@ -116,10 +117,10 @@ const SLIDES = [
     ] },
   /* the Gyms chapter's own points (Photos, Ratings, How busy) are not on the
      list screen, so these are the list's own words */
-  { kind: "feature", img: "gyms", kicker: ["05", "Gyms"], head: "See every gym on your campus", em: "in one place.",
+  { kind: "feature", img: "gyms", head: "See every gym on your campus", em: "in one place.",
     labels: [
       { side: "L", title: "Main gyms", at: [36, 547] },
-      { side: "R", title: "Favourites", at: [1006, 520] },
+      { side: "R", title: "Favourites", at: [1020, 536], rise: 70 },
       { side: "L", title: "House gyms", at: [36, 1536] },
     ] },
 
@@ -200,7 +201,7 @@ const stage = (s, ptop, pbottom, lbottom = pbottom) => {
   const labels = s.labels.map((l) => {
     const [tx, ty] = onPhone(pw, pleft, ptop, l.at, scr.w);
     const pos = l.side === "L" ? `right:${W - pleft + GAP}px` : `left:${pleft + pw + GAP}px`;
-    return `<div class="lab ${l.side}${l.text ? "" : " solo"}" data-tx="${tx}" data-ty="${ty}" style="${pos};width:${labW}px">
+    return `<div class="lab ${l.side}${l.text ? "" : " solo"}" data-tx="${tx}" data-ty="${ty}" data-rise="${l.rise || 0}" style="${pos};width:${labW}px">
       <b>${l.title}</b>${l.text ? `<span>${l.text}</span>` : ""}</div>`;
   });
   return `${phone(scr, pw, `left:${pleft}px;top:${ptop}px`)}${labels.join("")}
@@ -218,10 +219,8 @@ const css = `
   .serif em { font-style:italic; }
   .mono { font-family:"Geist Mono", ui-monospace, monospace; font-weight:500; text-transform:uppercase; letter-spacing:.14em; }
   .top { position:absolute; left:${M}px; right:${M}px; text-align:center; }
-  .kicker { font-size:24px; color:${BLUE}; }
   .badge { display:inline-flex; align-items:center; font-size:22px; color:${BLUE};
            padding:14px 26px; border-radius:999px; background:${BLUE_DIM}; border:1.5px solid ${BLUE_SOFT}; }
-  .kicker .num { margin-right:1.1em; }
   .sub { font-weight:500; line-height:1.4; color:${INK2}; text-wrap:pretty; }
 
   /* the labels: the name, then the site's line; they face the phone */
@@ -269,9 +268,8 @@ const render = (s) => {
 
   if (s.kind === "feature") {
     return `<div class="slide">
-      <div class="top mono kicker" style="top:${M - 6}px"><span class="num">${s.kicker[0]}</span>${s.kicker[1]}</div>
-      <div class="top serif fit" style="top:${M + 44}px;font-size:84px">${s.head} ${em(s.em)}</div>
-      ${stage(s, 352, H - 58)}
+      <div class="top serif fit" style="top:${M}px;font-size:84px">${s.head} ${em(s.em)}</div>
+      ${stage(s, 308, H - 58)}
     </div>`;
   }
 
@@ -307,11 +305,14 @@ const render = (s) => {
    each line from the label's inner edge to its point: a curve that leaves
    the label level and lands on the point.
 
-   The line is thin and black, like a comment line in Word, and ends in a
-   small dot on the spot (owner, 2026-09-28: "make the arrows black, like when
-   you make comments in Word, so that it's not that visible. It's just tied to
-   it"). It was a blue line with an open arrowhead before. A hairline of white
-   under it keeps it whole where it crosses the phone's black bezel. */
+   The line is thin, black and DASHED, and ends in a small solid arrowhead
+   whose tip touches the spot (owner, 2026-10-22: "udělej tu šipku šipkou na
+   konec a udělej ji přerušovaně tu čáru"). Before that it was a solid line
+   ending in a dot (2026-09-28: "make the arrows black, like when you make
+   comments in Word, so that it's not that visible"), and before that blue. A
+   hairline of white under it keeps it whole where it crosses the phone's
+   black bezel. A label with `rise` stands that much higher than its spot and
+   the line comes down onto it, to clear something level with the spot. */
 function layOut(LINE) {
   const NS = "http://www.w3.org/2000/svg";
   for (const svg of document.querySelectorAll("svg.arrows")) {
@@ -324,7 +325,7 @@ function layOut(LINE) {
       const gap = 44;
       const title = (l) => l.querySelector("b");
       /* first: level with its point */
-      let tops = mine.map((l) => +l.dataset.ty - title(l).offsetHeight / 2);
+      let tops = mine.map((l) => +l.dataset.ty - +l.dataset.rise - title(l).offsetHeight / 2);
       /* then: no overlaps, top to bottom … */
       for (let i = 0; i < mine.length; i++) {
         const min = i ? tops[i - 1] + mine[i - 1].offsetHeight + gap : ptop - 40;
@@ -344,19 +345,26 @@ function layOut(LINE) {
       const sx = L ? r.right + 14 : r.left - 14;
       const sy = t.top + Math.min(t.height, 36) / 2;
       const tx = +l.dataset.tx, ty = +l.dataset.ty;
-      const dx = tx - sx;
-      const c1 = [sx + dx * 0.55, sy], c2 = [tx - dx * 0.3, ty];
-      const d = `M${sx},${sy} C${c1[0]},${c1[1]} ${c2[0]},${c2[1]} ${tx},${ty}`;
-      for (const [stroke, width, r] of [["#fff", 5, 7.5], [LINE, 2, 5]]) {
+      const dx = tx - sx, dy = ty - sy;
+      const c1 = [sx + dx * 0.55, sy], c2 = +l.dataset.rise ? [tx - dx * 0.3, ty - dy * 0.5] : [tx - dx * 0.3, ty];
+      /* the head points along the line's last stretch, its tip on the spot;
+         the line stops inside the head so no dash pokes past the tip */
+      const len = Math.hypot(tx - c2[0], ty - c2[1]) || 1;
+      const ux = (tx - c2[0]) / len, uy = (ty - c2[1]) / len;
+      const HL = 14, HW = 6;
+      const bx = tx - ux * HL, by = ty - uy * HL;
+      const head = `M${tx},${ty} L${bx - uy * HW},${by + ux * HW} L${bx + uy * HW},${by - ux * HW} Z`;
+      const d = `M${sx},${sy} C${c1[0]},${c1[1]} ${c2[0]},${c2[1]} ${tx - ux * HL * 0.6},${ty - uy * HL * 0.6}`;
+      for (const [colour, width, edge] of [["#fff", 5, 3], [LINE, 2, 0]]) {
         const p = document.createElementNS(NS, "path");
         p.setAttribute("d", d); p.setAttribute("fill", "none");
-        p.setAttribute("stroke", stroke); p.setAttribute("stroke-width", width);
-        p.setAttribute("stroke-linecap", "round");
+        p.setAttribute("stroke", colour); p.setAttribute("stroke-width", width);
+        p.setAttribute("stroke-dasharray", "9 7");
         svg.appendChild(p);
-        /* where it lands: a small dot on the spot */
-        const dot = document.createElementNS(NS, "circle");
-        dot.setAttribute("cx", tx); dot.setAttribute("cy", ty); dot.setAttribute("r", r); dot.setAttribute("fill", stroke);
-        svg.appendChild(dot);
+        const h = document.createElementNS(NS, "path");
+        h.setAttribute("d", head); h.setAttribute("fill", colour);
+        if (edge) { h.setAttribute("stroke", colour); h.setAttribute("stroke-width", edge); h.setAttribute("stroke-linejoin", "round"); }
+        svg.appendChild(h);
       }
     }
   }

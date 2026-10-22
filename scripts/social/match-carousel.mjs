@@ -18,7 +18,9 @@
     4  Find training partners. Make friends. + how Browse sorts (S1)
     5  Get in on day one. + the waitlist's line and the bio link (lib/waitlist.ts)
 
-  No arrows: the words say what the screens show.
+  No arrows: the words say what the screens show. No small label above a
+  headline either (owner, 2026-10-22: "smaž to match nahoře ... ten malý
+  text"): each slide opens on its own words.
 
   Run: node scripts/social/match-carousel.mjs
   Out: mockups/social/match/01..05.png + sheet.png
@@ -34,19 +36,15 @@ const W = 1080, H = 1440, M = 84;
 const INK = "#141618", INK2 = "#4b4f53", BLUE = "#1f32c1", BLUE_DIM = "#e9ecfb";
 
 const COPY = {
-  badge: "Free for students",                                                    // hero.badge
   door: ["Sport is better", "with friends."],                                  // the Student door, split at its full stop
   doorSub: "Match with people who train like you and share your interests.",
-  why: "Why you match",                                                          // the screen's own heading
   /* four of the seven reasons on the Why-you-match screen (person.png, reshot
      22 Oct 2026), as it writes them; the gym line names a real building, so it
      stays in the phone */
   reasons: ["You both lift", "You’re both concentrating in Economics", "Shared interests: Film and Photography", "You train at similar times of day"],
-  whyKicker: "Why I built it",                                                   // aboutWhy.headline + headlineEm
   quote: ["By creating a match system based on interests, hobbies, concentration, languages, hometowns, experience level and much more that are ",
           "not accessible anywhere else", ", I hope students will find not only somebody to train with, but also make great friendships or establish contacts for the future."],
   name: "Martin Houska",                                                         // about.body
-  browse: "Browse",                                                              // S1's point
   s1: ["Find training partners.", "Make friends."],                            // S1 head
   s1Sub: "Browse sorts everyone by how well you fit with them, based on interests, concentration, experience and hours.",
   close: ["Get in on", "day one."],                                            // waitlist.headline
@@ -96,29 +94,26 @@ const pair = (l, r, cy, h, gap = 64) => {
     { src: src(r), frame: "black", pos: cam.at(W / 2 + off, cy), scale: cam.scaleFor(h) },
   ];
 };
-const head = (k, a, b) => `
-  <div class="abs mono c" style="top:84px">${k}</div>
-  <div class="abs serif c" style="top:122px;font-size:88px">${a}<br><em>${b}</em></div>`;
+const head = (a, b) => `
+  <div class="abs serif c" style="top:84px;font-size:88px">${a}<br><em>${b}</em></div>`;
 
 const SLIDES = [
-  { html: head(COPY.badge, ...COPY.door) +
-      `<div class="abs sub c" style="top:306px;font-size:26px">${COPY.doorSub}</div>`,
-    spec: { phones: pair("match", "person", 872, 984) } },
+  { html: head(...COPY.door) +
+      `<div class="abs sub c" style="top:268px;font-size:26px">${COPY.doorSub}</div>`,
+    spec: { phones: pair("match", "person", 853, 1022) } },
 
-  { html: `<div class="abs mono" style="left:${M}px;top:94px">${COPY.why}</div>
-      <ul class="abs reasons" style="left:${M}px;top:176px;width:410px">${COPY.reasons.map((r) => `<li>${tick}<span>${r}</span></li>`).join("")}</ul>`,
+  { html: `<ul class="abs reasons" style="left:${M}px;top:176px;width:410px">${COPY.reasons.map((r) => `<li>${tick}<span>${r}</span></li>`).join("")}</ul>`,
     /* the whole phone inside the frame, straight, so its own list reads */
     spec: { phones: [{ src: src("person"), frame: "black", pos: cam.at(780, 742), scale: cam.scaleFor(1140) }] } },
 
-  { html: `<div class="abs mono" style="left:${M}px;top:94px">${COPY.whyKicker}</div>
-      <div class="abs mark" style="left:${M - 8}px;top:190px">“</div>
-      <div class="abs quote" style="left:${M}px;top:400px;width:${W - 2 * M}px">${COPY.quote[0]}<em>${COPY.quote[1]}</em>${COPY.quote[2]}</div>
+  { html: `<div class="abs mark" style="left:${M - 8}px;top:150px">“</div>
+      <div class="abs quote" style="left:${M}px;top:360px;width:${W - 2 * M}px">${COPY.quote[0]}<em>${COPY.quote[1]}</em>${COPY.quote[2]}</div>
       <div class="abs name" style="left:${M}px;bottom:96px">${COPY.name}</div>`,
     spec: {} },
 
-  { html: head(COPY.browse, ...COPY.s1) +
-      `<div class="abs sub c" style="top:306px;font-size:26px;padding:0 150px">${COPY.s1Sub}</div>`,
-    spec: { phones: pair("match", "chat", 892, 956) } },
+  { html: head(...COPY.s1) +
+      `<div class="abs sub c" style="top:268px;font-size:26px;padding:0 150px">${COPY.s1Sub}</div>`,
+    spec: { phones: pair("match", "chat", 873, 994) } },
 
   { html: `<div class="abs serif c" style="top:470px;font-size:132px">${COPY.close[0]}<br><em>${COPY.close[1]}</em></div>
       <div class="abs sub c" style="top:760px;font-size:30px;padding:0 200px">${COPY.closeSub}</div>

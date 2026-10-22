@@ -453,8 +453,9 @@ The screens are shot signed in (`scripts/landing/save-cookie.mjs --fresh`, then
 Match carousels keep the September look and now show the app as it is: the Match tab's
 two-people icon, Why you match as a ticked list, the Gyms rows with crests, the white
 Profile top. The demo account is Lucas Bennett and the first card is Ethan Hale (made-up
-names, NO-SLOP 22). The chapter labels lost their dots ("01  Match") and the badge its
-dot. Yale, Princeton and Dartmouth on the colours slide were shot from a local copy with
+names, NO-SLOP 22). The small labels above the headlines ("01 Match", "Browse", "Why you match")
+are gone (owner, the same day: "smaž to match nahoře … ten malý text") and the lines
+are dashed with an arrowhead. Yale, Princeton and Dartmouth on the colours slide were shot from a local copy with
 the Harvard pin off; the live app shows only Harvard. The screens and their card boxes
 are in `mockups/social/screens/launch/`.
 
@@ -539,11 +540,12 @@ The long U only stretches the mark's flat bottom: heads, strokes and curves keep
 proportions (14 px a unit on a 3240 × 1440 row). The rule across all four: **the logo
 crosses from one post into the next; the phones never do.**
 
-**Lines to the screen are thin and black, like comment lines in Word** (owner,
-2026-09-28: "make the arrows black … so that it's not that visible. It's just tied to
-it"): a 2 px black line on a hairline of white, ending in a small dot on the spot, never
-on the words. `scripts/social/launch-carousel.mjs` draws them that way now; it was a blue
-line with an open arrowhead. No line goes to a button that says what it does: slide 3's
+**Lines to the screen are thin, black and dashed, ending in an arrowhead** (owner,
+2026-10-22: "udělej tu šipku šipkou na konec a udělej ji přerušovaně tu čáru"): a 2 px
+dashed black line on a hairline of white, ending in a small solid arrowhead whose tip
+touches the spot, never the words. Before that it was a solid line ending in a dot
+(2026-09-28: "make the arrows black … so that it's not that visible. It's just tied to
+it"), and before that a blue line with an open arrowhead. No line goes to a button that says what it does: slide 3's
 "Message" label came off on 2026-09-28 ("don't say 'message', so you don't need to point
 there").
 
