@@ -465,12 +465,12 @@ log workouts to earn points and memories. and then the leaderboards"):
 
 | Post | Slides | Where |
 |---|---|---|
-| Match, 5 | Match list (Match on the shared interests, Somebody to train with, New to the gym or campus?), a profile (What you have in common, Your week and theirs, Say hello), Sessions (Buddy Board, Only what suits you, Your hours, Train with them), the chat ending on a plan from Arjun you just accepted (Invite them, Both calendars), the waitlist | `mockups/social/post-match/` |
-| Profile, 4 | Profile (Your training, Calendar, Look back), the Log sheet (Any exercise, Log your workouts, Make memories), Leaderboards (Your score, How you compare), the waitlist | `mockups/social/post-profile/` |
+| Match, 5 | Match list (Match on the shared interests, "Browse people or post your session." on the switch, Find a mentor), a profile (See why you match, Compare calendars, Send a message), Sessions (Post a session, Filter the sessions, Find by time, Accept), the chat ending on a plan from Arjun you just accepted (Plan a session, Both calendars), the waitlist | `mockups/social/post-match/` |
+| Profile, 4 | Profile (Log a session, Calendar, Build memories), the Log sheet (Add an exercise, Log your workouts, Add a photo), Leaderboards (Score points, Pick the competition), the waitlist | `mockups/social/post-profile/` |
 
-No label is named with the word already on the screen it points at (owner, 2026-10-22: "dont
-name it the same like its on screen use the voice we have on webpage"), so the launch
-carousel's labels were renamed the same way.
+Labels keep the feature's own name with a verb where it reads more naturally (owner,
+2026-10-22: "name is close as it is jsut add verb there"); the launch carousel's got the
+same verbs.
 
 Both come from `node scripts/social/launch-carousel.mjs post-match` / `post-profile`. Lines
 are the website's, or the app walk's captions (`lib/tour.ts`) where the site has none.

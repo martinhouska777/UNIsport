@@ -168,13 +168,14 @@ own words, the date. Newest at the bottom of each part.
     both of your calendars" points at a plan just accepted, never one still waiting.
     (2026-10-22: "put all the features you think are worth doing", "show something when you
     just accepted from other guy and say it goes to both of your calendars".)
-    A label's name is never the word already on the screen it points at: not "Message" on the
-    Message button, "Filters" on Filters or "Memories" on Memories. It says what you get, in the
-    website's voice: "Say hello", "Only what suits you", "Look back". Match is named on the
-    Match slide, on the left, its arrow on the interests a card shares with you.
-    (2026-10-22: "match do it on left adn pointing to intersts etc and on the right name it
-    differently and in second dont name it message its obvious find different name like dont
-    name it the same like its on screen use the voice we have on webpage".)
+    A label keeps the feature's own short name, close to the word on the screen, with a verb
+    added where it reads more naturally: "Send a message" on Message, "Plan a session", "Build
+    memories", "Find a mentor", "See why you match". Never a new name made up to dodge the
+    screen's word ("Say hello", "Look back", "Only what suits you" were tried the same day and
+    reverted). Match is named on the Match slide, on the left, its arrow on the interests a card
+    shares with you. (2026-10-22: "match do it on left adn pointing to intersts etc and on the
+    right name it differently and in second dont name it message its obvious", then "actually
+    name is close as it is jsut add verb there this is bad so back as it was".)
 28. **Video sound is soft**: instrumental songs only, no aggressive sound effects, none at all
     except the connecting moment. Real downloaded sounds, never synthesised. No speed changes.
     (2026-09-22: "dont want the sounds to be aggressive rather … smooth"; 2026-09-27: "skip all
