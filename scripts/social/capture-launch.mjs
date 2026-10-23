@@ -94,6 +94,22 @@ await page.evaluateOnNewDocument(() => {
   };
 });
 
+/* THE PROFILE YOU OPEN FROM MATCH HAS A HISTORY. Ethan Hale is a made-up
+   person (db/shoot_names.sql) with nothing logged, so his row read 0 Workouts,
+   0 Following, 0 Partners on the "Find your ideal training partner" slide
+   (NO-SLOP 22: demo data looks real). On somebody else's profile the three
+   counts are answered in this browser only; nothing is written. */
+await page.evaluateOnNewDocument(() => {
+  const real = window.fetch.bind(window);
+  const FAKE = { workout_count: 52, partner_count: 8, follow_counts: [{ followers: 41, following: 37 }] };
+  window.fetch = async (input, init) => {
+    const url = String(input instanceof Request ? input.url : input);
+    const rpc = Object.keys(FAKE).find((k) => url.includes("/rpc/" + k));
+    if (!rpc || !location.pathname.startsWith("/people/")) return real(input, init);
+    return new Response(JSON.stringify(FAKE[rpc]), { status: 200, headers: { "content-type": "application/json" } });
+  };
+});
+
 /* the school for the next load (null = the account's own). Set on the app's
    own origin before the load, where the app reads it. */
 let school = null;

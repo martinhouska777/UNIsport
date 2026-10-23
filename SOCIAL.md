@@ -480,7 +480,9 @@ There is no Memories screen: the demo account has no photos, so memories are on 
 sheet's photo tile and the Profile's Memories row. Arjun's accepted plan at the end of the
 chat ("Chest tomorrow at 4?", Murr Center) is added in the shoot's browser only
 (`capture-launch.mjs`); nothing is written. The launch carousel's chat slide is the same
-slide, so it changed with it.
+slide, so it changed with it. Ethan Hale's counts on his profile (52 workouts, 37 following,
+8 partners) are added the same way since 2026-10-23: he is made up, has nothing logged, and
+showed three zeros on "Find your ideal training partner" in both carousels.
 
 **The posts:** 01 waitlist ("Get in on day one." + the link) · 02 the headline
 ("Your campus. Your gym. Your people.") · 03 Match · 04 Why you match · 05 Plan in the
