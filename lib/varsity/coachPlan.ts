@@ -118,6 +118,25 @@ export const logFields: Partial<Record<LogCategory, LogFields>> = {
 export const logFieldsFor = (category: string | null | undefined): LogFields =>
   logFields[(category ?? "other") as LogCategory] ?? (logFields.other as LogFields);
 
+/*
+  WHAT A FLEX DAY CAN BE: the chips under "What did you do?" in Log session.
+  SMALL BOATS is a row in a single, double or pair on a flex day (owner,
+  2026-10-23, after the captain's 15k in a pair could only go in as "Other",
+  where metres never count as rowing). It is saved as WATER, so its metres count
+  with the rest of the rowing and the calendar shows its km, and its photo is
+  the stroke's SpeedCoach.
+    label  the chip's word, when it isn't the category's own
+    photo  the photo row's heading, when it isn't "Photo"
+*/
+export type FlexOption = { category: LogCategory; label?: string; photo?: string };
+export const flexOptions: FlexOption[] = [
+  { category: "run" },
+  { category: "bike" },
+  { category: "erg" },
+  { category: "water", label: "Small boats", photo: "SpeedCoach" },
+  { category: "other" },
+];
+
 /* ── Intensities (Water + Erg only) ── */
 export type Intensity = "UT2" | "UT1" | "hard";
 export const intensities: Intensity[] = ["UT2", "UT1", "hard"];
@@ -335,8 +354,8 @@ export function logLabelParts(
 
       "Flex" is the coach saying "train how you like" — it is a permission, not
       a kind of training, and the athlete answers it in the log ("What did you
-      do?" → Run / Bike / Erg / Other). Reading the PLAN first meant the answer
-      was thrown away: a 40-minute bike on a flex day showed up in the calendar
+      do?" → Run / Bike / Erg / Small boats / Other; Small boats is Water).
+      Reading the PLAN first meant the answer was thrown away: a 40-minute bike on a flex day showed up in the calendar
       as "Flex", the one word that says nothing. So on a flex day the log's own
       category wins, and only a log with nothing said falls back to "Flex".
     */

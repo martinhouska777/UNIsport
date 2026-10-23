@@ -29,7 +29,9 @@ import {
   sessionLabel,
   logCategoryMeta,
   logFieldsFor,
+  flexOptions,
   toISO,
+  type FlexOption,
   type Session,
   type Period,
 } from "@/lib/varsity/coachPlan";
@@ -84,14 +86,17 @@ import DetailRow, { detailRowInput } from "@/components/ui/DetailRow";
 /* category → label + content color for the dot. Lives in the data layer
    (lib/varsity/coachPlan.ts) so no color literal sits in this component. */
 const catMeta: Record<string, { label: string; color: string }> = logCategoryMeta;
-const extraCategories = ["erg", "water", "weights", "run", "bike", "other"] as const;
+const extraCategories: FlexOption[] = (["erg", "water", "weights", "run", "bike", "other"] as const).map(
+  (category) => ({ category }),
+);
 /* A FLEX day is the coach saying "train how you like", so the plan itself cannot
    say what the session was — the athlete does, and that answer is what the
-   calendar counts. Which is why a logged flex day never stays category "flex". */
-/* Erg belongs here too: "train how you like" is very often answered with an
+   calendar counts. Which is why a logged flex day never stays category "flex".
+   Erg belongs there too: "train how you like" is very often answered with an
    easy paddle on the machine, and leaving it out meant that session had to be
-   filed as "Other" and lost its name in the calendar. */
-const flexCategories = ["run", "bike", "erg", "other"] as const;
+   filed as "Other" and lost its name in the calendar. The list, with Small
+   boats, is data (coachPlan → flexOptions). */
+const flexCategories = flexOptions;
 /* One line for a saved log: what was done, never how it felt (loggedLine.ts). */
 const summaryOf = loggedLine;
 
@@ -133,7 +138,10 @@ function LogEditor({
   const vTheme = useVarsityTheme();
   const existing = state.existing;
   // For a planned session with no log yet, pre-fill minutes/metres from the plan.
-  const est = state.mode === "plan" && !existing ? estimateForSession(state.session) : null;
+  // Not on a flex day: its words list choices ("60' erg, 75' bike, 50' run"),
+  // and adding them up opened the captain's pair row at 185 min and 48,250 m.
+  const isFlex = state.mode === "plan" && state.session.category === "flex";
+  const est = state.mode === "plan" && !existing && !isFlex ? estimateForSession(state.session) : null;
   const numStr = (n: number | null | undefined) => (n != null ? String(n) : "");
   // What the form would open with from the plan / the saved log alone.
   const defaults = {
@@ -142,7 +150,7 @@ function LogEditor({
       existing?.category ??
       (state.mode === "plan"
         ? state.session.category === "flex"
-          ? flexCategories[0]
+          ? flexCategories[0].category
           : state.session.category
         : "erg"),
     minutes: numStr(existing?.minutes ?? est?.minutes),
@@ -177,6 +185,8 @@ function LogEditor({
      Minutes and Metres, weights is Minutes, a bike's split is per 1000 m, a
      run's is a pace per km (owner, 2026-10-11). */
   const fields = logFieldsFor(category);
+  // The flex chip picked, for its own photo heading (Small boats: SpeedCoach).
+  const flexPick = isFlex ? flexCategories.find((o) => o.category === category) : undefined;
   const [minutes, setMinutes] = useState<string>(start.minutes);
   const [metres, setMetres] = useState<string>(start.metres);
   const [split, setSplit] = useState<string>(start.split);
@@ -373,9 +383,9 @@ function LogEditor({
 
   // The type chips. An extra log picks from everything; a flex day picks from
   // what a flex day can be. The dot is the colour the calendar draws it in.
-  const typeGrid = (options: readonly string[]) => (
+  const typeGrid = (options: readonly FlexOption[]) => (
     <div className="flex flex-wrap gap-2 rounded-2xl border border-border bg-surface p-3">
-      {options.map((c) => (
+      {options.map(({ category: c, label }) => (
         <button
           key={c}
           type="button"
@@ -386,7 +396,7 @@ function LogEditor({
           )}`}
         >
           <Dot color={catMeta[c].color} />
-          {catMeta[c].label}
+          {label ?? catMeta[c].label}
         </button>
       ))}
     </div>
@@ -709,7 +719,7 @@ function LogEditor({
               there is one, then the picture with an × to take it off. */}
           {fields.photo === "add" && (
             <>
-              <div className={labelCls}>Photo</div>
+              <div className={labelCls}>{flexPick?.photo ?? "Photo"}</div>
               <input
                 ref={photoRef}
                 type="file"
