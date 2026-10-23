@@ -164,10 +164,17 @@ own words, the date. Newest at the bottom of each part.
     with an arrow on that slide, never a slide of its own. (2026-10-22: "cut 3 and jsut
     describe calendar on second image with arrow".)
     A feature slide labels every feature on it worth knowing, not just one (the Sessions slide:
-    Post, Filters, Find by time, Accept), and the screen shows what a label says: "goes into
+    the post button, Filters, Search by time, Accept), and the screen shows what a label says: "goes into
     both of your calendars" points at a plan just accepted, never one still waiting.
     (2026-10-22: "put all the features you think are worth doing", "show something when you
     just accepted from other guy and say it goes to both of your calendars".)
+    A label's name is never the word already on the screen it points at: not "Message" on the
+    Message button, "Filters" on Filters or "Memories" on Memories. It says what you get, in the
+    website's voice: "Say hello", "Only what suits you", "Look back". Match is named on the
+    Match slide, on the left, its arrow on the interests a card shares with you.
+    (2026-10-22: "match do it on left adn pointing to intersts etc and on the right name it
+    differently and in second dont name it message its obvious find different name like dont
+    name it the same like its on screen use the voice we have on webpage".)
 28. **Video sound is soft**: instrumental songs only, no aggressive sound effects, none at all
     except the connecting moment. Real downloaded sounds, never synthesised. No speed changes.
     (2026-09-22: "dont want the sounds to be aggressive rather … smooth"; 2026-09-27: "skip all

@@ -18,8 +18,8 @@
 
   EVERY WORD IS THE WEBSITE'S (lib/landingCopy.ts, lib/waitlist.ts), the rule
   since 2026-09-22 ("use the tone from my website so it's not generic AI
-  slop"), or the app's own label on the thing the arrow points at (Log,
-  Main gyms, House gyms, Favourites). Left out on purpose, because
+  slop"); a label's name is never the word on the thing it points at
+  (2026-10-22). Left out on purpose, because
   the app does not do them today: "How busy" (cut 2026-09-22), "Connect it to
   Google or Apple Calendar" (not built), and "students verified by their .edu
   email" (sign-up asks for a .edu address but does not check it yet:
@@ -87,9 +87,11 @@ const BLUE_DIM = "rgba(31,50,193,.08)", BLUE_SOFT = "rgba(31,50,193,.2)";
 const CRIMSON = "#a51c30";
 
 /* THE LABELS. `at` is the point the arrow lands on, in the capture's pixels,
-   `side` which side of the phone the label stands on. Titles are the site's
-   feature names (or the app's own word on the button); the lines under them
-   are the site's, word for word. */
+   `side` which side of the phone the label stands on. A title is never the
+   word already on the screen: it says what you get, in the site's voice
+   (owner, 2026-10-22: "dont name it message its obvious ... dont name it the
+   same like its on screen use the voice we have on webpage"). The lines
+   under them are the site's, word for word. */
 const LAUNCH = [
   /* hero: badge, headline, and `hero.body` cut into its four actions: the
      people for "Match", the Gyms, Messages and Profile tabs for the rest. On
@@ -111,14 +113,14 @@ const LAUNCH = [
     labels: [
       { side: "L", title: "Browse", text: "Everyone sorted by how well you fit: interests, concentration, level and hours.", at: [44, 97] },
       { side: "R", title: "Buddy Board", text: "Post your session and see who wants to join.", at: [1166, 97] },
-      { side: "L", title: "Mentors", text: "Get help from an experienced student or an upperclassman in your concentration.", at: [236, 1435] },
+      { side: "L", title: "New to the gym or campus?", text: "Get help from an experienced student or an upperclassman in your concentration.", at: [236, 1435] },
     ] },
   { kind: "feature", img: "person", head: "Find your ideal", em: "training partner.",
     /* no line to the Message button (owner, 2026-09-27: "don't say
        'message', so you don't need to point there"): a button that says
        what it does gets no label */
     labels: [
-      { side: "L", title: "Why you match", text: "Get matched with people based on your interests, hobbies, concentrations, level, language, hometown or much more.", at: [44, 676] },
+      { side: "L", title: "What you have in common", text: "Get matched with people based on your interests, hobbies, concentrations, level, language, hometown or much more.", at: [44, 676] },
     ] },
   /* the chat ends on a plan Arjun sent that you have just accepted
      (capture-launch.mjs), and Both calendars points at its "You're on". No
@@ -126,23 +128,24 @@ const LAUNCH = [
      2026-10-22: "dont put the plan card text that is easy") */
   { kind: "feature", img: "chat", head: "Plan sessions easily", em: "in the chat.",
     labels: [
-      { side: "R", title: "Plan", text: "Simply tap the calendar button in the chat and set up a time.", at: [1166, 84] },
+      { side: "R", title: "Invite them", text: "Simply tap the calendar button in the chat and set up a time.", at: [1166, 84] },
       { side: "L", title: "Both calendars", text: "Once you accept, it goes into both of your calendars.", at: [109, 1836] },
     ] },
   { kind: "feature", img: "profile", head: "Track your statistics.", em: "See how you do in the leaderboards.",
     labels: [
-      { side: "L", title: "Leaderboards", text: "See how you, your house and your year rank on campus.", at: [42, 757] },
-      { side: "R", title: "Log", text: "Pick the exercises and record the sets, reps and weight. No separate app needed.", at: [1132, 758] },
+      { side: "L", title: "How you compare", text: "See how you, your house and your year rank on campus.", at: [42, 757] },
+      { side: "R", title: "Your training", text: "Pick the exercises and record the sets, reps and weight. No separate app needed.", at: [1132, 758] },
       { side: "L", title: "Calendar", text: "Every session you log marks its day.", at: [42, 1240] },
-      { side: "R", title: "Memories", text: "Photos from your sessions, saved to come back to.", at: [1164, 1496] },
+      { side: "R", title: "Look back", text: "Photos from your sessions, saved to come back to.", at: [1164, 1496] },
     ] },
-  /* the Gyms chapter's own points (Photos, Ratings, How busy) are not on the
-     list screen, so these are the list's own words */
+  /* the list's rows, named for what they show (the site's "opening hours,
+     rating and location of every gym, including the house gyms"), never
+     the list's own headings */
   { kind: "feature", img: "gyms", head: "See every gym on your campus", em: "in one place.",
     labels: [
-      { side: "L", title: "Main gyms", at: [36, 547] },
-      { side: "R", title: "Favourites", at: [1020, 536], rise: 70 },
-      { side: "L", title: "House gyms", at: [36, 1536] },
+      { side: "L", title: "Opening hours and ratings", at: [36, 547] },
+      { side: "R", title: "Save your gyms", at: [1020, 536], rise: 70 },
+      { side: "L", title: "Every house too", at: [36, 1536] },
     ] },
 
   /* Campus Colours (`closers.campus`) */
@@ -157,24 +160,26 @@ const CLOSER = LAUNCH[LAUNCH.length - 1];
 
 /* THE MATCH POST: the walk through Match, tap by tap */
 const POST_MATCH = [
-  /* Match first, top right, on its People and Sessions switch (owner,
-     2026-10-22: "do match on top right ... browse people or post your
-     session, that is the basic"), then Browse and Mentors */
+  /* Match on the left, its arrow on the interests you share with Ethan
+     (owner, 2026-10-22: "match do it on left and pointing to interests
+     etc"); his People and Sessions switch keeps its line on the right,
+     under a name that isn't Match ("on the right name it differently") */
   { kind: "feature", img: "match", head: "Find training partners.", em: "Make friends.",
     labels: [
-      { side: "R", title: "Match", text: "Browse people or post your session.", at: [1167, 99] },
-      { side: "L", title: "Browse", text: "Everyone sorted by how well you fit: interests, concentration, level and hours.", at: [44, 97] },
-      { side: "L", title: "Mentors", text: "Get help from an experienced student or an upperclassman in your concentration.", at: [236, 1435] },
+      { side: "L", title: "Match", text: "Everyone sorted by how well you fit: interests, concentration, level and hours.", at: [68, 854] },
+      { side: "R", title: "Somebody to train with", text: "Browse people or post your session.", at: [1167, 99] },
+      { side: "L", title: "New to the gym or campus?", text: "Get help from an experienced student or an upperclassman in your concentration.", at: [236, 1435] },
     ] },
   { kind: "feature", img: "person", head: "Find your ideal", em: "training partner.",
     labels: [
-      { side: "L", title: "Why you match", text: "Get matched with people based on your interests, hobbies, concentrations, level, language, hometown or much more.", at: [44, 676] },
+      { side: "L", title: "What you have in common", text: "Get matched with people based on your interests, hobbies, concentrations, level, language, hometown or much more.", at: [44, 676] },
       /* the calendars, on the button that opens them (the walk's "when
          you’re both free"); they had a slide of their own until 2026-10-22 */
-      { side: "R", title: "Compare calendars", text: "See when you’re both free to train.", at: [1119, 1824] },
-      /* Message is labelled here for what it leads to (owner, 2026-10-22:
-         "in second do that like message to set up something") */
-      { side: "R", title: "Message", text: "Set up a session together.", at: [1158, 2259] },
+      { side: "R", title: "Your week and theirs", text: "See when you’re both free to train.", at: [1119, 1824] },
+      /* the Message button, labelled for what it leads to (owner,
+         2026-10-22: "in second do that like message to set up something",
+         then "dont name it message its obvious") */
+      { side: "R", title: "Say hello", text: "Set up a session together.", at: [1158, 2259] },
     ] },
   /* Sessions: posting is the headline; the labels are every feature on the
      board worth knowing (owner, 2026-10-22: "put all the features you think
@@ -182,10 +187,10 @@ const POST_MATCH = [
      plan with the post's time and gym (BuddyBoard.tsx) */
   { kind: "feature", img: "board", head: "Post your session and", em: "see who wants to join.",
     labels: [
-      { side: "L", title: "Post", text: "Say what you’re training and when.", at: [36, 258] },
-      { side: "L", title: "Filters", text: "Narrow it to your gym, your day or what you want to train.", at: [39, 419] },
-      { side: "R", title: "Find by time", text: "Pick when you want to train and see who goes then.", at: [1168, 258] },
-      { side: "R", title: "Accept", text: "Sends them a plan with the time and the gym already on it.", at: [1124, 720] },
+      { side: "L", title: "Buddy Board", text: "Say what you’re training and when.", at: [36, 258] },
+      { side: "L", title: "Only what suits you", text: "Narrow it to your gym, your day or what you want to train.", at: [39, 419] },
+      { side: "R", title: "Your hours", text: "Pick when you want to train and see who goes then.", at: [1168, 258] },
+      { side: "R", title: "Train with them", text: "Sends a plan with the time and the gym already on it.", at: [1124, 720] },
     ] },
   LAUNCH.find((s) => s.img === "chat"),
   CLOSER,
@@ -195,25 +200,26 @@ const POST_MATCH = [
 const POST_PROFILE = [
   { kind: "feature", img: "profile", head: "Track your statistics.", em: "See how you do in the leaderboards.",
     labels: [
-      { side: "R", title: "Log", text: "Pick the exercises and record the sets, reps and weight. No separate app needed.", at: [1132, 758] },
+      { side: "R", title: "Your training", text: "Pick the exercises and record the sets, reps and weight. No separate app needed.", at: [1132, 758] },
       { side: "L", title: "Calendar", text: "Every session you log marks its day.", at: [42, 1240] },
-      { side: "R", title: "Memories", text: "Photos from your sessions, saved to come back to.", at: [1164, 1496] },
+      { side: "R", title: "Look back", text: "Photos from your sessions, saved to come back to.", at: [1164, 1496] },
     ] },
   /* the Log sheet with two muscle groups picked; its words are the walk's
-     ("Log your workouts", "Add a photo"). Add exercise opens the exercise
-     library, with your own when it isn't there (ExercisePicker.tsx; owner,
-     2026-10-22: "put there arrow to the add exercise") */
+     and the site's ("Log your workouts", "Take a picture with your training
+     partner"). Add exercise opens the exercise library, with your own when
+     it isn't there (ExercisePicker.tsx; owner, 2026-10-22: "put there arrow
+     to the add exercise") */
   { kind: "feature", img: "log", head: "Log the session", em: "without leaving the app.",
     labels: [
-      { side: "L", title: "Add exercise", text: "Search the exercises or add your own.", at: [48, 948] },
+      { side: "L", title: "Any exercise", text: "Search the library or add your own.", at: [48, 948] },
       { side: "L", title: "Log your workouts", text: "Every workout you log earns points.", at: [48, 2480] },
-      { side: "R", title: "Add a photo", text: "Take a picture with your training partner and make memories.", at: [308, 2140] },
+      { side: "R", title: "Make memories", text: "Take a picture with your training partner.", at: [308, 2140] },
     ] },
   /* the points line is the walk's (lib/tour.ts, with lib/points.ts's 10, 15, 25) */
   { kind: "feature", img: "leaderboards", head: "Log it together and participate", em: "in your college leaderboards.",
     labels: [
-      { side: "R", title: "Points", text: "Your workouts earn points for you and your house: 10 on your own, 15 with a partner, 25 with someone new.", at: [1162, 316] },
-      { side: "L", title: "Competition", text: "See how you, your house and your year rank on campus.", at: [48, 526] },
+      { side: "R", title: "Your score", text: "Your workouts earn points for you and your house: 10 on your own, 15 with a partner, 25 with someone new.", at: [1162, 316] },
+      { side: "L", title: "How you compare", text: "See how you, your house and your year rank on campus.", at: [48, 526] },
     ] },
   CLOSER,
 ];
