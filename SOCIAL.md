@@ -465,12 +465,14 @@ log workouts to earn points and memories. and then the leaderboards"):
 
 | Post | Slides | Where |
 |---|---|---|
-| Match, 5 | Match list (Match on the shared interests, "Browse people or post your session." on the switch, Find a mentor), a profile (See why you match, Compare calendars, Send a message), Sessions (Post a session, Filter the sessions, Find by time, Accept), the chat ending on a plan from Arjun you just accepted (Plan a session, Both calendars), the waitlist | `mockups/social/post-match/` |
+| Match, 5 | Match list (Filter people, Find people on the shared interests, "Browse people or post your session." on the switch, Find a mentor), a profile (See why you match, Compare calendars, Send a message), Sessions (Post a session, Filter the sessions, Find by time, Accept), the chat ending on a plan from Arjun you just accepted (Plan a session, and "Once you accept the session, it goes into both of your calendars." alone), the waitlist | `mockups/social/post-match/` |
 | Profile, 4 | Profile (Log a session, Calendar, Build memories), the Log sheet (Add an exercise, Log your workouts, Add a photo), Leaderboards (Score points, Pick the competition), the waitlist | `mockups/social/post-profile/` |
 
 Labels keep the feature's own name with a verb where it reads more naturally (owner,
 2026-10-22: "name is close as it is jsut add verb there"); the launch carousel's got the
-same verbs.
+same verbs. On 2026-10-23 the owner dictated the Match post's lines himself (Find people, the
+mentors, Send a message, Find by time, the calendars sentence, a Filters label); the launch
+carousel's Browse and Find a mentor share the new lines.
 
 Both come from `node scripts/social/launch-carousel.mjs post-match` / `post-profile`. Lines
 are the website's, or the app walk's captions (`lib/tour.ts`) where the site has none.

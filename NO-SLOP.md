@@ -166,7 +166,8 @@ own words, the date. Newest at the bottom of each part.
     with an arrow on that slide, never a slide of its own. (2026-10-22: "cut 3 and jsut
     describe calendar on second image with arrow".)
     A feature slide labels every feature on it worth knowing, not just one (the Sessions slide:
-    the post button, Filters, Search by time, Accept), and the screen shows what a label says: "goes into
+    the post button, Filters, Search by time, Accept; the Match slide: Filters too, 2026-10-23:
+    "for the first card, also do a filter"), and the screen shows what a label says: "goes into
     both of your calendars" points at a plan just accepted, never one still waiting.
     (2026-10-22: "put all the features you think are worth doing", "show something when you
     just accepted from other guy and say it goes to both of your calendars".)
@@ -178,6 +179,12 @@ own words, the date. Newest at the bottom of each part.
     shares with you. (2026-10-22: "match do it on left adn pointing to intersts etc and on the
     right name it differently and in second dont name it message its obvious", then "actually
     name is close as it is jsut add verb there this is bad so back as it was".)
+    On the Match slide the name is "Find people" now, the owner's own (2026-10-23). A label
+    whose sentence says it all has no name over it: the plan just accepted is "Once you accept
+    the session, it goes into both of your calendars.", alone, never under "Both calendars".
+    The lines are the owner's dictated words when he gives them, with only the grammar fixed.
+    (2026-10-23: "don't name it 'Both Calendars.' Just write there once [you accept] the
+    session, it goes into both your calendars".)
 28. **Video sound is soft**: instrumental songs only, no aggressive sound effects, none at all
     except the connecting moment. Real downloaded sounds, never synthesised. No speed changes.
     (2026-09-22: "dont want the sounds to be aggressive rather … smooth"; 2026-09-27: "skip all

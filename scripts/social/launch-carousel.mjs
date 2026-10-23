@@ -93,6 +93,14 @@ const CRIMSON = "#a51c30";
    memories" (owner, 2026-10-22: "actually name is close as it is jsut add
    verb there"; a full rename in the site's voice was tried the same day and
    reverted). The lines under them are the site's, word for word. */
+/* the owner's own lines for Match and the mentors (2026-10-23: "find new
+   people based on interest, concentration, training times, stuff like
+   that", "get help from a more experienced student about lifting, or
+   advising about your concentration from an upperclassman"), on both
+   carousels that show them */
+const FIND_PEOPLE = "Meet new people based on your interests, concentration, training times and more.";
+const MENTOR = "Get help with lifting from a more experienced student, or advice on your concentration from an upperclassman.";
+
 const LAUNCH = [
   /* hero: badge, headline, and `hero.body` cut into its four actions: the
      people for "Match", the Gyms, Messages and Profile tabs for the rest. On
@@ -112,9 +120,9 @@ const LAUNCH = [
   /* the student story's chapters (`storyBeats`) and their points */
   { kind: "feature", img: "match", head: "Find training partners.", em: "Make friends.",
     labels: [
-      { side: "L", title: "Browse", text: "Everyone sorted by how well you fit: interests, concentration, level and hours.", at: [44, 97] },
+      { side: "L", title: "Browse", text: FIND_PEOPLE, at: [44, 97] },
       { side: "R", title: "Buddy Board", text: "Post your session and see who wants to join.", at: [1166, 97] },
-      { side: "L", title: "Find a mentor", text: "Get help from an experienced student or an upperclassman in your concentration.", at: [236, 1435] },
+      { side: "L", title: "Find a mentor", text: MENTOR, at: [236, 1435] },
     ] },
   { kind: "feature", img: "person", head: "Find your ideal", em: "training partner.",
     /* no line to the Message button (owner, 2026-09-27: "don't say
@@ -130,7 +138,10 @@ const LAUNCH = [
   { kind: "feature", img: "chat", head: "Plan sessions easily", em: "in the chat.",
     labels: [
       { side: "R", title: "Plan a session", text: "Simply tap the calendar button in the chat and set up a time.", at: [1166, 84] },
-      { side: "L", title: "Both calendars", text: "Once you accept, it goes into both of your calendars.", at: [109, 1836] },
+      /* no name over it, the sentence alone (owner, 2026-10-23: "don't name
+         it 'Both Calendars.' Just write there: once you accept the session,
+         it goes into both your calendars") */
+      { side: "L", text: "Once you accept the session, it goes into both of your calendars.", at: [109, 1836] },
     ] },
   { kind: "feature", img: "profile", head: "Track your statistics.", em: "See how you do in the leaderboards.",
     labels: [
@@ -167,9 +178,13 @@ const POST_MATCH = [
      differently") */
   { kind: "feature", img: "match", head: "Find training partners.", em: "Make friends.",
     labels: [
-      { side: "L", title: "Match", text: "Everyone sorted by how well you fit: interests, concentration, level and hours.", at: [68, 854] },
+      /* Filters fills the empty top left (owner, 2026-10-23: "for the first
+         card, also do a filter if you are looking for specific people in
+         your concentration and a specific interest") */
+      { side: "L", title: "Filter people", text: "Look for people in your concentration or with a specific interest.", at: [40, 239] },
+      { side: "L", title: "Find people", text: FIND_PEOPLE, at: [68, 854] },
       { side: "R", title: "Browse people or post your session.", at: [1167, 99] },
-      { side: "L", title: "Find a mentor", text: "Get help from an experienced student or an upperclassman in your concentration.", at: [236, 1435] },
+      { side: "L", title: "Find a mentor", text: MENTOR, at: [236, 1435] },
     ] },
   { kind: "feature", img: "person", head: "Find your ideal", em: "training partner.",
     labels: [
@@ -180,7 +195,7 @@ const POST_MATCH = [
       /* the Message button, labelled for what it leads to (owner,
          2026-10-22: "in second do that like message to set up something",
          then "dont name it message its obvious") */
-      { side: "R", title: "Send a message", text: "Set up a session together.", at: [1158, 2259] },
+      { side: "R", title: "Send a message", text: "Set up a session together easily, right there in the chat.", at: [1158, 2259] },
     ] },
   /* Sessions: posting is the headline; the labels are every feature on the
      board worth knowing (owner, 2026-10-22: "put all the features you think
@@ -190,7 +205,7 @@ const POST_MATCH = [
     labels: [
       { side: "L", title: "Post a session", text: "Say what you’re training and when.", at: [36, 258] },
       { side: "L", title: "Filter the sessions", text: "Narrow it to your gym, your day or what you want to train.", at: [39, 419] },
-      { side: "R", title: "Find by time", text: "Pick when you want to train and see who goes then.", at: [1168, 258] },
+      { side: "R", title: "Find by time", text: "Search for a specific time you want to train and see who goes at that time.", at: [1168, 258] },
       { side: "R", title: "Accept", text: "Sends them a plan with the time and the gym already on it.", at: [1124, 720] },
     ] },
   LAUNCH.find((s) => s.img === "chat"),
@@ -295,8 +310,10 @@ const stage = (s, ptop, pbottom, lbottom = pbottom) => {
   const labels = s.labels.map((l) => {
     const [tx, ty] = onPhone(pw, pleft, ptop, l.at, scr.w);
     const pos = l.side === "L" ? `right:${W - pleft + GAP}px` : `left:${pleft + pw + GAP}px`;
-    return `<div class="lab ${l.side}${l.text ? "" : " solo"}" data-tx="${tx}" data-ty="${ty}" data-rise="${l.rise || 0}" style="${pos};width:${labW}px">
-      <b>${l.title}</b>${l.text ? `<span>${l.text}</span>` : ""}</div>`;
+    /* a label is its name, its name and the site's line, or (no name) the line alone */
+    const words = !l.title ? `<b class="plain">${l.text}</b>` : `<b>${l.title}</b>${l.text ? `<span>${l.text}</span>` : ""}`;
+    return `<div class="lab ${l.side}${l.title && !l.text ? " solo" : ""}" data-tx="${tx}" data-ty="${ty}" data-rise="${l.rise || 0}" style="${pos};width:${labW}px">
+      ${words}</div>`;
   });
   return `${phone(scr, pw, `left:${pleft}px;top:${ptop}px`)}${labels.join("")}
     <svg class="arrows" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" data-ptop="${ptop}" data-pbottom="${lbottom}"></svg>`;
@@ -323,6 +340,7 @@ const css = `
   .lab b { display:block; font-weight:700; font-size:29px; line-height:1.18; letter-spacing:-.01em; color:${INK}; text-wrap:balance; }
   .lab span { display:block; margin-top:8px; font-weight:500; font-size:22px; line-height:1.36; color:${INK2}; text-wrap:pretty; }
   .lab.solo b { font-size:30px; }
+  .lab b.plain { font-weight:500; font-size:24px; line-height:1.36; color:${INK2}; }
   .arrows { position:absolute; left:0; top:0; overflow:visible; pointer-events:none; }
 
   /* the phone (Phone.tsx + .l-phone-rim) */
