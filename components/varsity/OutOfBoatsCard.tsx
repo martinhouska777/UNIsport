@@ -9,28 +9,30 @@
   third of the squad unaccounted for — "am I out or did the coach forget me"
   is exactly the question the group chat exists to ask.
 
-  So All boats ends with one more card, in the same shape as a crew: shut it
-  says how many, open it says who and why. It is NOT a boat and is drawn
-  nothing like one — a hull with a rehab group in it would read as a crew
-  going out.
+  So All boats ends with one more card. It is NOT a boat and is drawn nothing
+  like one — a hull with a rehab group in it would read as a crew going out.
+
+  BY CATEGORY, LIKE THE SHEET (owner, 2026-10-24: "not in boat make it by
+  categories", look C of four): always open, a row per group with the group on
+  the left and its names on the right. It used to open from a count ("4 Rx,
+  5 Erg") into a list with a tag beside every name.
 
   Who is out on a day lives in lib/varsity/availabilityStore; the words and
   how loudly to say them are data in lib/varsity/coachLineup (outMeta,
   outTone).
 */
-import { useState } from "react";
-import { IconChevronDown } from "@/components/icons";
 import { outMeta, outTone, rosterById, type OutReason } from "@/lib/varsity/coachLineup";
 
 export type OutPerson = { id: string; name: string; reason: OutReason };
 
 /*
-  The day's out list, as people, sorted the way the sheet groups them: the
-  spells that run on (injured, sick, Rx) first, then this morning's groups,
-  and each group alphabetical. An id with nobody behind it is dropped rather
-  than printed raw — a screen should never show a slug.
+  The groups in the order the sheet has its columns: Launch, the erg, Rx, on
+  your own. Injured and sick sit beside Rx, the other spells that keep someone
+  off the water; away and missed come last. Each group is alphabetical. An id
+  with nobody behind it is dropped rather than printed raw — a screen should
+  never show a slug.
 */
-const ORDER: OutReason[] = ["INJ", "SICK", "RX", "AWAY", "ERG", "OYO", "LAUNCH", "MISSED"];
+const ORDER: OutReason[] = ["LAUNCH", "ERG", "RX", "INJ", "SICK", "OYO", "AWAY", "MISSED"];
 
 export function outPeople(out: Record<string, OutReason>): OutPerson[] {
   return Object.entries(out)
@@ -42,62 +44,30 @@ export function outPeople(out: Record<string, OutReason>): OutPerson[] {
     );
 }
 
-export default function OutOfBoatsCard({
-  people,
-  defaultOpen = false,
-}: {
-  people: OutPerson[];
-  defaultOpen?: boolean;
-}) {
-  const [open, setOpen] = useState(defaultOpen);
+export default function OutOfBoatsCard({ people }: { people: OutPerson[] }) {
   if (people.length === 0) return null;
+  const groups = ORDER.map((reason) => ({
+    reason,
+    names: people.filter((p) => p.reason === reason).map((p) => p.name),
+  })).filter((g) => g.names.length > 0);
 
   return (
-    <div className="overflow-hidden rounded-2xl bg-surface">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        aria-expanded={open}
-        className="flex w-full items-center gap-2 px-4 py-3 text-left"
-      >
-        <span className="min-w-0 flex-1">
-          <span className="block text-[15px] font-semibold text-text">Not in a boat</span>
-          {/* Shut, the card says how many and what for, so the day can be
-              counted without opening anything. */}
-          <span className="block text-[11px] text-muted">
-            {summary(people)}
-          </span>
-        </span>
-        <span
-          className={`flex-shrink-0 text-muted transition-transform ${open ? "rotate-180" : ""}`}
-        >
-          <IconChevronDown size={14} />
-        </span>
-      </button>
-
-      {open && (
-        <ul className="border-t border-border px-2 py-2">
-          {people.map((p) => (
-            <li key={p.id} className="flex items-center gap-2 px-2 py-2">
-              <span className="min-w-0 flex-1 truncate text-[14px] text-text">{p.name}</span>
-              <span
-                className={`flex-shrink-0 rounded-full border border-border bg-surface px-2 py-0.5 text-[11px] font-medium ${
-                  outTone[p.reason] === "warn" ? "text-warn" : "text-muted"
-                }`}
-              >
-                {outMeta[p.reason]}
-              </span>
-            </li>
-          ))}
-        </ul>
-      )}
+    <div className="overflow-hidden rounded-xl border border-border bg-surface">
+      <div className="px-4 pt-3 text-[15px] font-semibold text-text">Not in a boat</div>
+      <div className="divide-y divide-border px-4 pb-1">
+        {groups.map((g) => (
+          <div key={g.reason} className="grid grid-cols-[72px_1fr] gap-2 py-2.5">
+            <div
+              className={`text-[11px] font-semibold uppercase tracking-[0.12em] ${
+                outTone[g.reason] === "warn" ? "text-warn" : "text-text"
+              }`}
+            >
+              {outMeta[g.reason]}
+            </div>
+            <div className="text-[14px] leading-snug text-text">{g.names.join(", ")}</div>
+          </div>
+        ))}
+      </div>
     </div>
   );
-}
-
-/* "3 Rx · 3 Erg · 3 OYO · 1 Launch" — the groups in the order above. */
-function summary(people: OutPerson[]): string {
-  return ORDER.filter((r) => people.some((p) => p.reason === r))
-    .map((r) => `${people.filter((p) => p.reason === r).length} ${outMeta[r]}`)
-    .join(", ");
 }

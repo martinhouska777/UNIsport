@@ -104,9 +104,8 @@ function BoatSearchList({ lineups, out }: { lineups: Lineup[]; out: OutPerson[] 
             <LineupBoatCard key={`${i}-${needle}`} l={l} defaultOpen={!!needle} />
           ))}
           {/* Last, because it is the answer to a different question than
-              "which boat am I in" — and open straight away when a search
-              is what put it there. */}
-          <OutOfBoatsCard key={`out-${needle}`} people={shownOut} defaultOpen={!!needle} />
+              "which boat am I in". Always open, so a search lands on the name. */}
+          <OutOfBoatsCard people={shownOut} />
         </div>
       )}
     </>

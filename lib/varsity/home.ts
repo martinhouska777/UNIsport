@@ -318,6 +318,12 @@ export function crewName(l: Lineup): string | null {
   return stroke ? surname(stroke.name) : null;
 }
 
+/** The cox's surname, or null for a coxless boat or a cox seat nobody is in. */
+export function coxSurname(l: Lineup): string | null {
+  const cox = l.cox?.name;
+  return cox && cox !== "—" ? surname(cox) : null;
+}
+
 /** Every name aboard, for the All-boats search. Lowercased, cox included. */
 export const crewNames = (l: Lineup): string[] =>
   [...l.seats.map((s) => s.name), l.cox?.name ?? ""]

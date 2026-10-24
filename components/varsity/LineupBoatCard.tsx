@@ -19,7 +19,8 @@
   documented exception to rule 1. Everything else is a theme token.
 
   The card COLLAPSES to its title bar: which outing this is ("AM 2-") and when
-  it pushes off, and nothing else. Open, it reads in the order a crew needs it —
+  it pushes off, and under it the cox when the boat has one (owner,
+  2026-10-24). Open, it reads in the order a crew needs it —
   the coach's note, the boat, then the two things you carry down to the water:
   which shell, and which oars.
 */
@@ -29,6 +30,7 @@ import { IconChevronDown, IconChevronUp } from "@/components/icons";
 import { sideMeta, COX_COLOR, COX_INK, COX_TAG, COX_LABEL } from "@/lib/varsity/coachLineup";
 import {
   boatHeading,
+  coxSurname,
   crewName,
   dockTime,
   shellName,
@@ -282,7 +284,14 @@ export default function LineupBoatCard({
   defaultOpen?: boolean;
 }) {
   const [open, setOpen] = useState(defaultOpen);
-  const crew = crewName(l);
+  /* THE COX ON THE SHUT CARD (owner, 2026-10-24: "in eights show cox in
+     preview", look C of four): a second line under the boat, with the cox's
+     yellow C, so three eights on one morning read by who is steering them.
+     Shut only: open, the cox is right there in the hull. And while it shows,
+     the first line keeps only the shell's own name, never the cox twice. */
+  const cox = coxSurname(l);
+  const coxLine = !open && !!cox;
+  const crew = coxLine ? shellName(l) : crewName(l);
   /* The two things the card has to be right about at a glance: WHEN it pushes
      off, and WHICH shell to carry down. Both come back null rather than showing
      something that isn't one — a boathouse name left in the old dock field is
@@ -303,16 +312,31 @@ export default function LineupBoatCard({
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
-        className="flex w-full items-center gap-2.5 px-3.5 py-3 text-left"
+        className={`flex w-full items-center gap-2.5 px-3.5 text-left ${coxLine ? "py-2.5" : "py-3"}`}
       >
-        <span className="flex min-w-0 flex-1 items-baseline gap-2">
-          <span className="flex-shrink-0 text-[15px] font-semibold text-text">
-            {boatHeading(l)}
+        <span className="min-w-0 flex-1">
+          <span className="flex min-w-0 items-baseline gap-2">
+            <span className="flex-shrink-0 text-[15px] font-semibold text-text">
+              {boatHeading(l)}
+            </span>
+            {/* WHICH eight, on a morning that sent out three: the coach's name for
+                the boat, or the cox's surname, or the stroke's. Quieter than the
+                rig — you scan the column for "AM 8+" and land on the name. */}
+            {crew && <span className="min-w-0 truncate text-[14px] text-muted">{crew}</span>}
           </span>
-          {/* WHICH eight, on a morning that sent out three: the coach's name for
-              the boat, or the cox's surname, or the stroke's. Quieter than the
-              rig — you scan the column for "AM 8+" and land on the name. */}
-          {crew && <span className="min-w-0 truncate text-[14px] text-muted">{crew}</span>}
+          {coxLine && (
+            <span className="mt-1 flex min-w-0 items-center gap-1.5 text-[13px] text-text">
+              <span
+                aria-hidden
+                className="flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center rounded-[5px] font-mono text-[10px] font-semibold"
+                style={{ background: COX_COLOR, color: COX_INK }}
+              >
+                {COX_TAG}
+              </span>
+              <span className="sr-only">Cox </span>
+              <span className="truncate">{cox}</span>
+            </span>
+          )}
         </span>
         {/* THE PUSH-OFF TIME, and only ever a time. */}
         {time && (

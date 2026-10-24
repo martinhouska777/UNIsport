@@ -96,6 +96,11 @@ own words, the date. Newest at the bottom of each part.
     upper and lower body included. (2026-10-24: "do A but add everything there like
     shoulders upper body lower body like what people do and apply it to all filters, post a
     session and search by time".)
+    A shut boat card shows its cox on a second line under the boat, with the cox's yellow C
+    (8+ and 4+, gone once the card is open). "Not in a boat" is one card, always open, a row
+    per group like the coach's sheet: the group on the left (Launch, Erg, Rx, OYO), its names
+    on the right, never a count. (2026-10-24: "in eights show cox in preveiw and not in baot
+    make it by catagories", then "do C" of four.)
 14. **Light mode is the main mode**; the landing page is light only. (2026-09-15, 2026-09-20.)
 15. **Animation is quick and one continuous motion.** (2026-09-13: "it takes too long … I just
     want to see the thing".)
