@@ -465,8 +465,12 @@ log workouts to earn points and memories. and then the leaderboards"):
 
 | Post | Slides | Where |
 |---|---|---|
-| Match, 5 | Match list (Filter people, Find people on the shared interests, "Browse people or post your session." on the switch, Find a mentor), a profile (See why you match, Compare calendars, Send a message), Sessions (Post a session, Filter the sessions, Find by time, Accept), the chat ending on a plan from Arjun you just accepted (Plan a session, and "Once you accept the session, it goes into both of your calendars." alone), the waitlist | `mockups/social/post-match/` |
-| Profile, 4 | Profile (Log a session, Calendar, Build memories), the Log sheet (Add an exercise, Log your workouts, Add a photo), Leaderboards (Score points, Pick the competition), the waitlist | `mockups/social/post-profile/` |
+| Match, 5 | Match list (Browse on the switch, Search similarities on the shared interests, Look for a mentor), a profile (Why you match, Compare calendars, Send a message), Sessions (Post your session, Filter sessions, Search by time, Accept), the chat ending on a plan from Arjun you just accepted (Plan a session, and "Once you accept the session, it will appear in both of your calendars." alone), the waitlist ("Get in on the action.") | `mockups/social/post-match/` |
+| Profile, 4 | Profile (Log your sessions, Calendar), the Log sheet (Add exercises, Snap a picture, Earn points), Leaderboards (Rack up points, Join a competition), the waitlist ("Get in on the action.") | `mockups/social/post-profile/` |
+
+**Every word on both posts is the owner's own since 2026-10-24** ("can you change the text
+for this?"): the headlines, the labels and the closer. Only punctuation was added. The
+launch carousel keeps its own words and its "Get in on day one." closer.
 
 Labels keep the feature's own name with a verb where it reads more naturally (owner,
 2026-10-22: "name is close as it is jsut add verb there"); the launch carousel's got the
@@ -474,10 +478,9 @@ same verbs. On 2026-10-23 the owner dictated the Match post's lines himself (Fin
 mentors, Send a message, Find by time, the calendars sentence, a Filters label); the launch
 carousel's Browse and Find a mentor share the new lines.
 
-Both come from `node scripts/social/launch-carousel.mjs post-match` / `post-profile`. Lines
-are the website's, or the app walk's captions (`lib/tour.ts`) where the site has none.
+Both come from `node scripts/social/launch-carousel.mjs post-match` / `post-profile`.
 There is no Memories screen: the demo account has no photos, so memories are on the Log
-sheet's photo tile and the Profile's Memories row. Arjun's accepted plan at the end of the
+sheet's photo tile. Arjun's accepted plan at the end of the
 chat ("Chest tomorrow at 4?", Murr Center) is added in the shoot's browser only
 (`capture-launch.mjs`); nothing is written. The launch carousel's chat slide is the same
 slide, so it changed with it. Ethan Hale's counts on his profile (52 workouts, 37 following,

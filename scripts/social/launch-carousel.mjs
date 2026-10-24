@@ -60,10 +60,9 @@
                   second image with arrow").
     post-profile  Profile, the Log sheet (points and a photo), Leaderboards,
                   the waitlist
-  Their lines are the website's, or the app walk's own captions (lib/tour.ts)
-  where the site has none: the calendars, points and the photo. Memories is
-  covered by the Log sheet's photo tile and the Profile's Memories row: the
-  demo account has no photos, and an empty screen is never shown.
+  Since 2026-10-24 every word on them is the owner's own (POST_CLOSER).
+  Memories is the Log sheet's photo tile: the demo account has no photos,
+  and an empty screen is never shown.
 
   Run: node scripts/social/launch-carousel.mjs [launch|post-match|post-profile]
   Out: mockups/social/<set>/01.png …, and sheet.png with all of them
@@ -169,74 +168,71 @@ const LAUNCH = [
 ];
 const CLOSER = LAUNCH[LAUNCH.length - 1];
 
+/* THE TWO POSTS' WORDS ARE THE OWNER'S, every headline and label, written
+   2026-10-24 ("can you change the text for this?"). Only the punctuation is
+   ours: a full stop on each headline and line, a capital where a line starts
+   under its name, and "Plan a sessions" read as "Plan a session". The arrows'
+   points did not move. */
+const POST_CLOSER = { kind: "closer", head: "Get in on", em: "the action.",
+  sub: "UNIsport is launching at Harvard University first. Sign up to get an email when the app goes live.",
+  url: CLOSER.url };
+
 /* THE MATCH POST: the walk through Match, tap by tap */
 const POST_MATCH = [
-  /* Match on the left, its arrow on the interests you share with Ethan
-     (owner, 2026-10-22: "match do it on left and pointing to interests
-     etc"); the People and Sessions switch on the right is the owner's own
-     line on its own, with no second Match ("on the right name it
-     differently") */
-  { kind: "feature", img: "match", head: "Find training partners.", em: "Make friends.",
+  /* Browse on the People and Sessions switch, Search similarities on the
+     interests you share with Ethan */
+  { kind: "feature", img: "match", head: "Search for training partners.", em: "Find new friends.",
     labels: [
-      /* Filters fills the empty top left (owner, 2026-10-23: "for the first
-         card, also do a filter if you are looking for specific people in
-         your concentration and a specific interest") */
-      { side: "L", title: "Filter people", text: "Look for people in your concentration or with a specific interest.", at: [40, 239] },
-      { side: "L", title: "Find people", text: FIND_PEOPLE, at: [68, 854] },
-      { side: "R", title: "Browse people or post your session.", at: [1167, 99] },
-      { side: "L", title: "Find a mentor", text: MENTOR, at: [236, 1435] },
+      { side: "L", title: "Search similarities", text: "Connect with new people based on mutual interests, academic focus, training schedules, and more.", at: [68, 854] },
+      { side: "R", title: "Browse", text: "See people and sessions.", at: [1167, 99] },
+      { side: "L", title: "Look for a mentor", text: "Get help with your lifts from someone with a little more experience in the gym.", at: [236, 1435] },
     ] },
-  { kind: "feature", img: "person", head: "Find your ideal", em: "training partner.",
+  { kind: "feature", img: "person", head: "Connect with your perfect", em: "training partner.",
     labels: [
-      { side: "L", title: "See why you match", text: "Get matched with people based on your interests, hobbies, concentrations, level, language, hometown or much more.", at: [44, 676] },
-      /* the calendars, on the button that opens them (the walk's "when
-         you’re both free"); they had a slide of their own until 2026-10-22 */
-      { side: "R", title: "Compare calendars", text: "See when you’re both free to train.", at: [1119, 1824] },
-      /* the Message button, labelled for what it leads to (owner,
-         2026-10-22: "in second do that like message to set up something",
-         then "dont name it message its obvious") */
-      { side: "R", title: "Send a message", text: "Set up a session together easily, right there in the chat.", at: [1158, 2259] },
+      { side: "L", title: "Why you match", text: "See what similarities connected you and your partner.", at: [44, 676] },
+      { side: "R", title: "Compare calendars", text: "Find out when you’re both free to train.", at: [1119, 1824] },
+      { side: "R", title: "Send a message", text: "Set up a session in your chat.", at: [1158, 2259] },
     ] },
-  /* Sessions: posting is the headline; the labels are every feature on the
-     board worth knowing (owner, 2026-10-22: "put all the features you think
-     are worth doing"). Post's line is the walk's; Accept sends the poster a
-     plan with the post's time and gym (BuddyBoard.tsx) */
-  { kind: "feature", img: "board", head: "Post your session and", em: "see who wants to join.",
+  /* Accept sends the poster a plan with the post's time and gym (BuddyBoard.tsx) */
+  { kind: "feature", img: "board", head: "Post your session and", em: "see if anyone else wants to join.",
     labels: [
-      { side: "L", title: "Post a session", text: "Say what you’re training and when.", at: [36, 258] },
-      { side: "L", title: "Filter the sessions", text: "Narrow it to your gym, your day or what you want to train.", at: [39, 419] },
-      { side: "R", title: "Find by time", text: "Search for a specific time you want to train and see who goes at that time.", at: [1168, 258] },
-      { side: "R", title: "Accept", text: "Sends them a plan with the time and the gym already on it.", at: [1124, 720] },
+      { side: "L", title: "Post your session", text: "Show people what you’re up to.", at: [36, 258] },
+      { side: "L", title: "Filter sessions", text: "Find your gym, day, and exercises.", at: [39, 419] },
+      { side: "R", title: "Search by time", text: "Look for a time you want to train and connect with others going at the same time.", at: [1168, 258] },
+      { side: "R", title: "Accept", text: "Send your partner a plan.", at: [1124, 720] },
     ] },
-  LAUNCH.find((s) => s.img === "chat"),
-  CLOSER,
+  /* the chat ends on a plan Arjun sent that you have just accepted
+     (capture-launch.mjs); the sentence points at its "You're on" */
+  { kind: "feature", img: "chat", head: "Plan partner sessions", em: "in the chat.",
+    labels: [
+      { side: "R", title: "Plan a session", text: "Tap the calendar button to get your chat going.", at: [1166, 84] },
+      { side: "L", text: "Once you accept the session, it will appear in both of your calendars.", at: [109, 1836] },
+    ] },
+  POST_CLOSER,
 ];
 
 /* THE PROFILE POST: your own training, then the points it earns */
 const POST_PROFILE = [
-  { kind: "feature", img: "profile", head: "Track your statistics.", em: "See how you do in the leaderboards.",
+  { kind: "feature", img: "profile", head: "Track your stats.", em: "Check the leaderboards.",
     labels: [
-      { side: "R", title: "Log a session", text: "Pick the exercises and record the sets, reps and weight. No separate app needed.", at: [1132, 758] },
-      { side: "L", title: "Calendar", text: "Every session you log marks its day.", at: [42, 1240] },
-      { side: "R", title: "Build memories", text: "Photos from your sessions, saved to come back to.", at: [1164, 1496] },
+      { side: "R", title: "Log your sessions", text: "Track exercises, sets, reps, and weight.", at: [1132, 758] },
+      { side: "L", title: "Calendar", text: "Shows every session.", at: [42, 1240] },
     ] },
-  /* the Log sheet with two muscle groups picked; its words are the walk's
-     ("Log your workouts", "Add a photo"). Add exercise opens the exercise
-     library, with your own when it isn't there (ExercisePicker.tsx; owner,
-     2026-10-22: "put there arrow to the add exercise") */
-  { kind: "feature", img: "log", head: "Log the session", em: "without leaving the app.",
+  /* the Log sheet with two muscle groups picked. Add exercise opens the
+     exercise library, with your own when it isn't there (ExercisePicker.tsx) */
+  { kind: "feature", img: "log", head: "Log your session", em: "in the app.",
     labels: [
-      { side: "L", title: "Add an exercise", text: "Search the exercises or add your own.", at: [48, 948] },
-      { side: "L", title: "Log your workouts", text: "Every workout you log earns points.", at: [48, 2480] },
-      { side: "R", title: "Add a photo", text: "Take a picture with your training partner and make memories.", at: [308, 2140] },
+      { side: "L", title: "Add exercises", text: "Search for common exercises or input your own.", at: [48, 948] },
+      { side: "L", title: "Earn points", text: "Log your workout to earn points.", at: [48, 2480] },
+      { side: "R", title: "Snap a picture", text: "Make memories with your training partners.", at: [308, 2140] },
     ] },
-  /* the points line is the walk's (lib/tour.ts, with lib/points.ts's 10, 15, 25) */
-  { kind: "feature", img: "leaderboards", head: "Log it together and participate", em: "in your college leaderboards.",
+  /* a buddy earns more: lib/points.ts gives 10 alone, 15 with a partner */
+  { kind: "feature", img: "leaderboards", head: "Participate in", em: "college leaderboards.",
     labels: [
-      { side: "R", title: "Score points", text: "Your workouts earn points for you and your house: 10 on your own, 15 with a partner, 25 with someone new.", at: [1162, 316] },
-      { side: "L", title: "Pick the competition", text: "See how you, your house and your year rank on campus.", at: [48, 526] },
+      { side: "R", title: "Rack up points", text: "You earn more when you have a buddy.", at: [1162, 316] },
+      { side: "L", title: "Join a competition", text: "See how you rank on your campus.", at: [48, 526] },
     ] },
-  CLOSER,
+  POST_CLOSER,
 ];
 
 const SLIDES = { launch: LAUNCH, "post-match": POST_MATCH, "post-profile": POST_PROFILE }[SET];

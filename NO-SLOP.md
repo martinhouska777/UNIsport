@@ -198,6 +198,9 @@ own words, the date. Newest at the bottom of each part.
     The lines are the owner's dictated words when he gives them, with only the grammar fixed.
     (2026-10-23: "don't name it 'Both Calendars.' Just write there once [you accept] the
     session, it goes into both your calendars".)
+    When he writes the labels himself, his names stand over the screen's word ("Search
+    similarities", "Rack up points", "Snap a picture"), and a label missing from his text is
+    off the slide. (2026-10-24, both posts rewritten: "can you change the text for this?")
 28. **Video sound is soft**: instrumental songs only, no aggressive sound effects, none at all
     except the connecting moment. Real downloaded sounds, never synthesised. No speed changes.
     (2026-09-22: "dont want the sounds to be aggressive rather … smooth"; 2026-09-27: "skip all
