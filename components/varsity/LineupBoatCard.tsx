@@ -51,8 +51,15 @@ export function isMyBoat(l: Lineup): boolean {
   builder either way. The stroke is the LAST seat — seats run bow → stroke.
   A boat that carries a cox seat nobody is in is steered by nobody on the
   sheet, so it falls back to the stroke like a coxless one.
+
+  FOR NOW, ANYBODY IN THE BOAT (owner, 2026-10-23: "anybody can log km to the
+  boat, we will change it back later"). The database already lets anyone seated
+  in the boat save (varsity_save_boat_work), so this switch is the whole
+  change: set it to false to go back to the cox, or the stroke.
 */
+const ANYONE_IN_BOAT_WRITES = true;
 export function writesBoatWork(l: Lineup): boolean {
+  if (ANYONE_IN_BOAT_WRITES) return isMyBoat(l);
   if (l.cox && !isOpen(l.cox.name)) return !!l.cox.mine;
   return !!l.seats[l.seats.length - 1]?.mine;
 }
