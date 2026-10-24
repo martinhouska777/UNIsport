@@ -90,6 +90,12 @@ own words, the date. Newest at the bottom of each part.
     Strava does it: no pink pill behind it. Match's icon is Strava's two people.
     (2026-10-18: "match will be the 2 people from strava", "make it just turn red not like
     we have but the strava type".)
+    "When" is asked as two dropdowns on one line, Day beside Time, in the Sessions Filters,
+    the post form and Search by time (look A of four), never a grid of day tiles or a row of
+    day pills. The gym focus list carries what people actually train, shoulders, glutes,
+    upper and lower body included. (2026-10-24: "do A but add everything there like
+    shoulders upper body lower body like what people do and apply it to all filters, post a
+    session and search by time".)
 14. **Light mode is the main mode**; the landing page is light only. (2026-09-15, 2026-09-20.)
 15. **Animation is quick and one continuous motion.** (2026-09-13: "it takes too long … I just
     want to see the thing".)

@@ -28,7 +28,7 @@ import Button from "@/components/ui/Button";
 import { primaryActivities, sessionTimeSlots, verifiedGyms } from "@/lib/onboarding";
 import type { TimeSearch } from "@/lib/buddyBoard";
 import { Pill, FieldLabel, SelectField } from "@/components/onboarding/controls";
-import WeekPicker from "@/components/match/WeekPicker";
+import DaySelect from "@/components/match/DaySelect";
 import { IconX } from "@/components/icons";
 
 export default function SessionSearchSheet({
@@ -100,21 +100,12 @@ export default function SessionSearchSheet({
               </div>
             </div>
 
-            <div>
-              <FieldLabel>Day</FieldLabel>
-              <WeekPicker value={date} onChange={setDate} />
-            </div>
-
+            {/* Day and Time on one line, Gym under them: the board's Filters
+                and post form ask "when" the same way (owner, 2026-10-24). */}
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <FieldLabel>Gym</FieldLabel>
-                <SelectField
-                  value={gym ?? ""}
-                  onChange={(v) => setGym(v === "" ? null : v)}
-                  options={verifiedGyms.map((g) => ({ value: g, label: g }))}
-                  placeholder="Any gym"
-                  ariaLabel="Gym"
-                />
+                <FieldLabel>Day</FieldLabel>
+                <DaySelect value={date} onChange={setDate} placeholder="Pick a day" />
               </div>
               <div>
                 <FieldLabel>Time</FieldLabel>
@@ -126,6 +117,17 @@ export default function SessionSearchSheet({
                   ariaLabel="Time"
                 />
               </div>
+            </div>
+
+            <div>
+              <FieldLabel>Gym</FieldLabel>
+              <SelectField
+                value={gym ?? ""}
+                onChange={(v) => setGym(v === "" ? null : v)}
+                options={verifiedGyms.map((g) => ({ value: g, label: g }))}
+                placeholder="Any gym"
+                ariaLabel="Gym"
+              />
             </div>
 
             {/* Only the four answers and the button — the explainer lines and

@@ -3,9 +3,9 @@
 /*
   BUDDY BOARD FILTERS — the sheet behind the Board's "Filters" button.
 
-  Three short lists (focus, day, time of day), so unlike the people-matching
-  sheet there is nothing to tick open or search: every option is on screen and
-  tapping a picked one clears it. Same sheet chrome as FiltersSheet so the two
+  Short lists, so unlike the people-matching sheet there is nothing to tick
+  open or search: gym, day and time are dropdowns, the focus is pills, and
+  tapping a picked focus clears it. Same sheet chrome as FiltersSheet so the two
   read as one control in two places — including the one rule that matters: your
   picks are a DRAFT and the board only changes when you press Apply.
 
@@ -117,33 +117,29 @@ export default function BoardFiltersSheet({
           </div>
         </div>
 
-        <div className="mb-4">
-          <FieldLabel>Day</FieldLabel>
-          <div className="flex flex-wrap gap-1.5">
-            {weekDays.map((d) => (
-              <Pill
-                variant="solid"
-                key={d.key}
-                label={d.label.slice(0, 3)}
-                selected={draft.day === d.key}
-                onClick={() => set({ day: draft.day === d.key ? null : d.key })}
-              />
-            ))}
+        {/* DAY AND TIME, two dropdowns on one line (owner, 2026-10-24, look A
+            of four). They were seven day pills and three time pills; "Any"
+            in a dropdown is the old tap-again-to-clear. */}
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <FieldLabel>Day</FieldLabel>
+            <SelectField
+              value={draft.day ?? ""}
+              onChange={(v) => set({ day: v || null })}
+              options={weekDays.map((d) => ({ value: d.key, label: d.label }))}
+              placeholder="Any day"
+              ariaLabel="Day"
+            />
           </div>
-        </div>
-
-        <div>
-          <FieldLabel>Time of day</FieldLabel>
-          <div className="flex flex-wrap gap-1.5">
-            {buddyTimesOfDay.map((t) => (
-              <Pill
-                variant="solid"
-                key={t.key}
-                label={t.label}
-                selected={draft.timeOfDay === t.key}
-                onClick={() => set({ timeOfDay: draft.timeOfDay === t.key ? null : t.key })}
-              />
-            ))}
+          <div>
+            <FieldLabel>Time</FieldLabel>
+            <SelectField
+              value={draft.timeOfDay ?? ""}
+              onChange={(v) => set({ timeOfDay: v || null })}
+              options={buddyTimesOfDay.map((t) => ({ value: t.key, label: t.label }))}
+              placeholder="Any time"
+              ariaLabel="Time"
+            />
           </div>
         </div>
       </div>

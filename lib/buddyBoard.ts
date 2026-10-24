@@ -10,6 +10,10 @@ import { primaryActivities, sessionTimeLabel, sessionTimeSlots, type TimeSlot } 
 import { clockLabel, dateLabel, dayKeyOf, nextDays } from "@/lib/schedule";
 
 // The simple workout-focus options the owner chose (legs / arms / chest…).
+// Shoulders, glutes, upper body and lower body added (owner, 2026-10-24: "add
+// everything there like shoulders upper body lower body, like what people do").
+// All gym, so focusActivity and the database's buddy_focus_activity already
+// file them under the gym with nothing else to change.
 export type BuddyFocus = {
   key: string;
   label: string;
@@ -22,8 +26,12 @@ export const buddyFocuses: BuddyFocus[] = [
   { key: "arms", label: "Arms" },
   { key: "chest", label: "Chest" },
   { key: "back", label: "Back" },
+  { key: "shoulders", label: "Shoulders" },
+  { key: "glutes", label: "Glutes" },
   { key: "core", label: "Core" },
   { key: "full", label: "Full body" },
+  { key: "upper", label: "Upper body" },
+  { key: "lower", label: "Lower body" },
   { key: "cardio", label: "Cardio" },
   // Not a gym focus at all, and that is the point: you can put your hand up for
   // a run the same way you put it up for legs.
@@ -49,7 +57,7 @@ export const boardActivities: { key: string; label: string }[] = [
   { key: "cardio", label: "Cardio" },
 ];
 
-/** The focuses one activity offers — eight for the gym, one each for the rest. */
+/** The focuses one activity offers — twelve for the gym, one each for the rest. */
 export function focusesFor(activity: string): BuddyFocus[] {
   return buddyFocuses.filter((f) => focusActivity(f.key) === activity);
 }

@@ -38,7 +38,7 @@ import {
 import { weekDays, verifiedGyms, sessionTimeSlots, sessionTimeLabel, SESSION_WINDOW_HOURS } from "@/lib/onboarding";
 import { dateLabel } from "@/lib/schedule";
 import { Pill, FieldLabel, SelectField } from "@/components/onboarding/controls";
-import WeekPicker from "@/components/match/WeekPicker";
+import DaySelect from "@/components/match/DaySelect";
 import { FilterRow } from "@/components/match/FilterBar";
 import BoardFiltersSheet, {
   NO_BOARD_FILTERS,
@@ -196,7 +196,7 @@ export default function BuddyBoard({
   const pickActivity = (key: string) => {
     setActivity(key);
     const only = focusesFor(key);
-    // One focus means the question is already answered; the gym's eight are asked.
+    // One focus means the question is already answered; the gym's twelve are asked.
     setFocus(only.length === 1 ? only[0].key : null);
   };
   // A real date — you can put your hand up for Monday a week ahead.
@@ -410,16 +410,17 @@ export default function BuddyBoard({
             </div>
           )}
 
-          <div>
-            <FieldLabel required>Day</FieldLabel>
-            <WeekPicker value={date} onChange={setDate} />
-          </div>
-
-          {/* TIME AND GYM SHARE A LINE (owner, 2026-09-22) — two half-width
-              selects instead of two full rows, the same shape the session
-              search already uses. The hours are the SAME ones that search
-              offers (sessionTimeSlots), so the two can be compared. */}
+          {/* DAY AND TIME SHARE A LINE (owner, 2026-10-24, look A of four):
+              two half-width dropdowns, the same shape as the board's Filters
+              and the session search. Time and Gym shared it before (owner,
+              2026-09-22); Gym now has the row under them. The hours are the
+              SAME ones that search offers (sessionTimeSlots), so the two can
+              be compared. */}
           <div className="grid grid-cols-2 gap-2">
+            <div>
+              <FieldLabel required>Day</FieldLabel>
+              <DaySelect value={date} onChange={setDate} placeholder="Pick a day" />
+            </div>
             <div>
               <FieldLabel required>Time</FieldLabel>
               <SelectField
@@ -433,18 +434,18 @@ export default function BuddyBoard({
                 ariaLabel="Time"
               />
             </div>
-            <div>
-              <FieldLabel>Gym</FieldLabel>
-              {/* Fifteen gyms is a list, not a row of buttons — the last few were
-                  only reachable by dragging sideways past all the others. */}
-              <SelectField
-                value={gym ?? ""}
-                onChange={(v) => setGym(v || null)}
-                options={verifiedGyms.map((g) => ({ value: g, label: g }))}
-                placeholder="Any gym"
-                ariaLabel="Gym"
-              />
-            </div>
+          </div>
+          <div>
+            <FieldLabel>Gym</FieldLabel>
+            {/* Fifteen gyms is a list, not a row of buttons — the last few were
+                only reachable by dragging sideways past all the others. */}
+            <SelectField
+              value={gym ?? ""}
+              onChange={(v) => setGym(v || null)}
+              options={verifiedGyms.map((g) => ({ value: g, label: g }))}
+              placeholder="Any gym"
+              ariaLabel="Gym"
+            />
           </div>
 
           <div>
