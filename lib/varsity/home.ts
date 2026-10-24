@@ -324,6 +324,12 @@ export function coxSurname(l: Lineup): string | null {
   return cox && cox !== "—" ? surname(cox) : null;
 }
 
+/** The stroke's seat number and surname (the last seat with somebody in it), or null. */
+export function strokeSeat(l: Lineup): { num: string; surname: string } | null {
+  const s = [...l.seats].reverse().find((x) => x.name && x.name !== "—");
+  return s ? { num: s.num, surname: surname(s.name) } : null;
+}
+
 /** Every name aboard, for the All-boats search. Lowercased, cox included. */
 export const crewNames = (l: Lineup): string[] =>
   [...l.seats.map((s) => s.name), l.cox?.name ?? ""]

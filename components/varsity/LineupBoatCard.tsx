@@ -34,6 +34,7 @@ import {
   crewName,
   dockTime,
   shellName,
+  strokeSeat,
   type Lineup,
   type Seat,
 } from "@/lib/varsity/home";
@@ -288,10 +289,14 @@ export default function LineupBoatCard({
      preview", look C of four): a second line under the boat, with the cox's
      yellow C, so three eights on one morning read by who is steering them.
      Shut only: open, the cox is right there in the hull. And while it shows,
-     the first line keeps only the shell's own name, never the cox twice. */
+     the first line keeps only the shell's own name, never the cox twice.
+     A boat with no cox gets its STROKE there instead (owner, 2026-10-24: "for
+     the boat without cox put there the stroke seat"), marked with the seat's
+     own number chip from the hull. */
   const cox = coxSurname(l);
-  const coxLine = !open && !!cox;
-  const crew = coxLine ? shellName(l) : crewName(l);
+  const stroke = cox ? null : strokeSeat(l);
+  const secondLine = !open && (!!cox || !!stroke);
+  const crew = secondLine ? shellName(l) : crewName(l);
   /* The two things the card has to be right about at a glance: WHEN it pushes
      off, and WHICH shell to carry down. Both come back null rather than showing
      something that isn't one — a boathouse name left in the old dock field is
@@ -312,7 +317,7 @@ export default function LineupBoatCard({
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
-        className={`flex w-full items-center gap-2.5 px-3.5 text-left ${coxLine ? "py-2.5" : "py-3"}`}
+        className={`flex w-full items-center gap-2.5 px-3.5 text-left ${secondLine ? "py-2.5" : "py-3"}`}
       >
         <span className="min-w-0 flex-1">
           <span className="flex min-w-0 items-baseline gap-2">
@@ -324,7 +329,7 @@ export default function LineupBoatCard({
                 rig — you scan the column for "AM 8+" and land on the name. */}
             {crew && <span className="min-w-0 truncate text-[14px] text-muted">{crew}</span>}
           </span>
-          {coxLine && (
+          {secondLine && cox && (
             <span className="mt-1 flex min-w-0 items-center gap-1.5 text-[13px] text-text">
               <span
                 aria-hidden
@@ -335,6 +340,18 @@ export default function LineupBoatCard({
               </span>
               <span className="sr-only">Cox </span>
               <span className="truncate">{cox}</span>
+            </span>
+          )}
+          {secondLine && stroke && (
+            <span className="mt-1 flex min-w-0 items-center gap-1.5 text-[13px] text-text">
+              <span
+                aria-hidden
+                className="flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center rounded-[5px] border border-border bg-surface font-mono text-[10px] font-semibold text-text"
+              >
+                {stroke.num}
+              </span>
+              <span className="sr-only">Stroke </span>
+              <span className="truncate">{stroke.surname}</span>
             </span>
           )}
         </span>
