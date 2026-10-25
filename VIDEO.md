@@ -224,4 +224,17 @@ capped), about -23 LUFS integrated against v5's -30. Nothing is heard after the 
 `node scripts/video/intro-sound-v6.mjs all` makes `unisport-intro-v6-a…d.mp4`:
 A soft glass (rounded tock, glass pings, airy whoosh), B bubble pops, C smooth tech (soft
 select, plucks, a zoom into the close), D v5 cleaner (the owner's light pop and push kept, a
-softer mouse click, a fuller whoosh). Waiting for the owner's pick; v5 stays until then.
+softer mouse click, a fuller whoosh). All four turned down the same day, see sound v7.
+
+---
+
+## Sound v7, from the reference reel (2026-10-24)
+
+Owner on the v6 sets: "I want some sound from some reel that we put in ... I want a
+mouse-clicking sound, and I want the three things, like the popping sound ... Then I want it at
+the end for the letters, and that's all I want for sound." Both sounds are cut from
+`C:/VideoEditing/references/reels/01-ai-prompt-reel-timeline-visible.mp4`, the sound-design
+breakdown of the AI-prompt reel this intro copies, which plays the effects with silence between
+them: its cursor click (1.783-1.935 s) and the five pops of its menu (2.92-4.15 s). The click is
+on both presses, a pop on each tile, a pop on each letter of UNIsport as it lands. Nothing else.
+`node scripts/video/intro-sound-v7.mjs` makes `unisport-intro-v7.mp4`.
