@@ -210,3 +210,18 @@ soft low note under it; "UNIsport" is no longer typed — its letters FALL IN fr
 another (70 ms stagger), each landing with a soft click; "Live now at **Harvard**" with Harvard in
 its crimson (#a51c30 from lib/themes.ts — the one school colour in brand material, the owner's
 call). 11.7 s. The zoom-in after the activities stays.
+
+---
+
+## Sound v6, four sets to pick from (2026-10-24)
+
+Owner on v5: "can you make it better with better sound effects surely we have some better
+sound effects now for the clicks and everything". The kits had not grown since 22 Sep, but v5
+used 5 of their 540 sounds. Same six moments as v5, new sounds, and an audible level: v5's
+presses peaked at -37 LUFS momentary, near silent on a phone. Every set lands on the same
+levels (whooshes -19, push -18 LUFS momentary; presses and tiles by their loudest 50 ms, peaks
+capped), about -23 LUFS integrated against v5's -30. Nothing is heard after the halves touch.
+`node scripts/video/intro-sound-v6.mjs all` makes `unisport-intro-v6-a…d.mp4`:
+A soft glass (rounded tock, glass pings, airy whoosh), B bubble pops, C smooth tech (soft
+select, plucks, a zoom into the close), D v5 cleaner (the owner's light pop and push kept, a
+softer mouse click, a fuller whoosh). Waiting for the owner's pick; v5 stays until then.
