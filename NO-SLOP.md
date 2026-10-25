@@ -208,8 +208,9 @@ own words, the date. Newest at the bottom of each part.
     except the connecting moment. Real downloaded sounds, never synthesised. No speed changes.
     (2026-09-22: "dont want the sounds to be aggressive rather … smooth"; 2026-09-27: "skip all
     sound effects because they're distracting".)
-    The intro's sound is only what the owner lists: a mouse click on the two presses, a normal
-    pop as the three tiles pop up, the same pop on each letter of UNIsport at the end. No
+    The intro's sound is only what the owner lists: a mouse click on the two presses (the one in
+    his 25 Oct video, kept as it sounds there: "tenhle mouse click"), a normal pop as the three
+    tiles pop up, the same pop on each letter of UNIsport at the end. No
     whooshes, no push. When he asks for sounds, look first in the reels he uploaded
     (`C:\VideoEditing\references\reels`; reel 01 plays its effects alone, so its click and pops
     come out clean), never only in the libraries. (2026-10-24: "I want some sound from some reel

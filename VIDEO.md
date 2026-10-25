@@ -238,3 +238,7 @@ breakdown of the AI-prompt reel this intro copies, which plays the effects with 
 them: its cursor click (1.783-1.935 s) and the five pops of its menu (2.92-4.15 s). The click is
 on both presses, a pop on each tile, a pop on each letter of UNIsport as it lands. Nothing else.
 `node scripts/video/intro-sound-v7.mjs` makes `unisport-intro-v7.mp4`.
+
+2026-10-25: the click is now the one the owner sent ("tenhle mouse click"), an earlier render of
+this intro saved as `C:/VideoEditing/references/reels/10-intro-mouse-click-2026-10-25.mp4`. Each
+press is cut straight out of it with its release, at the same level and with no room on it.
