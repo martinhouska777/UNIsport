@@ -465,7 +465,7 @@ log workouts to earn points and memories. and then the leaderboards"):
 
 | Post | Slides | Where |
 |---|---|---|
-| Match, 5 | Match list (Browse on the switch, Search similarities on the shared interests, Look for a mentor), a profile (Why you match, Compare calendars, Send a message), Sessions (Post your session, Filter sessions, Search by time, Accept), the chat ending on a plan from Arjun you just accepted (Plan a session, and "Once you accept the session, it will appear in both of your calendars." alone), the waitlist ("Get in on the action.") | `mockups/social/post-match/` |
+| Match, 5 | Match list (Browse on the switch, Search similarities on the shared interests, Look for a mentor), a profile (Why you match, Compare calendars, Send a message), Sessions (Post your session, Filter sessions, Search by time; Accept cut 2026-10-24), the chat ending on a plan from Arjun you just accepted (Plan a session, and "Once you accept the session, it will appear in both of your calendars." alone), the waitlist ("Get in on the action.") | `mockups/social/post-match/` |
 | Profile, 4 | Profile (Log your sessions, Calendar), the Log sheet (Add exercises, Snap a picture, Earn points), Leaderboards (Rack up points, Join a competition), the waitlist ("Get in on the action.") | `mockups/social/post-profile/` |
 
 **Every word on both posts is the owner's own since 2026-10-24** ("can you change the text

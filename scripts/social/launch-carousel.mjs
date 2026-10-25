@@ -193,13 +193,12 @@ const POST_MATCH = [
       { side: "R", title: "Compare calendars", text: "Find out when you’re both free to train.", at: [1119, 1824] },
       { side: "R", title: "Send a message", text: "Set up a session in your chat.", at: [1158, 2259] },
     ] },
-  /* Accept sends the poster a plan with the post's time and gym (BuddyBoard.tsx) */
+  /* no Accept label (owner, 2026-10-24: "delete the accept") */
   { kind: "feature", img: "board", head: "Post your session and", em: "see if anyone else wants to join.",
     labels: [
       { side: "L", title: "Post your session", text: "Show people what you’re up to.", at: [36, 258] },
       { side: "L", title: "Filter sessions", text: "Find your gym, day, and exercises.", at: [39, 419] },
       { side: "R", title: "Search by time", text: "Look for a time you want to train and connect with others going at the same time.", at: [1168, 258] },
-      { side: "R", title: "Accept", text: "Send your partner a plan.", at: [1124, 720] },
     ] },
   /* the chat ends on a plan Arjun sent that you have just accepted
      (capture-launch.mjs); the sentence points at its "You're on" */
@@ -408,10 +407,14 @@ const render = (s) => {
 };
 
 /* IN THE PAGE, once the type has wrapped: stand each label level with the
-   point it names (its name's middle on the arrow's line), push labels on one
-   side apart so none touch, keep them inside the phone's height, then draw
-   each line from the label's inner edge to its point: a curve that leaves
-   the label level and lands on the point.
+   point it names (its name's middle on the arrow's line). Where two labels on
+   one side would touch, the pair moves apart evenly, one up and one down,
+   rather than the lower one taking all of it; then everything stays inside
+   the phone's height. Each line is STRAIGHT, from the label's inner edge at
+   the height of its name closest to the point, onto the point (owner,
+   2026-10-24: "make the arrows better now some of them have strange shapes").
+   The curve it replaced left the label level and landed level, so any label
+   not level with its point drew an S running down the phone's edge.
 
    The line is thin, black and SOLID, and ends in a small solid arrowhead
    whose tip touches the spot (owner, 2026-10-22: "udělej tu šipku šipkou na
@@ -431,11 +434,26 @@ function layOut(LINE) {
     for (const side of ["L", "R"]) {
       const mine = labs.filter((l) => l.classList.contains(side)).sort((a, b) => a.dataset.ty - b.dataset.ty);
       if (!mine.length) continue;
-      const gap = 44;
+      const gap = 36;
       const title = (l) => l.querySelector("b");
-      /* first: level with its point */
-      let tops = mine.map((l) => +l.dataset.ty - +l.dataset.rise - title(l).offsetHeight / 2);
-      /* then: no overlaps, top to bottom … */
+      /* where each label wants to be: level with its point */
+      const want = mine.map((l) => +l.dataset.ty - +l.dataset.rise - title(l).offsetHeight / 2);
+      /* the closest tops that keep every label `gap` apart: labels that
+         would touch are pooled and share the move evenly (pool adjacent
+         violators, on each top less the room the labels above it take) */
+      const room = [];
+      mine.reduce((acc, l) => (room.push(acc), acc + l.offsetHeight + gap), 0);
+      const pools = [];
+      mine.forEach((_, i) => {
+        pools.push({ sum: want[i] - room[i], n: 1 });
+        while (pools.length > 1 && pools.at(-2).sum / pools.at(-2).n > pools.at(-1).sum / pools.at(-1).n) {
+          const p = pools.pop();
+          pools.at(-1).sum += p.sum; pools.at(-1).n += p.n;
+        }
+      });
+      let tops = [];
+      for (const p of pools) for (let k = 0; k < p.n; k++) tops.push(p.sum / p.n + room[tops.length]);
+      /* then: never above the phone's top … */
       for (let i = 0; i < mine.length; i++) {
         const min = i ? tops[i - 1] + mine[i - 1].offsetHeight + gap : ptop - 40;
         tops[i] = Math.max(tops[i], min);
@@ -450,20 +468,19 @@ function layOut(LINE) {
     for (const l of labs) {
       const r = l.getBoundingClientRect(), t = l.querySelector("b").getBoundingClientRect();
       const L = l.classList.contains("L");
-      /* the line under the name's middle, just off the label's inner edge */
-      const sx = L ? r.right + 14 : r.left - 14;
-      const sy = t.top + Math.min(t.height, 36) / 2;
       const tx = +l.dataset.tx, ty = +l.dataset.ty;
-      const dx = tx - sx, dy = ty - sy;
-      const c1 = [sx + dx * 0.55, sy], c2 = +l.dataset.rise ? [tx - dx * 0.3, ty - dy * 0.5] : [tx - dx * 0.3, ty];
-      /* the head points along the line's last stretch, its tip on the spot;
+      /* just off the label's inner edge, at the height of its name nearest
+         the point: level with it whenever any line of the name is */
+      const sx = L ? r.right + 14 : r.left - 14;
+      const sy = Math.min(Math.max(ty, t.top + 15), t.bottom - 15);
+      /* a straight line; the head points along it, its tip on the spot, and
          the line stops inside the head so nothing pokes past the tip */
-      const len = Math.hypot(tx - c2[0], ty - c2[1]) || 1;
-      const ux = (tx - c2[0]) / len, uy = (ty - c2[1]) / len;
+      const len = Math.hypot(tx - sx, ty - sy) || 1;
+      const ux = (tx - sx) / len, uy = (ty - sy) / len;
       const HL = 14, HW = 6;
       const bx = tx - ux * HL, by = ty - uy * HL;
       const head = `M${tx},${ty} L${bx - uy * HW},${by + ux * HW} L${bx + uy * HW},${by - ux * HW} Z`;
-      const d = `M${sx},${sy} C${c1[0]},${c1[1]} ${c2[0]},${c2[1]} ${tx - ux * HL * 0.6},${ty - uy * HL * 0.6}`;
+      const d = `M${sx},${sy} L${tx - ux * HL * 0.6},${ty - uy * HL * 0.6}`;
       for (const [colour, width, edge] of [["#fff", 5, 3], [LINE, 2, 0]]) {
         const p = document.createElementNS(NS, "path");
         p.setAttribute("d", d); p.setAttribute("fill", "none");

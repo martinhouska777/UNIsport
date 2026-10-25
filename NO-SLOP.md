@@ -168,7 +168,10 @@ own words, the date. Newest at the bottom of each part.
     straight, no logo.** Arrows are thin, black and solid (a full line, never dashed: tried
     for a few hours on 2026-10-22, then "actually do it full lines"), end in a small arrowhead whose
     tip touches the spot, and never point at what explains itself: Follow, or a plan card's
-    gym, day and time (2026-10-22: "dont put the plan card text that is easy"). Message gets
+    gym, day and time (2026-10-22: "dont put the plan card text that is easy"). An arrow is a
+    straight line from the label to the spot, the label as level with its spot as the labels
+    around it allow; never a curve that bends into an S or runs down the phone's edge
+    (2026-10-24: "make the arrows better now some of them have strange shapes"). Message gets
     a label only on a profile, for what it leads to: setting up a session (2026-10-22). No small
     label above a slide's headline ("01 Match", "Browse", "Why you match"): the slide opens
     on its headline. (2026-09-22: "Don't put the logo there", "these are old ones";
