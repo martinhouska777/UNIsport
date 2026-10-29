@@ -103,6 +103,9 @@ own words, the date. Newest at the bottom of each part.
     on the right, never a count. (2026-10-24: "in eights show cox in preveiw and not in baot
     make it by catagories", then "do C" of four; "for the boat without cox put there the stroke
     seat".)
+    A person's picture opens their profile, the way Instagram does it: on a Match card a tap on
+    the picture does what View profile does. (2026-10-29: "when you click on the profile picture
+    it will open the profile aswell not just from view profile".)
 14. **Light mode is the main mode**; the landing page is light only. (2026-09-15, 2026-09-20.)
 15. **Animation is quick and one continuous motion.** (2026-09-13: "it takes too long … I just
     want to see the thing".)

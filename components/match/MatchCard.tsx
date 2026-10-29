@@ -105,7 +105,15 @@ export default function MatchCard({
         (owner, 2026-09-14).
       */}
       <div className="flex h-24 flex-col items-center justify-center gap-1.5 border-b border-border bg-sunken">
-        <InitialsAvatar name={match.name} size={48} colors={houseColors} />
+        {/* The picture opens the profile too, like View profile (owner, 2026-10-29). */}
+        <button
+          type="button"
+          onClick={() => onView?.(match)}
+          aria-label={`${match.name || "Member"}'s profile`}
+          className="press rounded-full"
+        >
+          <InitialsAvatar name={match.name} size={48} colors={houseColors} />
+        </button>
         {(card?.varsity || card?.mentor) && (
           <div className="flex gap-1">
             {card.varsity && <ProfileBadge kind="varsity" small />}
