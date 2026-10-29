@@ -34,7 +34,8 @@
 
   The device is the website's phone (components/landing/Phone.tsx): metal rim,
   black bezel, a status-bar row, the app's capture WHOLE, a gesture-bar row.
-  No logo, no handle (the owner's rule for posts).
+  No logo, no handle (the owner's rule for posts), except on the two posts'
+  closer, which carries the mark (2026-10-29).
 
   Screens: mockups/social/screens/launch (scripts/social/capture-launch.mjs,
   signed in as the demo account; reshot 22 Oct 2026). Every arrow's target is
@@ -172,8 +173,11 @@ const CLOSER = LAUNCH[LAUNCH.length - 1];
    2026-10-24 ("can you change the text for this?"). Only the punctuation is
    ours: a full stop on each headline and line, a capital where a line starts
    under its name, and "Plan a sessions" read as "Plan a session". The arrows'
-   points did not move. */
-const POST_CLOSER = { kind: "closer", head: "Get in on", em: "the action.",
+   points did not move.
+   The closer carries the logo over "Get in early." (owner, 2026-10-29: "put the
+   logo there in the last thing and like get in early"). The launch carousel is
+   already posted and keeps its closer. */
+const POST_CLOSER = { kind: "closer", logo: true, head: "Get in", em: "early.",
   sub: "UNIsport is launching at Harvard University first. Sign up to get an email when the app goes live.",
   url: CLOSER.url };
 
@@ -316,6 +320,16 @@ const stage = (s, ptop, pbottom, lbottom = pbottom) => {
 
 const em = (text, colour = BLUE) => `<em style="color:${colour}">${text}</em>`;
 
+/* the logo as the app icon draws it on white (mockups/logo/_icons.mjs): the
+   left person navy, the right one blue, the viewBox cropped to the ink */
+const NAVY = "#2f3b52";
+const MARK = `<svg viewBox="19.5 7.5 61 81.5" height="168" style="display:inline-block">
+  <path d="M28 34 V56 Q28 82 50 82 H51" fill="none" stroke="${NAVY}" stroke-width="14" stroke-linecap="butt"/>
+  <path d="M72 34 V56 Q72 82 50 82" fill="none" stroke="${BLUE}" stroke-width="14" stroke-linecap="butt"/>
+  <circle cx="28" cy="34" r="7" fill="${NAVY}"/><circle cx="72" cy="34" r="7" fill="${BLUE}"/>
+  <circle cx="28" cy="16" r="8.5" fill="${NAVY}"/><circle cx="72" cy="16" r="8.5" fill="${BLUE}"/>
+</svg>`;
+
 const css = `
   * { margin:0; padding:0; box-sizing:border-box; }
   html,body { width:${W}px; height:${H}px; overflow:hidden; background:#fff; }
@@ -399,6 +413,7 @@ const render = (s) => {
   /* closer */
   return `<div class="slide">
     <div class="top" style="top:50%;transform:translateY(-54%)">
+      ${s.logo ? `<div style="margin-bottom:56px">${MARK}</div>` : ""}
       <div class="serif" style="font-size:150px">${s.head}<br>${em(s.em)}</div>
       <div class="sub" style="margin:34px auto 0;font-size:36px;max-width:820px">${s.sub}</div>
       <div style="margin-top:52px"><span class="url">${s.url}</span></div>

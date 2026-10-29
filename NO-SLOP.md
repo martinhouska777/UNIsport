@@ -168,7 +168,7 @@ own words, the date. Newest at the bottom of each part.
     owner asks for one by name. (2026-09-22: "no, student first"; 2026-10-23: "no not varsity
     we want to continue on the student side".)
 27. **Social images: white ground, the real current screen in light mode, a whole phone held
-    straight, no logo.** Arrows are thin, black and solid (a full line, never dashed: tried
+    straight, no logo except on a post's last slide.** Arrows are thin, black and solid (a full line, never dashed: tried
     for a few hours on 2026-10-22, then "actually do it full lines"), end in a small arrowhead whose
     tip touches the spot, and never point at what explains itself: Follow, or a plan card's
     gym, day and time (2026-10-22: "dont put the plan card text that is easy"). An arrow is a
@@ -207,6 +207,9 @@ own words, the date. Newest at the bottom of each part.
     When he writes the labels himself, his names stand over the screen's word ("Search
     similarities", "Rack up points", "Snap a picture"), and a label missing from his text is
     off the slide. (2026-10-24, both posts rewritten: "can you change the text for this?")
+    A post's last slide carries the logo: the U mark in the app icon's navy and blue over the
+    headline "Get in early.", then the line and the waitlist link. The slides before it stay
+    without one. (2026-10-29: "put the logo there in the last thing and like get in early".)
 28. **Video sound is soft**: instrumental songs only, no aggressive sound effects, none at all
     except the connecting moment. Real downloaded sounds, never synthesised. No speed changes.
     (2026-09-22: "dont want the sounds to be aggressive rather … smooth"; 2026-09-27: "skip all
