@@ -207,9 +207,14 @@ own words, the date. Newest at the bottom of each part.
     When he writes the labels himself, his names stand over the screen's word ("Search
     similarities", "Rack up points", "Snap a picture"), and a label missing from his text is
     off the slide. (2026-10-24, both posts rewritten: "can you change the text for this?")
-    A post's last slide carries the logo: the U mark in the app icon's navy and blue over the
-    headline "Get in early.", then the line and the waitlist link. The slides before it stay
-    without one. (2026-10-29: "put the logo there in the last thing and like get in early".)
+    A post's last slide carries the logo, top to bottom: the name UNIsport as the site writes
+    it, the U mark, "Get in early." on one line and smaller than the other headlines, "UNIsport
+    is launching at Harvard University first.", then "Link in bio". The slides before it stay
+    without a logo. (2026-10-29: "put the logo there in the last thing and like get in early",
+    then "the name unisport then the logo then get in early on one line and smaller".)
+    Nothing on a post looks like a link or a button when it can't be tapped: no blue pill with
+    the address. The waitlist is "Link in bio", in plain words. (2026-10-29: "jestli to nejde
+    tak tam nedavej neco co vypada jako odkaz ale neni rekni link in bio".)
 28. **Video sound is soft**: instrumental songs only, no aggressive sound effects, none at all
     except the connecting moment. Real downloaded sounds, never synthesised. No speed changes.
     (2026-09-22: "dont want the sounds to be aggressive rather … smooth"; 2026-09-27: "skip all

@@ -35,7 +35,7 @@
   The device is the website's phone (components/landing/Phone.tsx): metal rim,
   black bezel, a status-bar row, the app's capture WHOLE, a gesture-bar row.
   No logo, no handle (the owner's rule for posts), except on the two posts'
-  closer, which carries the mark (2026-10-29).
+  closer, which carries the name and the mark (2026-10-29).
 
   Screens: mockups/social/screens/launch (scripts/social/capture-launch.mjs,
   signed in as the demo account; reshot 22 Oct 2026). Every arrow's target is
@@ -174,12 +174,16 @@ const CLOSER = LAUNCH[LAUNCH.length - 1];
    ours: a full stop on each headline and line, a capital where a line starts
    under its name, and "Plan a sessions" read as "Plan a session". The arrows'
    points did not move.
-   The closer carries the logo over "Get in early." (owner, 2026-10-29: "put the
-   logo there in the last thing and like get in early"). The launch carousel is
-   already posted and keeps its closer. */
+   The closer is the name, the logo, then "Get in early." on one smaller line,
+   the Harvard line, and "Link in bio" in plain words: a drawn link nobody can
+   tap is not on it (owner, 2026-10-29: "put the logo there in the last thing
+   and like get in early", then "the name unisport then the logo then get in
+   early on one line and smaller and say that unisport is launching on harvard
+   university first, jestli to nejde tak tam nedavej neco co vypada jako odkaz
+   ale neni rekni link in bio"). The launch carousel is already posted and
+   keeps its closer. */
 const POST_CLOSER = { kind: "closer", logo: true, head: "Get in", em: "early.",
-  sub: "UNIsport is launching at Harvard University first. Sign up to get an email when the app goes live.",
-  url: CLOSER.url };
+  sub: "UNIsport is launching at Harvard University first.", bio: "Link in bio" };
 
 /* THE MATCH POST: the walk through Match, tap by tap */
 const POST_MATCH = [
@@ -330,6 +334,27 @@ const MARK = `<svg viewBox="19.5 7.5 61 81.5" height="168" style="display:inline
   <circle cx="28" cy="16" r="8.5" fill="${NAVY}"/><circle cx="72" cy="16" r="8.5" fill="${BLUE}"/>
 </svg>`;
 
+/* the name as the site writes it (components/landing/Wordmark.tsx, every
+   number copied): Instrument Serif italic, "UN" in ink, the I an Olympic bar
+   with blue plates, "sport" in blue */
+const BARBELL_I = (() => {
+  const BOX_H = 170, CAP_TOP = 15, BASE = 155, CAP_H = 140, STEM = 11.9, STUB = 9;
+  const PLATE_W = STEM * 3.2, PLATE_H = STEM * 1.45, BOX_W = PLATE_W * 1.18, CX = BOX_W / 2;
+  const CAP_EM = 0.72, SLANT = 13.1;
+  const HEIGHT_EM = (CAP_EM * BOX_H) / CAP_H, WIDTH_EM = (HEIGHT_EM * BOX_W) / BOX_H;
+  const SHIFT_EM = ((BOX_H - BASE) / CAP_H) * CAP_EM;
+  const plate = (y) => `<rect x="${(CX - PLATE_W / 2).toFixed(2)}" y="${y}" width="${PLATE_W.toFixed(2)}"
+    height="${PLATE_H.toFixed(2)}" rx="${(PLATE_H * 0.22).toFixed(2)}" fill="${BLUE}"/>`;
+  return `<svg viewBox="0 0 ${BOX_W.toFixed(2)} ${BOX_H}" width="${WIDTH_EM.toFixed(4)}em" height="${HEIGHT_EM.toFixed(4)}em"
+    style="display:inline-block;vertical-align:baseline;transform:translateY(${SHIFT_EM.toFixed(4)}em);margin-left:.05em;margin-right:-.035em;overflow:visible">
+    <g transform="rotate(${SLANT} ${CX.toFixed(2)} ${(CAP_TOP + BASE) / 2})">
+      <rect x="${(CX - STEM / 2).toFixed(2)}" y="${CAP_TOP - STUB}" width="${STEM.toFixed(2)}" height="${CAP_H + STUB * 2}"
+        rx="${(STEM * 0.12).toFixed(2)}" fill="${INK}"/>
+      ${plate(CAP_TOP)}${plate((BASE - PLATE_H).toFixed(2))}
+    </g></svg>`;
+})();
+const WORDMARK = `<span style="font-style:italic;letter-spacing:-.025em">UN${BARBELL_I}<span style="color:${BLUE}">sport</span></span>`;
+
 const css = `
   * { margin:0; padding:0; box-sizing:border-box; }
   html,body { width:${W}px; height:${H}px; overflow:hidden; background:#fff; }
@@ -410,10 +435,22 @@ const render = (s) => {
     </div>`;
   }
 
-  /* closer */
+  /* the posts' closer: the name, the logo, the headline on one line */
+  if (s.logo) {
+    return `<div class="slide">
+      <div class="top" style="top:50%;transform:translateY(-50%)">
+        <div class="serif" style="font-size:120px">${WORDMARK}</div>
+        <div style="margin-top:48px">${MARK}</div>
+        <div class="serif" style="margin-top:64px;font-size:118px">${s.head} ${em(s.em)}</div>
+        <div class="sub" style="margin:32px auto 0;font-size:36px;max-width:900px">${s.sub}</div>
+        <div style="margin-top:44px;font-weight:700;font-size:36px">${s.bio}</div>
+      </div>
+    </div>`;
+  }
+
+  /* the launch carousel's closer */
   return `<div class="slide">
     <div class="top" style="top:50%;transform:translateY(-54%)">
-      ${s.logo ? `<div style="margin-bottom:56px">${MARK}</div>` : ""}
       <div class="serif" style="font-size:150px">${s.head}<br>${em(s.em)}</div>
       <div class="sub" style="margin:34px auto 0;font-size:36px;max-width:820px">${s.sub}</div>
       <div style="margin-top:52px"><span class="url">${s.url}</span></div>
