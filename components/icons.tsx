@@ -391,6 +391,14 @@ export const IconMoon = (p: IconProps) => (
   </Base>
 );
 
+/* A circle with a slash: Blocked, as Instagram and WhatsApp draw it. */
+export const IconBlock = (p: IconProps) => (
+  <Base {...p}>
+    <circle cx="12" cy="12" r="8.5" />
+    <path d="M6 6l12 12" />
+  </Base>
+);
+
 export const IconTrash = (p: IconProps) => (
   <Base {...p}>
     <path d="M4 7h16" />

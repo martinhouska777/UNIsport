@@ -52,6 +52,8 @@ import { IconMapPin, IconSearch, IconX } from "@/components/icons";
 import { useAppState } from "@/components/AppState";
 import { useTourRunning } from "@/lib/tour";
 import { isTourExamplePost, tourExamplePosts } from "@/lib/tourExample";
+import SafetySheet, { MoreButton } from "@/components/safety/SafetySheet";
+import { useBlockedIds } from "@/lib/supabase/safety";
 
 function dayShort(key: string): string {
   return weekDays.find((d) => d.key === key)?.label.slice(0, 3) ?? key;
@@ -96,6 +98,7 @@ export function PostCard({
   onAccept,
   onMessage,
   onOpenProfile,
+  onMore,
 }: {
   post: BuddyPost;
   busy: boolean;
@@ -104,6 +107,8 @@ export function PostCard({
   onAccept: (() => void) | null;
   onMessage: () => void;
   onOpenProfile: () => void;
+  /** Report and Block (components/safety/SafetySheet.tsx); null on the walk's example */
+  onMore: (() => void) | null;
 }) {
   return (
     <div className="overflow-hidden rounded-xl border border-border bg-surface">
@@ -113,12 +118,15 @@ export function PostCard({
         <span className="flex-shrink-0 text-[13px] font-bold text-text">
           {p.date ? dateLabel(p.date) : dayShort(p.day)} {postWhenLabel(p.hour, p.timeOfDay)}
         </span>
-        {p.gym && (
-          <span className="flex min-w-0 items-center gap-1 text-[12px] font-medium text-text-2">
-            <IconMapPin size={13} className="flex-shrink-0" />
-            <span className="min-w-0 truncate">{p.gym}</span>
-          </span>
-        )}
+        <span className="flex min-w-0 items-center gap-1">
+          {p.gym && (
+            <span className="flex min-w-0 items-center gap-1 text-[12px] font-medium text-text-2">
+              <IconMapPin size={13} className="flex-shrink-0" />
+              <span className="min-w-0 truncate">{p.gym}</span>
+            </span>
+          )}
+          {onMore && <MoreButton onClick={onMore} className="-my-2 -mr-2 h-8 w-8 flex-shrink-0" />}
+        </span>
       </div>
       <div className="flex items-center gap-3 px-3.5 py-3">
         <div className="min-w-0 flex-1">
@@ -344,7 +352,12 @@ export default function BuddyBoard({
   const { universityKey } = useAppState();
   const touring = useTourRunning();
   const example = touring && board?.length === 0 && !anyFilter && !timeSearch;
-  const posts = example ? tourExamplePosts(universityKey) : board;
+  // Posts by anyone on either side of a block with you are not shown.
+  const blocked = useBlockedIds();
+  const [held, setHeld] = useState<BuddyPost | null>(null);
+  const posts = example
+    ? tourExamplePosts(universityKey)
+    : (board?.filter((p) => !blocked.has(p.author)) ?? board);
 
   // The board as shown: everything, or only what answers the time search.
   const found =
@@ -588,6 +601,7 @@ export default function BuddyBoard({
                   onAccept={canJoin(p) ? () => real && imIn(p) : null}
                   onMessage={() => real && message(p)}
                   onOpenProfile={() => real && router.push(`/people/${p.author}`)}
+                  onMore={real ? () => setHeld(p) : null}
                 />
               </div>
             );
@@ -595,6 +609,14 @@ export default function BuddyBoard({
         </div>
       )}
 
+      {held && (
+        <SafetySheet
+          userId={held.author}
+          name={held.authorName}
+          report={{ kind: "post", targetId: held.id, body: held.note ?? null }}
+          onClose={() => setHeld(null)}
+        />
+      )}
     </div>
   );
 }

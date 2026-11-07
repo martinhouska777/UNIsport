@@ -29,6 +29,7 @@ import type { HouseColors } from "@/lib/gyms";
 import { listPendingInvites } from "@/lib/supabase/sessionPlans";
 import { useTourRunning } from "@/lib/tour";
 import { isTourExample, tourExampleChat, useTourExample } from "@/lib/tourExample";
+import { useBlockedIds } from "@/lib/supabase/safety";
 
 export type MessagesTab = "direct" | "community";
 type Tab = MessagesTab;
@@ -100,15 +101,18 @@ export default function MessagesList({
   // …or, with none waiting, the walk's example chat (lib/tourExample.ts).
   const example = useTourExample();
 
+  // A chat with someone on either side of a block is not listed.
+  const blocked = useBlockedIds();
   const filteredDms = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return conversations ?? [];
-    return (conversations ?? []).filter(
+    const open = (conversations ?? []).filter((c) => !blocked.has(c.otherId));
+    if (!q) return open;
+    return open.filter(
       (c) =>
         c.otherName.toLowerCase().includes(q) ||
         (c.lastBody ?? "").toLowerCase().includes(q),
     );
-  }, [conversations, query]);
+  }, [conversations, query, blocked]);
 
   const filteredChannels = useMemo(() => {
     const q = query.trim().toLowerCase();

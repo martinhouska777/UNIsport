@@ -44,6 +44,7 @@ import FiltersSheet, {
 } from "@/components/match/FiltersSheet";
 import { NO_BOARD_FILTERS, type BoardFilters } from "@/components/match/BoardFiltersSheet";
 import { IconSearch } from "@/components/icons";
+import { useBlockedIds } from "@/lib/supabase/safety";
 
 type SubTab = "people" | "sessions";
 
@@ -158,7 +159,9 @@ function MatchScreen() {
   }, [userId, filters]);
 
   const current = browseResult?.forFilters === filters ? browseResult : null;
-  const browse = current?.rows ?? null;
+  // Nobody on either side of a block with you is shown.
+  const blocked = useBlockedIds();
+  const browse = current?.rows?.filter((m) => !blocked.has(m.userId)) ?? null;
   const browseErr = current?.error ?? null;
 
   return (

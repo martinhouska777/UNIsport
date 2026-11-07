@@ -9,6 +9,7 @@
     (group)      Notifications · Design — pages; Units — in place
     Help         Take the tour, the privacy policy, the terms
     (group)      Replay athlete setup — asks first
+    (red row)    Delete account, asks once (components/settings/DeleteAccount.tsx)
     (bottom)     Log out
 
   Two things MOVED HERE off the varsity profile (owner, same day): the calendar
@@ -29,6 +30,7 @@ import type { ProfileSaveState } from "@/components/profile/useProfileData";
 import { useMembership } from "@/components/varsity/useMembership";
 import Button from "@/components/ui/Button";
 import { AppRows, LegalRows } from "@/components/settings/CommonRows";
+import DeleteAccount from "@/components/settings/DeleteAccount";
 import {
   Group,
   ProfileCard,
@@ -177,6 +179,8 @@ export default function VarsitySettings() {
             />
           </Group>
         )}
+
+        <DeleteAccount />
 
         <Button
           variant="secondary"

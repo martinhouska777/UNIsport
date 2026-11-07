@@ -35,6 +35,8 @@ import FollowListSheet from "@/components/people/FollowListSheet";
 import { getFollowCounts, type FollowKind } from "@/lib/supabase/follows";
 import { getPartnerCount, getWorkoutCount } from "@/lib/supabase/workouts";
 import SectionLabel from "@/components/ui/SectionLabel";
+import SafetySheet, { MoreButton } from "@/components/safety/SafetySheet";
+import { useBlockedIds } from "@/lib/supabase/safety";
 
 // The real screen sits in a Suspense boundary. It was required while this page
 // read ?fit= with useSearchParams (the fit pill, cut 2026-09-30); it stays as
@@ -111,6 +113,11 @@ function PersonProfile() {
   }, [meId, id]);
 
   const sharedInterests = new Set(match?.facts.interests ?? []);
+
+  /* Report and Block under the ⋯ (components/safety/SafetySheet.tsx). Either
+     side of a block sees this profile as not available. */
+  const [safetyOpen, setSafetyOpen] = useState(false);
+  const blocked = useBlockedIds().has(id);
 
   useEffect(() => {
     if (!id) return;
@@ -243,12 +250,23 @@ function PersonProfile() {
           <IconArrowLeft size={18} />
         </button>
         {/* No "Profile" title: the card under it is the profile (NO-SLOP 7). */}
+        {id && meId !== id && <MoreButton onClick={() => setSafetyOpen(true)} />}
       </div>
+
+      {safetyOpen && id && (
+        <SafetySheet
+          userId={id}
+          name={user?.name || "Member"}
+          report={{ kind: "person", targetId: id }}
+          onClose={() => setSafetyOpen(false)}
+          onBlocked={() => router.back()}
+        />
+      )}
 
       {status === "loading" && (
         <div className="px-6 py-20 text-center text-sm text-muted">Loading profile…</div>
       )}
-      {status === "missing" && (
+      {(status === "missing" || (blocked && status === "ready")) && (
         <div className="px-6 py-20 text-center text-sm text-muted">
           This profile isn’t available.
         </div>
@@ -259,7 +277,7 @@ function PersonProfile() {
         </div>
       )}
 
-      {status === "ready" && user && (
+      {status === "ready" && user && !blocked && (
         <>
           <div className="flex flex-col gap-2.5 px-3.5 pb-3 pt-3">
             {/* WHO THEY ARE — laid out like your own Profile tab: photo on the

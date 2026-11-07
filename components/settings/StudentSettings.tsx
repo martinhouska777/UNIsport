@@ -8,6 +8,8 @@
     Match        Train alone, mentorship, Partner — in that order
     Help         the tour, the privacy policy, the terms
     (group)      the way into a varsity team, when you aren't on one
+    (group)      Blocked: the people you blocked, each with Unblock
+    (red row)    Delete account, asks once (components/settings/DeleteAccount.tsx)
     (bottom)     Invite a friend and Log out, side by side
 
   Every answer has one home: training answers in Training, matching answers in
@@ -22,6 +24,7 @@ import { useMembership } from "@/components/varsity/useMembership";
 import ShareInviteButton from "@/components/ShareInviteButton";
 import Button from "@/components/ui/Button";
 import MatchSettings from "@/components/settings/MatchSettings";
+import DeleteAccount from "@/components/settings/DeleteAccount";
 import { AppRows, LegalRows } from "@/components/settings/CommonRows";
 import {
   Group,
@@ -35,7 +38,7 @@ import { LIVE_UNIVERSITY, universities } from "@/lib/themes";
 import SchoolCrest from "@/components/SchoolCrest";
 import { crestFor } from "@/lib/crests";
 import { appTour, requestTour, resetTour } from "@/lib/tour";
-import { IconBarbell, IconBulb, IconPencil, IconShield } from "@/components/icons";
+import { IconBarbell, IconBlock, IconBulb, IconPencil, IconShield } from "@/components/icons";
 
 // Dev-only affordances are compiled out of the production bundle.
 const isProduction = process.env.NODE_ENV === "production";
@@ -165,6 +168,12 @@ export default function StudentSettings() {
             )}
           </Group>
         )}
+
+        <Group>
+          <Row icon={<IconBlock size={20} />} label="Blocked" href="/settings/blocked" />
+        </Group>
+
+        <DeleteAccount />
 
         <div className="flex flex-col gap-2">
           {!isProduction && (

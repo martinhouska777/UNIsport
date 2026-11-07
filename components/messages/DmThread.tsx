@@ -20,6 +20,7 @@ import Composer from "./Composer";
 import PlanCard from "./PlanCard";
 import PlanSessionSheet from "./PlanSessionSheet";
 import ReadTicks from "./ReadTicks";
+import SafetySheet, { MoreButton } from "@/components/safety/SafetySheet";
 import { dayLabel, sameDay } from "./dayLabel";
 import {
   TOUR_EXAMPLE_ID,
@@ -53,6 +54,7 @@ export default function DmThread({
   const [peer, setPeer] = useState<PeerState | null>(null);
   const [planOpen, setPlanOpen] = useState(false); // "Plan a session" form
   const [editPlan, setEditPlan] = useState<DmPlan | null>(null); // reschedule editor
+  const [safetyOpen, setSafetyOpen] = useState(false); // Report and Block under the ⋯
   /*
     The plan the walk lights (lib/tour.ts): the newest one the other person
     sent you that was still waiting for your answer when the chat opened. Held
@@ -156,6 +158,7 @@ export default function DmThread({
         >
           <IconCalendar size={14} /> Plan
         </button>
+        {otherId && !example && <MoreButton onClick={() => setSafetyOpen(true)} className="-mr-1 shrink-0" />}
       </div>
 
       {/* Messages. On WHITE (owner, 2026-10-04: "make the background more
@@ -219,6 +222,26 @@ export default function DmThread({
       </div>
 
       <Composer placeholder="Message..." onSend={send} />
+
+      {safetyOpen && otherId && (
+        <SafetySheet
+          userId={otherId}
+          name={title}
+          report={{
+            kind: "message",
+            targetId: conversationId,
+            // Their last few messages go with the report, so it still says
+            // what was written if they delete it.
+            body: (messages ?? [])
+              .filter((m) => m.senderId === otherId && m.body)
+              .slice(-5)
+              .map((m) => m.body)
+              .join("\n"),
+          }}
+          onClose={() => setSafetyOpen(false)}
+          onBlocked={onBack}
+        />
+      )}
 
       {planOpen && (
         <PlanSessionSheet

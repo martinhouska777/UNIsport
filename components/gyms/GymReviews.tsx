@@ -40,6 +40,9 @@ import Avatar from "@/components/messages/Avatar";
 import Button from "@/components/ui/Button";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { IconStar } from "@/components/icons";
+import SafetySheet from "@/components/safety/SafetySheet";
+import { useLongPress } from "@/components/safety/useLongPress";
+import { useBlockedIds } from "@/lib/supabase/safety";
 
 /** One category's average, as a bar. Empty track when nobody has said. */
 function ScoreBar({ label, value }: { label: string; value: number | null }) {
@@ -140,6 +143,12 @@ export default function GymReviews({
 
   const draftOverall = overallOf(scores);
   const nothingToSave = draftOverall === null && comment.trim() === "";
+
+  /* What people wrote, without anyone on either side of a block with you;
+     hold someone else's comment for Report and Block. */
+  const blocked = useBlockedIds();
+  const [held, setHeld] = useState<GymReview | null>(null);
+  const written = reviews.filter((r) => r.comment && !blocked.has(r.userId));
   const score = summary?.score ?? null;
   const count = summary?.reviews ?? 0;
 
@@ -228,12 +237,10 @@ export default function GymReviews({
 
       {/* WHAT PEOPLE WROTE. Only reviews that actually say something appear —
           a bare score is already in the average above. */}
-      {loaded && reviews.some((r) => r.comment) && (
+      {loaded && written.length > 0 && (
         <ul className="mt-3.5 flex flex-col divide-y divide-border border-t border-border">
-          {reviews
-            .filter((r) => r.comment)
-            .map((r) => (
-              <li key={r.userId} className="flex gap-2.5 py-3">
+          {written.map((r) => (
+              <HoldRow key={r.userId} onHold={r.mine ? null : () => setHeld(r)}>
                 <Avatar size={30} src={r.authorPhoto ?? undefined} alt={r.authorName} />
                 <div className="min-w-0 flex-1">
                   <div className="flex min-w-0 items-center gap-2">
@@ -254,10 +261,32 @@ export default function GymReviews({
                     {r.comment}
                   </p>
                 </div>
-              </li>
+              </HoldRow>
             ))}
         </ul>
       )}
+
+      {held && (
+        <SafetySheet
+          userId={held.userId}
+          name={held.authorName}
+          report={{ kind: "review", targetId: `${gymSlug}:${held.userId}`, body: held.comment }}
+          onClose={() => setHeld(null)}
+        />
+      )}
     </div>
+  );
+}
+
+/* One comment; someone else's opens Report and Block when held. */
+function HoldRow({ onHold, children }: { onHold: (() => void) | null; children: React.ReactNode }) {
+  const press = useLongPress(() => onHold?.());
+  return (
+    <li
+      {...(onHold ? press : {})}
+      className={`flex gap-2.5 py-3 ${onHold ? "select-none [-webkit-touch-callout:none]" : ""}`}
+    >
+      {children}
+    </li>
   );
 }

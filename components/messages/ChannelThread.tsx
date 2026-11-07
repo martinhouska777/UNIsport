@@ -22,6 +22,9 @@ import { useAppState } from "@/components/AppState";
 import { teamFor } from "@/lib/cohorts";
 import ChannelInfo from "./ChannelInfo";
 import { dayLabel, sameDay } from "./dayLabel";
+import SafetySheet from "@/components/safety/SafetySheet";
+import { useLongPress } from "@/components/safety/useLongPress";
+import { useBlockedIds } from "@/lib/supabase/safety";
 
 /*
   Community channel thread. Each message shows the sender's name, house + class
@@ -47,7 +50,7 @@ export default function ChannelThread({
   /** "Message" on a member in Channel info — opens a chat with them. */
   onMessagePerson?: (person: { id: string; name: string }) => void;
 }) {
-  const { universityKey } = useAppState();
+  const { universityKey, userId: meId } = useAppState();
   // The name can change under you: the admin renames it in Channel info.
   const [name, setName] = useState(title);
   const [info, setInfo] = useState(false);
@@ -69,6 +72,11 @@ export default function ChannelThread({
   const [joined, setJoined] = useState(joinedInitial);
   const [joining, setJoining] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  /* Hold someone else's message for Report and Block (WhatsApp's long press).
+     Messages from anyone on either side of a block with you are not shown. */
+  const [held, setHeld] = useState<ChannelMessage | null>(null);
+  const blocked = useBlockedIds();
+  const shown = messages?.filter((m) => !blocked.has(m.senderId)) ?? null;
 
   const join = async () => {
     if (joining) return;
@@ -167,13 +175,13 @@ export default function ChannelThread({
           (DmThread, owner 2026-10-04). */}
       <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto bg-surface px-3.5 py-3">
         {error && <div className="py-10 text-center text-sm text-muted">{error}</div>}
-        {messages?.length === 0 && !error && (
+        {shown?.length === 0 && !error && (
           <div className="py-10 text-center text-[12px] text-muted">
             No messages yet.
           </div>
         )}
-        {messages?.map((m, i) => {
-          const showDay = i === 0 || !sameDay(m.createdAt, messages[i - 1].createdAt);
+        {shown?.map((m, i) => {
+          const showDay = i === 0 || !sameDay(m.createdAt, shown[i - 1].createdAt);
           return (
             <div key={m.id} className="flex flex-col gap-3">
               {showDay && (
@@ -198,9 +206,9 @@ export default function ChannelThread({
                       {clockTime(m.createdAt)}
                     </span>
                   </div>
-                  <div className="inline-block max-w-full whitespace-pre-wrap break-words rounded-[4px_16px_16px_16px] bg-surface-2 px-3 py-1.5 text-[14px] leading-snug text-text">
+                  <Holdable onHold={meId && m.senderId !== meId ? () => setHeld(m) : null}>
                     {m.body}
-                  </div>
+                  </Holdable>
                 </div>
               </div>
             </div>
@@ -208,6 +216,15 @@ export default function ChannelThread({
         })}
         <div ref={bottomRef} />
       </div>
+
+      {held && (
+        <SafetySheet
+          userId={held.senderId}
+          name={held.senderName || "Member"}
+          report={{ kind: "message", targetId: held.id, body: held.body }}
+          onClose={() => setHeld(null)}
+        />
+      )}
 
       {joined ? (
         <Composer placeholder={`Message # ${name}...`} onSend={send} />
@@ -218,6 +235,21 @@ export default function ChannelThread({
           </Button>
         </div>
       )}
+    </div>
+  );
+}
+
+/* A message bubble; someone else's opens Report and Block when held. */
+function Holdable({ onHold, children }: { onHold: (() => void) | null; children: React.ReactNode }) {
+  const press = useLongPress(() => onHold?.());
+  return (
+    <div
+      {...(onHold ? press : {})}
+      className={`inline-block max-w-full whitespace-pre-wrap break-words rounded-[4px_16px_16px_16px] bg-surface-2 px-3 py-1.5 text-[14px] leading-snug text-text ${
+        onHold ? "select-none [-webkit-touch-callout:none]" : ""
+      }`}
+    >
+      {children}
     </div>
   );
 }
