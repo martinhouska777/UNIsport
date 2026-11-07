@@ -18,7 +18,8 @@ import type { Session } from "@supabase/supabase-js";
 import { createClient, hasSupabaseEnv } from "@/lib/supabase/client";
 import { clearOnboardingDraft, type OnboardingProfile } from "@/lib/onboarding";
 import { getUniversity, LIVE_UNIVERSITY } from "@/lib/themes";
-import { universityForEmail } from "@/lib/universityEmail";
+import { needsSchoolAddress, universityForEmail } from "@/lib/universityEmail";
+import { usePathname, useRouter } from "next/navigation";
 import { readDemoSchool, rollDemoSchool } from "@/lib/demoSchool";
 import type { VarsityAthleteProfile } from "@/lib/varsity/athleteProfile";
 import { defaultUnits, type Units } from "@/lib/varsity/units";
@@ -42,6 +43,8 @@ type AppState = {
   loggedIn: boolean;
   userId: string | null;
   email: string | null; // which account you're signed in as — shown on Profile
+  /** an Apple account not on a university address yet: only /verify-school is open to it */
+  needsSchoolEmail: boolean;
   /*
     When this account was made (ISO), from the auth record. What "new here"
     means to the app — a first-year's Match narrows to their own year for the
@@ -441,6 +444,21 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     setVarsityReady(false);
   };
 
+  /*
+    THE .edu RULE FOR SIGN IN WITH APPLE (lib/universityEmail.ts). Until the
+    account is on a university address, every page but the public ones sends
+    it to /verify-school, so no part of the app is reachable around it.
+  */
+  const needsSchoolEmail = needsSchoolAddress(session?.user);
+  const pathname = usePathname();
+  const router = useRouter();
+  useEffect(() => {
+    if (!needsSchoolEmail || !pathname) return;
+    const open = ["/verify-school", "/login", "/auth", "/privacy", "/terms", "/about", "/contact"];
+    if (pathname === "/" || open.some((p) => pathname === p || pathname.startsWith(`${p}/`))) return;
+    router.replace(`/verify-school?next=${encodeURIComponent(pathname)}`);
+  }, [needsSchoolEmail, pathname, router]);
+
   return (
     <AppStateContext.Provider
       value={{
@@ -448,6 +466,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         loggedIn: !!session,
         userId: session?.user.id ?? null,
         email: session?.user.email ?? null,
+        needsSchoolEmail,
         signedUpAt: session?.user.created_at ?? null,
         studentReady,
         varsityReady,

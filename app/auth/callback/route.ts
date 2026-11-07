@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import type { EmailOtpType } from "@supabase/supabase-js";
-import { isUniversityEmail } from "@/lib/universityEmail";
+import { isUniversityEmail, needsSchoolAddress } from "@/lib/universityEmail";
 import { NEXT_AFTER_SIGN_IN_COOKIE } from "@/lib/signInNext";
 
 /*
@@ -89,7 +89,14 @@ export async function GET(request: NextRequest) {
     the profile read failed, let them through — an RLS hiccup or a network blip
     must not lock out a real student.
   */
-  if (!profileUnknown && !profile && !isUniversityEmail(data.user?.email ?? "")) {
+  /*
+    Sign in with Apple is the exception: Apple almost never hands over the
+    university address, so a new Apple account is kept signed in and sent to
+    /verify-school, which asks for the university email and its code before
+    anything else (lib/universityEmail.ts needsSchoolAddress).
+  */
+  const askSchool = !profileUnknown && !profile && needsSchoolAddress(data.user);
+  if (!askSchool && !profileUnknown && !profile && !isUniversityEmail(data.user?.email ?? "")) {
     await supabase.auth.signOut();
     return NextResponse.redirect(`${origin}/login?auth_error=university`);
   }
@@ -111,7 +118,9 @@ export async function GET(request: NextRequest) {
   // link could otherwise drop a freshly signed-in student on another website.
   const safeNext =
     next && next.startsWith("/") && !next.startsWith("//") && !/[@\\]/.test(next) ? next : null;
-  let destination = safeNext;
+  let destination = askSchool
+    ? `/verify-school${safeNext ? `?next=${encodeURIComponent(safeNext)}` : ""}`
+    : safeNext;
   if (!destination) {
     destination = profileUnknown || profile?.onboarding_completed ? "/match" : "/onboarding";
   }

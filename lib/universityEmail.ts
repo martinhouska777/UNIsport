@@ -106,3 +106,24 @@ export function universityForEmail(email: string | null | undefined): University
     u.domains.some((d) => domain === d || domain.endsWith(`.${d}`)),
   );
 }
+
+/*
+  SIGN IN WITH APPLE AND THE .edu RULE. Apple hands us the person's Apple ID
+  address, or a hidden one (…@privaterelay.appleid.com), and almost never a
+  university address. So an Apple account that isn't on a university address
+  yet is let in only as far as /verify-school, which asks for the university
+  email and its code and makes that the account's address (app/verify-school).
+  Google stays as it is: those are the university's own Google accounts, and a
+  new one off a university address is still turned away (app/auth/callback).
+*/
+type SignedInUser = {
+  email?: string | null;
+  app_metadata?: { provider?: string; providers?: string[] };
+};
+
+export function needsSchoolAddress(user: SignedInUser | null | undefined): boolean {
+  if (!user) return false;
+  const providers = user.app_metadata?.providers ?? [user.app_metadata?.provider];
+  if (!providers.includes("apple")) return false;
+  return !isUniversityEmail(user.email ?? "");
+}

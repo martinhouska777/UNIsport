@@ -2,7 +2,8 @@
 
 /*
   Student sign-in (Zone 1). Reached from the landing's "Get started" CTAs.
-  Real Supabase auth: email + password (the familiar flow) plus Google. After
+  Real Supabase auth: email + password (the familiar flow) plus Google, and
+  Apple once it is set up (NEXT_PUBLIC_APPLE_SIGNIN, APPLE-SIGN-IN.md). After
   auth, new accounts (no profile yet) go to onboarding, returning ones to the app.
   Styled in the landing's dark product brand via the `l-*` tokens — except on
   the way to a team invite (`?next=/join/<code>`), where it wears the team's
@@ -25,6 +26,7 @@ import {
   isInvitePath,
 } from "@/lib/signInNext";
 import TeamDoor, { TeamMark } from "@/components/join/TeamDoor";
+import { IconApple } from "@/components/icons";
 import {
   isUniversityEmail,
   universityForEmail,
@@ -32,6 +34,10 @@ import {
 } from "@/lib/universityEmail";
 
 type Mode = "login" | "signup";
+
+/* Continue with Apple shows once Apple and Supabase are set up for it
+   (APPLE-SIGN-IN.md): a button that only errors helps nobody. */
+const APPLE_SIGN_IN = process.env.NEXT_PUBLIC_APPLE_SIGNIN === "1";
 
 /*
   Which screen of the sign-in is showing. "form" is the usual email + password;
@@ -356,7 +362,7 @@ export default function LoginPage({
     setSettingPassword(false); // → the redirect effect takes them in
   };
 
-  const signInWithGoogle = async () => {
+  const signInWith = async (provider: "google" | "apple") => {
     if (!supabase) return;
     setError(null);
     /*
@@ -375,7 +381,7 @@ export default function LoginPage({
       document.cookie = `${NEXT_AFTER_SIGN_IN_COOKIE}=${encodeURIComponent(next)}; Max-Age=${NEXT_AFTER_SIGN_IN_MAX_AGE}; Path=/; SameSite=Lax`;
     }
     const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
+      provider,
       options: { redirectTo: `${window.location.origin}/auth/callback` },
     });
     if (error) {
@@ -619,12 +625,25 @@ export default function LoginPage({
               <span className="h-px flex-1 bg-l-line" />
             </div>
 
-            <button
-              onClick={signInWithGoogle}
-              className="w-full rounded-full border border-l-line bg-l-surface px-5 py-3 text-sm font-medium text-l-text"
-            >
-              Continue with Google
-            </button>
+            <div className="flex flex-col gap-2.5">
+              <button
+                onClick={() => signInWith("google")}
+                className="w-full rounded-full border border-l-line bg-l-surface px-5 py-3 text-sm font-medium text-l-text"
+              >
+                Continue with Google
+              </button>
+              {/* Apple's own look: black with the white mark, the same size as
+                  Google beside it (Apple's Human Interface Guidelines). */}
+              {APPLE_SIGN_IN && (
+                <button
+                  onClick={() => signInWith("apple")}
+                  className="flex w-full items-center justify-center gap-2 rounded-full bg-l-text px-5 py-3 text-sm font-medium text-l-bg"
+                >
+                  <IconApple size={16} className="-mt-0.5" />
+                  Continue with Apple
+                </button>
+              )}
+            </div>
 
             {error && <p className="mt-3 text-xs text-l-danger">{error}</p>}
           </div>
