@@ -234,7 +234,7 @@ function fillQRs(url, ink) {
     const n = q.getModuleCount(), z = 4, size = n + 2 * z;
     let d = "";
     for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (q.isDark(r, c)) d += `M${c + z} ${r + z}h1v1h-1z`;
-    el.innerHTML = `<svg viewBox="0 0 ${size} ${size}" shape-rendering="crispEdges"><rect width="${size}" height="${size}" fill="#fff"/><path d="${d}" fill="${ink}"/></svg>`;
+    el.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" shape-rendering="crispEdges"><rect width="${size}" height="${size}" fill="#fff"/><path d="${d}" fill="${ink}"/></svg>`;
   }
 }
 
@@ -265,11 +265,24 @@ for (const [key, draw] of Object.entries(LOOKS)) {
   console.log("  " + path.basename(file));
 }
 
+/* the code alone, the same link: qr.png to scan from a screen, qr.svg for
+   the printer (vector, sharp at any size) */
+const QS = 600;
+await page.setViewport({ width: QS, height: QS, deviceScaleFactor: DPI_SCALE });
+await page.setContent(`<!doctype html><html><head><meta charset="utf-8">
+  <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+  <style>${css} html,body { width:${QS}px; height:${QS}px; }</style></head><body>${qr(QS)}</body></html>`, { waitUntil: "load", timeout: 60000 });
+await page.evaluate(fillQRs, URL_QR, INK);
+writeFileSync(path.join(OUT, "qr.svg"), await page.$eval(".qr", (el) => el.innerHTML));
+const qrFile = path.join(OUT, "qr.png");
+await page.screenshot({ path: qrFile, type: "png" });
+console.log("  qr.png, qr.svg");
+
 /* every QR must read: each code cut out with the poster around it, made
    small like a phone photo from a step back, then decoded with jsQR */
 const check = await browser.newPage();
 await check.setContent(`<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>`, { waitUntil: "load" });
-for (const { key, file, boxes } of made) {
+for (const { key, file, boxes } of [...made, { key: "qr", file: qrFile, boxes: [[0, 0, QS, QS]] }]) {
   const meta = await sharp(file).metadata();
   const results = [];
   for (const [x, y, w, h] of boxes) {
