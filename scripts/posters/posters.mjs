@@ -2,10 +2,8 @@
   CAMPUS POSTERS, the first round of looks (2026-11-07).
 
   11 x 17 in portrait, the biggest size Harvard Distribution takes (Office of
-  Student Life rule), drawn at 100 px an inch and shot at 3x = 300 dpi. Every
-  word is one the owner already put on the Instagram posts: the Match post's
-  first headline (2026-10-24) and the last slide's "Get in early." and Harvard
-  line (2026-10-29). The QR is real and leads to the waitlist.
+  Student Life rule), drawn at 100 px an inch and shot at 3x = 300 dpi. The
+  words are the owner's (NO-SLOP 25). The QR is real and leads to the waitlist.
 
   Colours, logo and name come from the posts (scripts/social/launch-carousel.mjs):
   the neutral brand only, since a poster is Zone 1.
@@ -27,10 +25,15 @@ const W = 1100, H = 1700, M = 88, DPI_SCALE = 3;
 const URL_QR = "https://getunisport.com/waitlist";
 const INK = "#141618", BLUE = "#1f32c1", NAVY = "#2f3b52";
 
-/* the owner's words */
-const HEAD = "Search for training partners.", HEAD_EM = "Find new friends.";
-const CALL = "Get in", CALL_EM = "early.";
-const SUB = "UNIsport is launching at Harvard University first.";
+/* the owner's words for the posters (2026-11-07): his question, then his
+   "based on interests and making gym more fun"; the call is that the waitlist
+   is open and the launch is next semester. The posts' "Search for training
+   partners. Find new friends." was "really generic" on a poster, and "Get in
+   early." with the Harvard line is cut. */
+const HEAD = "Looking to find somebody to train with or", HEAD_EM = "meet new people?";
+const LINE = "Find people based on your interests and make the gym more fun.";
+const CALL = "Waitlist", CALL_EM = "open.";
+const SUB = "We will be launching next semester.";
 
 /* the logo as the app icon draws it on white (mockups/logo/_icons.mjs) */
 const MARK_PATHS = `
@@ -111,11 +114,13 @@ const em = (t) => `<em style="color:${BLUE}">${t}</em>`;
 const LOOKS = {
   /* A: the posts' look, the Match screen in a phone */
   phone: () => {
-    const ptop = 432, ph = 800, pw = widthFor(ph, MATCH.aspect);
+    const ptop = 430, ph = 800, pw = widthFor(ph, MATCH.aspect);
     const q = 330;
     return `
-      <div class="serif" style="position:absolute;left:${M}px;right:${M}px;top:${M - 6}px;text-align:center;font-size:100px;line-height:1.02">
-        ${HEAD}<br>${em(HEAD_EM)}</div>
+      <div style="position:absolute;left:${M}px;right:${M}px;top:${M - 10}px;text-align:center">
+        <div class="serif" style="font-size:88px;line-height:1.02">${HEAD} ${em(HEAD_EM)}</div>
+        <div class="sub" style="margin:26px auto 0;max-width:820px;font-size:32px;text-wrap:balance">${LINE}</div>
+      </div>
       ${phone(MATCH, pw, `position:absolute;left:${(W - pw) / 2}px;top:${ptop}px`)}
       <div style="position:absolute;left:${M}px;right:${M}px;bottom:${M}px;display:flex;align-items:flex-end;justify-content:space-between;gap:48px">
         <div style="flex:1;min-width:0">
@@ -131,8 +136,10 @@ const LOOKS = {
   words: () => `
       <div style="position:absolute;left:0;top:0;bottom:0;width:34px;background:${BLUE}"></div>
       <div style="position:absolute;left:${M + 22}px;top:${M}px">${lockup(60)}</div>
-      <div class="serif" style="position:absolute;left:${M + 22}px;right:${M - 10}px;top:236px;font-size:200px;line-height:.94;text-wrap:wrap">
-        ${HEAD}<br>${em(HEAD_EM)}</div>
+      <div style="position:absolute;left:${M + 22}px;right:${M - 10}px;top:230px">
+        <div class="serif" style="font-size:160px;line-height:.95;text-wrap:wrap">${HEAD} ${em(HEAD_EM)}</div>
+        <div class="sub" style="margin-top:40px;max-width:800px;font-size:38px">${LINE}</div>
+      </div>
       <div style="position:absolute;left:${M + 22}px;right:${M}px;bottom:${M}px;display:flex;align-items:flex-end;gap:52px">
         ${qr(360, "flex:none;margin-left:-14px;margin-bottom:-14px")}
         <div style="flex:1;min-width:0">
@@ -143,17 +150,18 @@ const LOOKS = {
 
   /* C: the logo as the picture, the code between the two people */
   u: () => {
-    /* 11.8 px a unit: the mouth of the U (x 35-65) is 354 px */
-    const k = 11.8, mw = 61 * k, mh = 81.5 * k;
-    const left = (W - mw) / 2, top = 96;
+    /* 10.4 px a unit: the mouth of the U (x 35-65) is 312 px */
+    const k = 10.4, mw = 61 * k, mh = 81.5 * k;
+    const left = (W - mw) / 2, top = 84;
     /* the mouth, in poster px: the straight legs run y 34-56 */
     const qx = left + (35 - 19.5) * k, qy = top + (27.5 - 7.5) * k, qs = 30 * k;
     return `
       ${mark(mh, `position:absolute;left:${left}px;top:${top}px`)}
       ${qr(qs - 8, `position:absolute;left:${qx + 4}px;top:${qy + 4}px`)}
-      <div style="position:absolute;left:${M}px;right:${M}px;top:${top + mh + 52}px;text-align:center">
-        <div style="font-size:84px;line-height:1">${WORDMARK}</div>
-        <div class="serif" style="margin-top:40px;font-size:74px;line-height:1.04">${HEAD}<br>${em(HEAD_EM)}</div>
+      <div style="position:absolute;left:${M}px;right:${M}px;top:${top + mh + 44}px;text-align:center">
+        <div style="font-size:76px;line-height:1">${WORDMARK}</div>
+        <div class="serif" style="margin-top:38px;font-size:62px;line-height:1.04">${HEAD} ${em(HEAD_EM)}</div>
+        <div class="sub" style="margin:18px auto 0;max-width:760px;font-size:27px;text-wrap:balance">${LINE}</div>
       </div>
       <div style="position:absolute;left:${M}px;right:${M}px;bottom:${M}px;text-align:center">
         <div class="serif" style="font-size:72px;line-height:1">${CALL} ${em(CALL_EM)}</div>
@@ -175,9 +183,10 @@ const LOOKS = {
       <div style="position:absolute;left:0;right:0;top:0;height:24px;background:${BLUE}"></div>
       <div style="position:absolute;left:${M}px;right:${M}px;top:24px;height:${top - 24}px;display:flex;flex-direction:column;
                   align-items:center;justify-content:center;text-align:center">
-        ${mark(270)}
-        <div class="serif" style="margin-top:60px;font-size:132px;line-height:.98">${HEAD}<br>${em(HEAD_EM)}</div>
-        <div class="serif" style="margin-top:64px;font-size:90px;line-height:1">${CALL} ${em(CALL_EM)}</div>
+        ${mark(230)}
+        <div class="serif" style="margin-top:52px;font-size:112px;line-height:.98">${HEAD} ${em(HEAD_EM)}</div>
+        <div class="sub" style="margin-top:26px;max-width:820px;font-size:32px;text-wrap:balance">${LINE}</div>
+        <div class="serif" style="margin-top:58px;font-size:90px;line-height:1">${CALL} ${em(CALL_EM)}</div>
         <div class="sub" style="margin-top:20px;font-size:30px">${SUB}</div>
       </div>
       <div style="position:absolute;left:0;right:0;top:${top}px;border-top:3px dashed ${INK}"></div>

@@ -163,6 +163,12 @@ own words, the date. Newest at the bottom of each part.
     taglines. Dictated copy goes in as he said it, with only typos fixed. (2026-09-22: "use the
     tone from my website so its not generic ai slop"; 2026-09-28: "just 'find your ideal
     training partner.' Just a text.")
+    A campus poster asks the reader his question, "Looking to find somebody to train with or meet
+    new people?", then says it is based on your interests and makes the gym more fun. The posts'
+    "Search for training partners. Find new friends." is too generic for a poster. Its call is
+    "Waitlist open." and "We will be launching next semester.", never "Get in early." or the
+    Harvard line (`scripts/posters/posters.mjs`). (2026-11-07: "this is really generic make it
+    more like this and cut it get in early unisport is launching".)
 26. **The app is described by matching first, for every student**, never as a rowing app.
     (2026-09-20.) The Instagram posts are the student side; no Varsity or Coach post until the
     owner asks for one by name. (2026-09-22: "no, student first"; 2026-10-23: "no not varsity
