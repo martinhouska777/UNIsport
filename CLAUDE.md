@@ -64,6 +64,10 @@ A white-label university fitness PWA. These rules apply to EVERYTHING in this re
 - **Temporary fakes** (until Supabase): login + onboarding state in
   `components/AppState.tsx` (localStorage). Replay onboarding from the Profile tab.
 - **`db/schema.sql`** — planned tables, NOT connected.
+- **The iPhone app** (2026-11-08): `ios/` is a Capacitor shell that opens the live
+  getunisport.com/match (`capacitor.config.ts`), so a push to `main` updates it too.
+  Icon and launch screen come from `node mockups/logo/_icons.mjs --ios`. Built on a
+  Mac or a cloud Mac only; after changing `capacitor.config.ts` run `npx cap sync ios`.
 - After a UI change, verify in a browser (the owner reviews visually), and keep the
   `text-base`/16px rule on inputs so phones don't auto-zoom.
 

@@ -56,6 +56,34 @@ function square(px, { ground, a, b, scale }) {
 
 const ON_WHITE = { ground: "#ffffff", a: NAVY, b: BLUE };
 
+/* The iPhone app (ios/, 2026-11-08). The icon is one 1024 square that iOS
+   rounds itself, so it runs at the Apple touch icon's 0.68, and Apple refuses
+   an icon with an alpha channel. The launch screen is a 2732 square shown
+   cropped to the phone, so the mark sits small in its middle.
+   `node mockups/logo/_icons.mjs --ios` writes only these. */
+const IOS_ASSETS = "ios/App/App/Assets.xcassets";
+const IOS_JOBS = [
+  { files: [`${IOS_ASSETS}/AppIcon.appiconset/AppIcon-512@2x.png`], px: 1024, scale: 0.68, ...ON_WHITE },
+  {
+    files: ["", "-1", "-2"].map((s) => `${IOS_ASSETS}/Splash.imageset/splash-2732x2732${s}.png`),
+    px: 2732, scale: 0.14, ...ON_WHITE,
+  },
+];
+if (process.argv.includes("--ios")) {
+  for (const job of IOS_JOBS) {
+    const buf = await sharp(Buffer.from(square(job.px, job)))
+      .flatten({ background: "#ffffff" })
+      .removeAlpha()
+      .png({ compressionLevel: 9 })
+      .toBuffer();
+    for (const file of job.files) {
+      writeFileSync(path.join(ROOT, file), buf);
+      console.log(`  ${file}  ${job.px}x${job.px}  ${buf.length} bytes`);
+    }
+  }
+  process.exit(0);
+}
+
 const JOBS = [
   { file: "public/icons/icon-192.png", px: 192, scale: 0.56, ...ON_WHITE },
   { file: "public/icons/icon-512.png", px: 512, scale: 0.56, ...ON_WHITE },
