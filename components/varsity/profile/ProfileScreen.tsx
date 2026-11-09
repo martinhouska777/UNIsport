@@ -83,6 +83,7 @@ import {
   type DaysOut,
 } from "@/lib/varsity/daysOut";
 import { type CheckIns, recoveryCurves, hasRecovery } from "@/lib/varsity/checkIn";
+import WinterPointsRow from "@/components/varsity/winter/WinterPointsRow";
 import {
   IconExpand,
   IconActivity,
@@ -1131,6 +1132,9 @@ export default function ProfileScreen() {
           <IconChevronRight size={17} />
         </span>
       </Link>
+
+      {/* WINTER POINTS (owner, 2026-11-08), only while the event runs. */}
+      <WinterPointsRow />
       {/* WHO SEES YOUR CALENDAR is a switch in Varsity Mode's Settings
           (owner, 2026-09-30) — it was a row here. */}
 

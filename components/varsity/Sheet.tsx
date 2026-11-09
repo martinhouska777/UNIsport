@@ -19,10 +19,13 @@ export default function Sheet({
   children,
   full = false,
   backTour,
+  aside,
 }: {
   title: string;
   onClose: () => void;
   children: ReactNode;
+  /** Beside the title, before the close button (winter points: the total). */
+  aside?: ReactNode;
   /* FULL — the sheet fills the whole screen instead of stopping at 85%
      (owner, 2026-09-16: a team workout "goes all the way", not three
      quarters). It still slides up and closes the same way. */
@@ -76,8 +79,9 @@ export default function Sheet({
           <div className="flex justify-center pb-1.5 pt-2.5">
             <div className="h-1 w-9 rounded-full bg-border" />
           </div>
-          <div className="flex items-center justify-between border-b border-border px-4 pb-3">
-            <span className="text-[15px] font-semibold text-text">{title}</span>
+          <div className="flex items-center justify-between gap-3 border-b border-border px-4 pb-3">
+            <span className={`text-[15px] font-semibold text-text ${aside ? "min-w-0 flex-1 truncate" : ""}`}>{title}</span>
+            {aside}
             <button
               type="button"
               onClick={onClose}

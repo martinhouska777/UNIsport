@@ -32,6 +32,11 @@ export type LogEntry = {
   split: string | null; // e.g. "1:52" (mainly erg)
   effort: number | null; // how hard it felt, 1–5 (effortOptions); null = not answered
   note: string;
+  /* WINTER POINTS (lib/varsity/winterPoints.ts): the activity this session
+     counts as, and whether it has heart rate data. Absent outside the event,
+     and on a table that predates db/varsity_winter_points.sql. */
+  wpActivity?: string | null;
+  heartRate?: boolean | null;
   // The monitor photo it was scanned from (log-photos bucket), or null. Never
   // part of a draft: only a fresh scan sets it (attachLogPhoto), so editing the
   // numbers by hand keeps the picture they came off.
@@ -77,6 +82,8 @@ type Row = {
   effort?: number | null; // absent on a table that predates the column
   note: string;
   photo_path?: string | null; // absent until db/varsity_log_photos.sql has run
+  wp_activity?: string | null; // absent until db/varsity_winter_points.sql has run
+  heart_rate?: boolean | null;
 };
 
 const rowToEntry = (r: Row): LogEntry => ({
@@ -93,6 +100,8 @@ const rowToEntry = (r: Row): LogEntry => ({
   effort: r.effort ?? null,
   note: r.note ?? "",
   photoPath: r.photo_path ?? null,
+  wpActivity: r.wp_activity ?? null,
+  heartRate: r.heart_rate ?? null,
 });
 
 const draftToRow = (athleteId: string, d: LogDraft) => ({
@@ -108,6 +117,9 @@ const draftToRow = (athleteId: string, d: LogDraft) => ({
   split: d.split,
   effort: d.effort ?? null,
   note: d.note,
+  // Sent only when the Log screen showed winter points, so a save never names
+  // a column the database doesn't have yet.
+  ...(d.wpActivity !== undefined ? { wp_activity: d.wpActivity, heart_rate: d.heartRate ?? null } : {}),
 });
 
 /* ── localStorage fallback (no Supabase env) ── */

@@ -82,6 +82,10 @@ import {
 import { markColor } from "@/lib/colorMarks";
 import KindTag from "@/components/varsity/KindTag";
 import DetailRow, { detailRowInput } from "@/components/ui/DetailRow";
+import { Toggle } from "@/components/onboarding/controls";
+import { useMembership } from "@/components/varsity/useMembership";
+import { useWinterConfig } from "@/components/varsity/winter/useWinter";
+import { activitiesOfType, inEvent, isoToday, isRunning, teamOf } from "@/lib/varsity/winterPoints";
 
 /* category → label + content color for the dot. Lives in the data layer
    (lib/varsity/coachPlan.ts) so no color literal sits in this component. */
@@ -203,6 +207,12 @@ function LogEditor({
   }, [note]);
   // How hard it felt, 1–5; null until tapped, and a second tap clears it.
   const [effort, setEffort] = useState<number | null>(start.effort);
+  // Winter points (lib/varsity/winterPoints.ts): the published event, and this
+  // session's activity and heart rate. Heart rate starts on, as in the preview.
+  const { membership } = useMembership();
+  const { config: wp } = useWinterConfig(membership ? membership.teamId : undefined);
+  const [wpAct, setWpAct] = useState<string | null>(existing?.wpActivity ?? null);
+  const [heartRate, setHeartRate] = useState<boolean>(existing?.heartRate ?? true);
   const [busy, setBusy] = useState(false);
   // A save that didn't land. Shown in red above the Save bar with the form
   // still full — it used to go to the console only, and the sheet just sat
@@ -404,6 +414,14 @@ function LogEditor({
 
   const valid = state.mode === "plan" || title.trim().length > 0;
 
+  // Winter points: what this session counts as. `wpActs` is empty outside the event.
+  const wpToday = isoToday();
+  const wpActs =
+    wp && isRunning(wp, wpToday) && inEvent(wp, logDate, wpToday) && teamOf(wp, athleteId)
+      ? activitiesOfType(wp, category)
+      : [];
+  const wpPick = wpActs.find((a) => a.id === wpAct) ?? wpActs[0] ?? null;
+
   // The form as a record, exactly what Save sends and what a failed save parks.
   const currentDraft = (): LogDraft => ({
     logDate,
@@ -419,6 +437,8 @@ function LogEditor({
     split: fields.split ? split.trim() || null : null,
     effort,
     note: note.trim(),
+    // Only while winter points shows here, so nothing else ever sends the columns.
+    ...(wpPick ? { wpActivity: wpPick.id, heartRate: wpPick.hr ? heartRate : null } : {}),
   });
 
   // Back. After a failed save the draft is already parked; but anything typed
@@ -672,6 +692,49 @@ function LogEditor({
               </DetailRow>
             )}
           </div>
+
+          {/* WINTER POINTS (owner, 2026-11-08), only while the event runs and
+              you are on one of its teams: which activity this session counts
+              as, when its kind has more than one (Erg or Hard workout), and
+              heart rate when the rules need it. */}
+          {wp && wpPick && (wpActs.length > 1 || wpPick.hr) && (
+            <>
+              <div className={labelCls}>{wp.name}</div>
+              <div className="overflow-hidden rounded-2xl border border-border bg-surface">
+                {wpActs.length > 1 && (
+                  <div className="px-3.5 py-3">
+                    <div className="mb-2.5 text-[15px] text-text">Counts as</div>
+                    <div className="flex flex-wrap gap-2">
+                      {wpActs.map((a) => (
+                        <button
+                          key={a.id}
+                          type="button"
+                          onClick={() => setWpAct(a.id)}
+                          aria-pressed={a.id === wpPick.id}
+                          className={`tap44 flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-[13px] font-medium ${pick(
+                            a.id === wpPick.id,
+                          )}`}
+                        >
+                          <Dot color={a.color} />
+                          {a.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {wpPick.hr && (
+                  <div
+                    className={`flex min-h-[52px] items-center justify-between gap-3 px-3.5 py-2.5 ${
+                      wpActs.length > 1 ? "border-t border-border" : ""
+                    }`}
+                  >
+                    <span className="text-[15px] text-text">Heart rate</span>
+                    <Toggle on={heartRate} onChange={() => setHeartRate(!heartRate)} ariaLabel="Heart rate" />
+                  </div>
+                )}
+              </div>
+            </>
+          )}
 
           {/* Five taps, no typing. The words come from data (logStore →
               effortOptions); tapping the chosen one again clears it. In a

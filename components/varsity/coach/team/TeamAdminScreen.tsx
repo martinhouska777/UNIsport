@@ -63,6 +63,7 @@ import {
   IconClock,
   IconUser,
   IconTrash,
+  IconTrophy,
   IconX,
 } from "@/components/icons";
 import { requestTour, resetTour } from "@/lib/tour";
@@ -293,6 +294,13 @@ export default function TeamAdminScreen({
               icon={<IconUser size={20} />}
               label="Team"
               href="/varsity/coach/settings/squad"
+            />
+            {/* The team's winter competition, set up by the captain or the
+                coach (owner, 2026-11-08). A trophy, not a snowflake. */}
+            <Row
+              icon={<IconTrophy size={20} />}
+              label="Winter points"
+              href="/varsity/coach/settings/winter-points"
             />
           </Group>
 

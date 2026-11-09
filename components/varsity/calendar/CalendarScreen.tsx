@@ -56,6 +56,7 @@ import CategoryStatsSheet from "@/components/varsity/calendar/CategoryStatsSheet
 import { useAppState } from "@/components/AppState";
 import { useUnits } from "@/components/useUnits";
 import { fetchLogsInRange, type LogEntry } from "@/lib/varsity/logStore";
+import WinterPointsDay from "@/components/varsity/winter/WinterPointsDay";
 import { teamMonthLogs } from "@/lib/varsity/teamTraining";
 import { fetchPlan } from "@/lib/varsity/planStore";
 import { kindOf } from "@/lib/varsity/athleteHome";
@@ -261,6 +262,7 @@ function DayOutSection({
 }
 
 function DaySheet({
+  iso,
   label,
   logs,
   planSessions,
@@ -271,6 +273,8 @@ function DaySheet({
   onOpen,
   readOnly = false,
 }: {
+  /** The day, yyyy-mm-dd. */
+  iso?: string;
   label: string;
   logs: LogEntry[];
   /** The published plan, keyed by slot — the dots read their colour off it. */
@@ -356,6 +360,8 @@ function DaySheet({
       {/* No "Open the log" link under the day (owner, 2026-10-01: "I don't see
           a point in it") — a session opens by tapping it, and the Log tab is
           in the nav. */}
+      {/* Winter points: what this day scored (owner, 2026-11-08). Your own days only. */}
+      {!readOnly && iso && <WinterPointsDay iso={iso} />}
       {!readOnly && <DayOutSection value={dayOut} canMiss={canMiss} onSave={onDayOut} />}
     </Sheet>
   );
@@ -821,6 +827,7 @@ export default function CalendarScreen({
       {picked && (
         <DaySheet
           key={picked.iso}
+          iso={picked.iso}
           label={picked.label}
           logs={logsByDay[Number(picked.iso.split("-")[2])] ?? []}
           planSessions={planSessions}
