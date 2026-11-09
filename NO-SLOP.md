@@ -106,6 +106,9 @@ own words, the date. Newest at the bottom of each part.
     A person's picture opens their profile, the way Instagram does it: on a Match card a tap on
     the picture does what View profile does. (2026-10-29: "when you click on the profile picture
     it will open the profile aswell not just from view profile".)
+    Winter points is a trophy: its row on the athlete's Profile and in the captain's Settings
+    carries a trophy icon, not a snowflake. (2026-11-08: "can you do a trophy there for winter
+    points".)
 14. **Light mode is the main mode**; the landing page is light only. (2026-09-15, 2026-09-20.)
 15. **Animation is quick and one continuous motion.** (2026-09-13: "it takes too long … I just
     want to see the thing".)

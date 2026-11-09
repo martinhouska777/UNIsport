@@ -219,7 +219,8 @@ function ord(n){var t=n%100,u=n%10;return n+((u===1&&t!==11)?'st':(u===2&&t!==12
 
 /* ---------- icons ---------- */
 function sv(w,p,sw){return '<svg width="'+w+'" height="'+w+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="'+(sw||1.8)+'" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+p+'</svg>';}
-var SNOW='<path d="M12 2v20"/><path d="M4.5 6.5l15 11"/><path d="M19.5 6.5l-15 11"/><path d="M9.5 3.5L12 6l2.5-2.5"/><path d="M9.5 20.5L12 18l2.5 2.5"/>';
+/* Winter points is a trophy (owner, 2026-11-08) */
+var TROPHY='<path d="M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5.5h3V7a3 3 0 0 1-3 3"/><path d="M7 5.5H4V7a3 3 0 0 0 3 3"/><path d="M12 14v3.5"/><path d="M8 21h8"/><path d="M9.5 21c0-2 1-3.5 2.5-3.5s2.5 1.5 2.5 3.5"/>';
 var I={
  back:sv(20,'<path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/>'),
  back18:sv(18,'<path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/>'),
@@ -243,7 +244,7 @@ var I={
  users18:sv(18,'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 3-5.5 6.5-5.5s6.5 1.9 6.5 5.5"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8"/><path d="M18 14.8c2.2.6 3.5 2.4 3.5 5.2"/>'),
  act18:sv(18,'<path d="M3 12h4l3-8 4 16 3-8h4"/>'),
  act13:sv(13,'<path d="M3 12h4l3-8 4 16 3-8h4"/>',2),
- snow18:sv(18,SNOW),snow20:sv(20,SNOW),
+ trophy18:sv(18,TROPHY),trophy20:sv(20,TROPHY),
  clock:sv(20,'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'),
  send:sv(20,'<path d="M21 3L10 14"/><path d="M21 3l-7 18-4-7-7-4z"/>'),
  palette:sv(20,'<path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.6-.8 1.6-1.6 0-.5-.2-.9-.5-1.2-.3-.3-.5-.7-.5-1.2 0-.9.7-1.6 1.6-1.6H16a5 5 0 0 0 5-5c0-4-4-7.4-9-7.4z"/><circle cx="7.5" cy="11" r="1.1"/><circle cx="10.5" cy="7.5" r="1.1"/><circle cx="15" cy="7.5" r="1.1"/>'),
@@ -483,7 +484,7 @@ function captainMenu(){
  var me=PBY[CAPTAIN],ini=me.name.split(' ').map(function(x){return x[0];}).join('');
  return '<div class="scr"><div class="hdr"><h3>Settings</h3></div><div class="body">'+
   '<div class="pcard"><span class="pav">'+ini+'</span><span class="pct"><span class="pcn">'+esc(me.name)+'</span><span class="pcs">Harvard Rowing, Captain</span></span><span class="chev">'+I.chev+'</span></div>'+
-  sec('Administration',row({icon:I.clock,lab:'Waiting to join',chev:true})+row({icon:I.send,lab:'Invite links',chev:true})+row({icon:I.user20,lab:'Team',chev:true})+row({icon:I.snow20,lab:'Winter points',a:'open'}))+
+  sec('Administration',row({icon:I.clock,lab:'Waiting to join',chev:true})+row({icon:I.send,lab:'Invite links',chev:true})+row({icon:I.user20,lab:'Team',chev:true})+row({icon:I.trophy20,lab:'Winter points',a:'open'}))+
   '<section>'+card(row({icon:I.palette,lab:'Design',det:'Light',chev:true}))+'</section>'+
   '</div></div>';
 }
@@ -642,7 +643,7 @@ function weekMinutes(){
 function profileScreen(){
  var me=PBY[ME],wm=weekMinutes(),mx=Math.max.apply(null,wm.map(function(x){return x.v;}).concat([1]));
  var tp=running(S.pub)?teamPlace():null;
- var wpRow=running(S.pub)?'<button type="button" class="lrow" data-a="go:wp"><span class="tile">'+I.snow18+'</span><span class="t">'+esc(S.pub.name)+'</span>'+(tp?'<span class="det">'+dot(tp.t.color)+ord(tp.place)+'</span>':'')+'<span class="chev">'+I.chev17+'</span></button>':'';
+ var wpRow=running(S.pub)?'<button type="button" class="lrow" data-a="go:wp"><span class="tile">'+I.trophy18+'</span><span class="t">'+esc(S.pub.name)+'</span>'+(tp?'<span class="det">'+dot(tp.t.color)+ord(tp.place)+'</span>':'')+'<span class="chev">'+I.chev17+'</span></button>':'';
  return varsityBar()+'<div class="scr"><div class="body prof">'+
   '<div class="idc"><span class="av">EH</span><div class="idt"><div class="idn">'+esc(me.name)+'</div><div class="ids">Class of '+me.cls+'</div><div class="idf"><span>86 kg</span><span class="side">Port</span></div></div><span class="stat">'+I.act13+'Active</span></div>'+
   '<h4 class="pgh">Statistics</h4>'+
