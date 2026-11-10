@@ -81,7 +81,10 @@ own words, the date. Newest at the bottom of each part.
     top that doesn't do anything"; 2026-09-22: "so much empty space"; 2026-10-02: "they're
     crammed".) Tabs and the options they open are clearly apart: a line across the whole panel
     and room on both sides of it. (2026-10-18: "in filters we want to split more the top and
-    bottom".)
+    bottom".) The improvement on a workout board (better or worse than last time) is small
+    green or red words with an arrow, under the result, with no box around them
+    (`components/varsity/team/Delta.tsx`). (2026-11-10: "the improvement number make it
+    smaller the green or red ... bez toho rámečku", "yes i like it like this".)
 13. **Every new screen reuses a pattern the app already has** (Messages is the model). Familiar
     things copy WhatsApp, Instagram, Hevy or Strava closely. (2026-09-14: "just look at WhatsApp
     how he does it and copy it"; 2026-09-27: "I like how it is done on messages".)
