@@ -44,8 +44,9 @@ Martin Houska stays himself.
 What changed since September, so the next reshoot starts from here:
 
 - `copy-edits.patch` was made again from the copy. Besides the crest letter, the school
-  name and the two Supabase clients, it now hides the "Example" tag (NO-SLOP 8) and
-  marks Lucas Bennett's row as yours on the example boards (`lib/varsity/teamBoard.ts`).
+  name and the two Supabase clients, it marks Lucas Bennett's row as yours on the
+  made-up boards (`lib/varsity/teamBoard.ts`). The app itself no longer writes
+  "Example" on them (45420ae).
 - The athlete is **Lucas Bennett**, not Martin Houska (NO-SLOP 22): `fake-roster.mjs`
   maps the seat, and `full-names.mjs` (run after it, in the copy) adds every full
   name and a surname list to `shootMap.json`, so result rows written as "Samuel

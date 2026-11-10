@@ -272,9 +272,9 @@ const POST_VARSITY = [
     ] },
   { kind: "feature", img: "../light/varsity-board", head: "Look at statistics", em: "for every team workout.",
     labels: [
-      { side: "L", title: "Team rankings", text: "See where you stand on every workout.", at: [52, 448] },
-      { side: "R", title: "Smart filters", text: "Sort by split, time, watts or watts per kilo.", at: [1155, 605] },
-      { side: "R", title: "Your progress", text: "Compare to last time and see how you improved.", at: [1125, 2148] },
+      { side: "L", title: "Team rankings", text: "See where you stand on every workout.", at: [52, 440] },
+      { side: "R", title: "Smart filters", text: "Sort by split, time, watts or watts per kilo.", at: [1155, 589] },
+      { side: "R", title: "Your progress", text: "Compare to last time and see how you improved.", at: [1140, 1904] },
     ] },
   { kind: "feature", img: "../light/varsity-stats", head: "See your", em: "statistics.",
     labels: [

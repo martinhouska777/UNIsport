@@ -1,15 +1,3 @@
-diff --git a/components/varsity/ExampleTag.tsx b/components/varsity/ExampleTag.tsx
-index 2c46fab..ff8d232 100644
---- a/components/varsity/ExampleTag.tsx
-+++ b/components/varsity/ExampleTag.tsx
-@@ -7,6 +7,7 @@
-   so every example wears the same one.
- */
- export default function ExampleTag() {
-+  if (true) return null; // shoot copy only
-   return (
-     <span className="inline-flex flex-shrink-0 items-center rounded-md border border-border bg-surface px-1.5 py-0.5 text-[10px] font-semibold tracking-[0.08em] text-warn">
-       Example
 diff --git a/lib/crests.ts b/lib/crests.ts
 index 8431b42..0be97a0 100644
 --- a/lib/crests.ts
