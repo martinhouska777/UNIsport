@@ -173,9 +173,11 @@ own words, the date. Newest at the bottom of each part.
     Harvard line (`scripts/posters/posters.mjs`). (2026-11-07: "this is really generic make it
     more like this and cut it get in early unisport is launching".)
 26. **The app is described by matching first, for every student**, never as a rowing app.
-    (2026-09-20.) The Instagram posts are the student side; no Varsity or Coach post until the
-    owner asks for one by name. (2026-09-22: "no, student first"; 2026-10-23: "no not varsity
-    we want to continue on the student side".)
+    (2026-09-20.) The Instagram posts are student mode only: no Varsity or Coach post, and
+    none suggested or offered as the next post, until the owner asks for one by name.
+    (2026-09-22: "no, student first"; 2026-10-23: "no not varsity we want to continue on the
+    student side"; 2026-11-10, after Varsity Mode was offered as the next post: "no only the
+    student mode".)
 27. **Social images: white ground, the real current screen in light mode, a whole phone held
     straight, no logo except on a post's last slide.** Arrows are thin, black and solid (a full line, never dashed: tried
     for a few hours on 2026-10-22, then "actually do it full lines"), end in a small arrowhead whose
