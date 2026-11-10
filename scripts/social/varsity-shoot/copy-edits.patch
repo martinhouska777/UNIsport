@@ -1,3 +1,15 @@
+diff --git a/components/varsity/ExampleTag.tsx b/components/varsity/ExampleTag.tsx
+index 2c46fab..ff8d232 100644
+--- a/components/varsity/ExampleTag.tsx
++++ b/components/varsity/ExampleTag.tsx
+@@ -7,6 +7,7 @@
+   so every example wears the same one.
+ */
+ export default function ExampleTag() {
++  if (true) return null; // shoot copy only
+   return (
+     <span className="inline-flex flex-shrink-0 items-center rounded-md border border-border bg-surface px-1.5 py-0.5 text-[10px] font-semibold tracking-[0.08em] text-warn">
+       Example
 diff --git a/lib/crests.ts b/lib/crests.ts
 index 8431b42..0be97a0 100644
 --- a/lib/crests.ts
@@ -50,10 +62,10 @@ index 3ffb226..ad22896 100644
          getAll() {
            return cookieStore.getAll();
 diff --git a/lib/themes.ts b/lib/themes.ts
-index d11c6da..d7c8da5 100644
+index 8073452..168b195 100644
 --- a/lib/themes.ts
 +++ b/lib/themes.ts
-@@ -235,8 +235,8 @@ function ivy(
+@@ -309,8 +309,8 @@ function ivy(
  export const universities: Record<string, University> = {
    harvard: ivy({
      key: "harvard",
@@ -62,5 +74,18 @@ index d11c6da..d7c8da5 100644
 +    name: "Westbrook University",
 +    shortName: "Westbrook",
      domains: ["harvard.edu"],
-     motto: "Ex Nemo", // the rowing motto, per the product owner
-     houseSection: "House gyms",
+     // 7:00 Boston time. A placeholder for the first Monday of spring term
+     // until the owner names the day (2026-10-15).
+diff --git a/lib/varsity/teamBoard.ts b/lib/varsity/teamBoard.ts
+index d95be89..8d84b73 100644
+--- a/lib/varsity/teamBoard.ts
++++ b/lib/varsity/teamBoard.ts
+@@ -424,7 +424,7 @@ export function buildBoard(
+       value,
+       display: metricDisplay(value, metric),
+       rank: null,
+-      mine: !!myId && result.athleteId === myId,
++      mine: (!!myId && result.athleteId === myId) || result.athleteName === "Lucas Bennett",
+       detail: detailLine(result, reps),
+       improvement:
+         value != null && prevValue != null

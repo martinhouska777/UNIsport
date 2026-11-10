@@ -38,3 +38,33 @@ What the rewrite maps: team name, block name ("Fall 2026"), "Palmer Dixon" → t
 boathouse, "HClub Event", the shells (Engstrom, Hamlin, Hosea, Mississippi, 92 →
 Aurora, Osprey, Meridian, Tempest, Heron), and every race-sheet token in `fake-roster.mjs`.
 Martin Houska stays himself.
+
+## The 2026-11-10 reshoot (the Varsity Mode post)
+
+What changed since September, so the next reshoot starts from here:
+
+- `copy-edits.patch` was made again from the copy. Besides the crest letter, the school
+  name and the two Supabase clients, it now hides the "Example" tag (NO-SLOP 8) and
+  marks Lucas Bennett's row as yours on the example boards (`lib/varsity/teamBoard.ts`).
+- The athlete is **Lucas Bennett**, not Martin Houska (NO-SLOP 22): `fake-roster.mjs`
+  maps the seat, and `full-names.mjs` (run after it, in the copy) adds every full
+  name and a surname list to `shootMap.json`, so result rows written as "Samuel
+  Gallaudet" get their invented name too.
+- `shootFetch.ts.txt` also gives the athlete a logged session for every past session
+  in the coach's plan, with weekly metres that rise a little each week, and takes the
+  long dash out of the coach's note. Nothing is ever written to the database.
+- `shoot-varsity.mjs` (put it at `scripts/social/` in the copy) replaces
+  `capture-shoot.mjs` for the athlete screens. `CLOCK=2026-10-22T06:30:00-04:00` sets the
+  page's "now", so a week with a full plan reads as this week (the real current week
+  was nearly empty). The post used 22 Oct for Home, the boat and the board, 24 Oct for
+  the erg log sheet (`LOGTAP="8×500m"`), and 18 Oct for the statistics.
+  `WORKOUT="Mon 28 Sep"` picks the board. It keeps its browser profile in the temp
+  folder: a profile inside the copy makes Next rebuild in a loop. It skips the app's
+  service worker, which otherwise serves the code from before an edit.
+- Winter points is left out: the board shows a real test team.
+
+Run in the copy, in this order: `git apply copy-edits.patch` (fix `lib/themes.ts` by hand
+if it no longer applies), copy `shootFetch.ts.txt` to `lib/supabase/shootFetch.ts`,
+`node <repo>/scripts/social/varsity-shoot/fake-roster.mjs`, then
+`node <repo>/scripts/social/varsity-shoot/full-names.mjs`. The slides are
+`node scripts/social/launch-carousel.mjs post-varsity` from the real repo.

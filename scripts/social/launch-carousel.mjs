@@ -65,7 +65,7 @@
   Memories is the Log sheet's photo tile: the demo account has no photos,
   and an empty screen is never shown.
 
-  Run: node scripts/social/launch-carousel.mjs [launch|post-match|post-profile]
+  Run: node scripts/social/launch-carousel.mjs [launch|post-match|post-profile|post-varsity]
   Out: mockups/social/<set>/01.png …, and sheet.png with all of them
 */
 import puppeteer from "puppeteer-core";
@@ -242,7 +242,50 @@ const POST_PROFILE = [
   POST_CLOSER,
 ];
 
-const SLIDES = { launch: LAUNCH, "post-match": POST_MATCH, "post-profile": POST_PROFILE }[SET];
+/* THE VARSITY MODE POST, the third post (owner, 2026-11-10: "dáme tam ten
+   basic kde bude i ten profil pak ten match jako druhý post a pak varsity
+   mode"). The screens are the team shot as Westbrook Rowing with invented
+   rowers (scripts/social/varsity-shoot), the athlete as Lucas Bennett, on
+   Thursday 22 October, a week with a full plan ("potřebujeme dobrý plán").
+   They sit in screens/light and are gitignored. The words are the site's
+   Varsity story and feature rows (lib/landingCopy.ts), waiting for the
+   owner's own, like the other two posts. */
+const POST_VARSITY = [
+  { kind: "feature", img: "../light/varsity-home", head: "Training plan", em: "always at hand.",
+    labels: [
+      /* lower than its spot, so the line comes up under the settings cog */
+      { side: "R", title: "Check the weather", text: "See the wind and UV at your boathouse.", at: [985, 134], rise: -75 },
+      { side: "L", title: "Store your videos", text: "Your crew videos, saved to Google Drive.", at: [40, 270] },
+      { side: "L", title: "Race countdown", text: "Always see how long until the next race.", at: [45, 492] },
+      { side: "R", title: "Training calendar", text: "Today’s sessions, updated in real time. Tap a day for the full workout.", at: [1168, 850] },
+      { side: "L", title: "Coach’s notes", text: "What to improve, straight from your coach.", at: [38, 1870] },
+    ] },
+  { kind: "feature", img: "../light/varsity-home-boat", head: "No more Excel sheet.", em: "Your name pops right in your boat.",
+    labels: [
+      { side: "R", title: "See the lineups", text: "Your coach sets the lineups and publishes them.", at: [1162, 695] },
+      { side: "L", title: "Find your seat", text: "Your name is highlighted in the boat you are sitting in.", at: [130, 1274] },
+    ] },
+  { kind: "feature", img: "../light/varsity-log-erg", head: "Log a session", em: "in a few taps.",
+    labels: [
+      { side: "L", title: "Scan the monitor", text: "Snap your C2 or RP3 screen and get the numbers instantly.", at: [48, 643] },
+      { side: "R", title: "From the plan", text: "Log straight from your training plan.", at: [1160, 815] },
+    ] },
+  { kind: "feature", img: "../light/varsity-board", head: "Look at statistics", em: "for every team workout.",
+    labels: [
+      { side: "L", title: "Team rankings", text: "See where you stand on every workout.", at: [52, 448] },
+      { side: "R", title: "Smart filters", text: "Sort by split, time, watts or watts per kilo.", at: [1155, 605] },
+      { side: "R", title: "Your progress", text: "Compare to last time and see how you improved.", at: [1125, 2148] },
+    ] },
+  { kind: "feature", img: "../light/varsity-stats", head: "See your", em: "statistics.",
+    labels: [
+      { side: "R", title: "A graph for each", text: "Metres rowed, hours and consistency over the weeks.", at: [1160, 640] },
+      { side: "L", title: "Distance", text: "Every metre you rowed.", at: [45, 1922] },
+      { side: "L", title: "Time", text: "The hours you trained.", at: [45, 2415] },
+    ] },
+  POST_CLOSER,
+];
+
+const SLIDES = { launch: LAUNCH, "post-match": POST_MATCH, "post-profile": POST_PROFILE, "post-varsity": POST_VARSITY }[SET];
 if (!SLIDES) throw new Error("no set " + SET);
 
 /* ── the screens ── */

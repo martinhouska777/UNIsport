@@ -1,5 +1,5 @@
 /* THROWAWAY (photo shoot only, never committed): rewrites what comes back from
-   Supabase so the screens carry an invented team instead of the real squad. */
+   Supabase so the screens carry an invented team instead of the real team. */
 import map from "./shootMap.json";
 
 const GENERAL: [RegExp, string][] = [
@@ -9,7 +9,9 @@ const GENERAL: [RegExp, string][] = [
   [/Weights at Palmer Dixon/g, "Weights at the boathouse"],
   [/Palmer Dixon/g, "the boathouse gym"],
   [/HClub Event/g, "Club event"],
-  // the real squad's shells -> invented boat names
+  // no long dash on anything posted (NO-SLOP 4)
+  [/this week \u2014 be on/g, "this week. Be on"],
+  // the real team's shells -> invented boat names
   [/"name":\s*"Engstrom"/g, '"name":"Aurora"'],
   [/"name":\s*"Hamlin"/g, '"name":"Osprey"'],
   [/"name":\s*"Hosea"/g, '"name":"Meridian"'],
@@ -20,12 +22,117 @@ const RACE: [RegExp, string][] = Object.entries(map.race as Record<string, strin
   .sort((a, b) => b[0].length - a[0].length)
   .map(([from, to]) => [new RegExp(`(?<![A-Za-z'])${from.replace(/[-/\^$*+?.()|[\]{}]/g, "\$&")}(?![A-Za-z'])`, "g"), to]);
 
+const FULL: [RegExp, string][] = Object.entries((map as { full?: Record<string, string> }).full ?? {})
+  .sort((a, b) => b[0].length - a[0].length)
+  .map(([from, to]) => [new RegExp(`(?<![A-Za-z])${from.replace(/[-/\^$*+?.()|[\]{}]/g, "\$&")}(?![A-Za-z])`, "g"), to]);
+
+type Person = { real: string; fake: string };
+const PEOPLE = ((map as { people?: Person[] }).people ?? []).map((p) => {
+  const w = p.real.split(" ");
+  return { ...p, first: w[0].toLowerCase(), last: w.slice(1).join(" ").toLowerCase().replace(/[-' ]/g, "") };
+});
+function fakeFor(name: string): string {
+  const w = name.trim().split(/\s+/);
+  if (w.length < 2) return name;
+  const first = w[0].toLowerCase(), last = w.slice(1).join(" ").toLowerCase().replace(/[-' ]/g, "");
+  const same = PEOPLE.filter((p) => p.last === last || p.last.endsWith(last) || last.endsWith(p.last));
+  if (!same.length) return name;
+  return (same.find((p) => p.first === first) || same.find((p) => p.first[0] === first[0]) || same[0]).fake;
+}
+function renameRows(v: unknown): unknown {
+  if (Array.isArray(v)) return v.map(renameRows);
+  if (v && typeof v === "object") {
+    const o = { ...(v as Record<string, unknown>) };
+    for (const k of Object.keys(o)) {
+      if (/name$/i.test(k) && typeof o[k] === "string") o[k] = fakeFor(o[k] as string);
+      else if (o[k] && typeof o[k] === "object") o[k] = renameRows(o[k]);
+    }
+    return o;
+  }
+  return v;
+}
+
+/* FAKE LOGS: every past plan session counts as logged (shoot only, never saved). */
+let planCache: Promise<Record<string, unknown>[]> | null = null;
+function planRows(url: string, init?: RequestInit) {
+  if (!planCache) {
+    const base = url.slice(0, url.indexOf("/rest/v1/"));
+    planCache = fetch(base + "/rest/v1/varsity_plan_sessions?select=*", { headers: init?.headers })
+      .then((r) => r.json()).catch(() => []);
+  }
+  return planCache;
+}
+const isoOf = (dayKey: string) => {
+  const [y, m, d] = dayKey.split("-").map(Number);
+  return `${y}-${String(m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+};
+function metresOf(cat: string, text: string): number | null {
+  const t = text.toLowerCase();
+  const x = t.match(/(\d+)\s*[x×]\s*(\d+)\s*m/); if (x) return Number(x[1]) * Number(x[2]) + 3000;
+  const k = t.match(/(\d+(?:\.\d+)?)\s*k\b/); if (k) return Math.round(Number(k[1]) * 1000);
+  const x2 = t.match(/(\d+)\s*[x×]\s*(\d+)\s*'/); if (x2) return Math.round(Number(x2[1]) * Number(x2[2]) * 260);
+  if (cat === "water") return 14000; if (cat === "erg") return 12000;
+  return null;
+}
+function fakeLogs(plan: Record<string, unknown>[], athleteId: string, from: string | null, to: string | null) {
+  const today = new Date(); const todayIso = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+  const all: Record<string, unknown>[] = [];
+  for (const r of plan) {
+    const dk = String(r.day_key), cat = String(r.category || "").toLowerCase();
+    if (!dk || /off|rest|none/.test(cat)) continue;
+    const iso = isoOf(dk);
+    if (iso >= todayIso) continue;
+    const desc = String(r.description || "");
+    const hash = [...dk].reduce((a, c) => a + c.charCodeAt(0), 0);
+    if (hash % 11 === 0) continue; // a missed one now and then
+    const metres = /water|erg/.test(cat) ? metresOf(cat, desc) : null;
+    const minutes = cat === "water" ? 80 : cat === "erg" ? (metres && metres < 9000 ? 40 : 60) : cat === "weights" ? 60 : 45;
+    all.push({
+      id: "shoot-" + dk, athlete_id: athleteId, log_date: iso, period: dk.endsWith("PM") ? "PM" : "AM", day_key: dk,
+      source: "plan", title: desc || cat, category: r.category, minutes, metres,
+      split: cat === "erg" ? (metres && metres < 9000 ? "1:31.8" : "1:54.2") : null,
+      effort: 2 + (hash % 3), note: "", photo_path: null, wp_activity: null, heart_rate: null, created_at: iso + "T12:00:00Z",
+    });
+  }
+  /* each week's metres rise a little on the one before, the way a block builds */
+  const monday = (iso: string) => { const d = new Date(iso + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7)); return d.toISOString().slice(0, 10); };
+  const weeks: Record<string, Record<string, unknown>[]> = {};
+  for (const l of all) (weeks[monday(String(l.log_date))] ||= []).push(l);
+  const base = Date.UTC(2026, 8, 7);
+  const totals = Object.fromEntries(Object.entries(weeks).map(([m, ls]) => [m, ls.reduce((a, l) => a + (Number(l.metres) || 0), 0)]));
+  if (typeof window !== "undefined") console.log("SHOOTWEEKS " + JSON.stringify(totals));
+  for (const [mon, logs] of Object.entries(weeks)) {
+    const n = Math.round((Date.parse(mon + "T12:00:00Z") - base) / (7 * 864e5)) + 1;
+    const target = Number((globalThis as { SHOOT_T0?: number }).SHOOT_T0 ?? 46000) + Number((globalThis as { SHOOT_DT?: number }).SHOOT_DT ?? 3000) * n;
+    const total = totals[mon];
+    if (!total) continue;
+    const f = Math.min(1.35, Math.max(0.7, target / total));
+    for (const l of logs) if (l.metres) l.metres = Math.min(l.category === "erg" ? 22000 : 20000, Math.round((Number(l.metres) * f) / 100) * 100);
+  }
+  return all.filter((l) => !(from && String(l.log_date) < from) && !(to && String(l.log_date) > to));
+}
+
 export const shootFetch: typeof fetch = async (input, init) => {
   const res = await fetch(input, init);
   const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
   if (!/\/rest\/v1\//.test(url)) return res;
   let text = await res.text();
   for (const [re, to] of GENERAL) text = text.replace(re, to);
+  for (const [re, to] of FULL) text = text.replace(re, to);
+  if (/\/rest\/v1\/varsity_logs/.test(url) && (!init?.method || init.method === "GET")) {
+    try {
+      const u = new URL(url);
+      const ath = (u.searchParams.get("athlete_id") || "").replace(/^eq\./, "");
+      const dates = u.searchParams.getAll("log_date");
+      let from: string | null = null, to: string | null = null;
+      for (const d of dates) { if (d.startsWith("gte.")) from = d.slice(4); else if (d.startsWith("lte.")) to = d.slice(4); else if (d.startsWith("eq.")) { from = d.slice(3); to = d.slice(3); } }
+      const real = JSON.parse(text);
+      if (Array.isArray(real) && ath && !/accept.*object/i.test(JSON.stringify(init?.headers || {}))) {
+        text = JSON.stringify(fakeLogs(await planRows(url, init), ath, from, to));
+      }
+    } catch {}
+  }
+  if (/varsity_results/.test(url)) { try { text = JSON.stringify(renameRows(JSON.parse(text))); } catch {} }
   if (/varsity_race_results|race_results/.test(url)) for (const [re, to] of RACE) text = text.replace(re, to);
   const headers = new Headers(res.headers);
   headers.delete("content-length"); headers.delete("content-encoding");

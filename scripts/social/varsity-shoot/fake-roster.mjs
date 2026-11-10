@@ -23,7 +23,7 @@ export const MAP = {
   "alexander-grundy": ["Alexander Brandt", ["Grundy"]],
   "george-farkas": ["George Kaplan", ["Farkas"]],
   "sam-gallaudet": ["Sam Ashworth", ["Gallaudet"]],
-  "martin-houska": ["Martin Houska", []],
+  "martin-houska": ["Lucas Bennett", []], // the demo account's shoot name (NO-SLOP 22)
   "marco-gandola": ["Marco Bellini", ["Gandola", "Marco G"]],
   "apostolos-lykomitros": ["Nikos Alexiou", ["Lykomitros"]],
   "tyler-horler": ["Tyler Redmond", ["Horler"]],
