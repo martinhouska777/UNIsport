@@ -91,7 +91,6 @@ import { fetchTrainingConfig } from "@/lib/varsity/configStore";
 import RaceBoard from "@/components/varsity/team/RaceBoard";
 import TeamRanking from "@/components/varsity/team/TeamRanking";
 import Sheet from "@/components/varsity/Sheet";
-import ExampleTag from "@/components/varsity/ExampleTag";
 import { fetchRaceDays, saveRaceDay } from "@/lib/varsity/raceStore";
 import { crewTime, pieceCountFromText, piecesFromSession, type RaceDay } from "@/lib/varsity/racePieces";
 import { fetchLineupsFor } from "@/lib/varsity/lineupStore";
@@ -112,6 +111,8 @@ import { coachTourExampleRace } from "@/lib/varsity/coachTourExample";
   (a real board is never compared with an invented one: the example's people
   are roster seats, the sheet's are their own ids). Nothing is stored.
   Set it to false after the demo and only real boards show once one exists.
+  Kept ON (owner, 2026-11-10: "i need the made up names that is good"), with
+  no Example tag on them any more.
 */
 const EXAMPLE_BESIDE_REAL = true;
 
@@ -679,7 +680,6 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
           boats={tourRace.boats}
           inConsole={inConsole}
           practice
-          example={tourRace.example}
           onChange={(next) => setTourRace((t) => (t ? { ...t, day: next } : t))}
           onDeleted={() => setOpenRace(null)}
           onClose={() => setOpenRace(null)}
@@ -741,7 +741,6 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
               <div className="min-w-0 flex-1">
                 <span className="flex items-center gap-2">
                   <span className="truncate text-[13px] font-semibold text-text">{exampleRace.session.description}</span>
-                  <ExampleTag />
                 </span>
                 <span className="mt-0.5 block text-[11px] text-muted">{outingDateLabel(exampleRace.dayKey)}</span>
               </div>

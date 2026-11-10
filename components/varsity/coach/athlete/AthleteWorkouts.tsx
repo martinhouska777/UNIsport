@@ -34,7 +34,6 @@
 import { useEffect, useMemo, useState } from "react";
 import LogRow from "@/components/varsity/coach/athlete/LogRow";
 import WorkoutDetail from "@/components/varsity/calendar/WorkoutDetail";
-import ExampleTag from "@/components/varsity/ExampleTag";
 import { fetchLogsInRange, type LogEntry } from "@/lib/varsity/logStore";
 import { fetchPlan } from "@/lib/varsity/planStore";
 import { kindOf } from "@/lib/varsity/athleteHome";
@@ -146,11 +145,6 @@ export default function AthleteWorkouts({
           </button>
         ))}
       </div>
-      {example && (
-        <div className="mb-3">
-          <ExampleTag />
-        </div>
-      )}
       {shown.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border bg-surface px-4 py-8 text-center text-[12px] text-muted">
           {side === "erg" ? "No erg sessions logged yet." : "No water sessions logged yet."}

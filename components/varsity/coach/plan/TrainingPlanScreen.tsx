@@ -80,7 +80,6 @@ import { markColor } from "@/lib/colorMarks";
 import { useTourRunning } from "@/lib/tour";
 import { coachTourExample } from "@/lib/varsity/coachTourExample";
 import { tourSessionPick } from "@/lib/varsity/coachTour";
-import ExampleTag from "@/components/varsity/ExampleTag";
 
 /*
   THE TAB OPENS ON THE WEEK (owner, 2026-09-17: "I don't want to see the
@@ -991,7 +990,6 @@ export default function TrainingPlanScreen({
               <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
                 <span className="min-w-0 break-words text-[17px] font-semibold leading-snug text-text">{block.name}</span>
                 <StatusChip live={live} />
-                {showExample && <ExampleTag />}
               </div>
               <div className="mt-1 text-[11px] text-muted">{week.rangeLabel}</div>
               {/* The race in a pill of its own, down at the foot of the left

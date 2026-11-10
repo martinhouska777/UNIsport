@@ -31,7 +31,10 @@ own words, the date. Newest at the bottom of each part.
    "39 sessions · 32h 59m", "40 points behind", "UT 36%". (2026-09-22: "don't write 44 people,
    25 boats"; 2026-10-02: "we don't care how many logged".)
 6. **Never the same information twice on one screen.** (2026-10-11: "3 × 25 UT2, so we don't
-   need to write it there again".)
+   need to write it there again".) A team workout's board row is the name, the rate and the
+   result: no count of reps under the name, the 8 of 8×500m is in the workout's own name.
+   (2026-11-10: "there is not like the 8 steps for the 8x500m for example just the name and
+   then the rate".)
 7. **No screen titles inside the app, and the shortest label that works**: "Search", not
    "Search by name or date"; "Publish", not "Unpublish, tell the team". An obvious icon beats a
    word: the pencil, not "Edit"; an open or closed eye, not "Shown to others". (2026-09-13:
@@ -41,8 +44,11 @@ own words, the date. Newest at the bottom of each part.
    "in the gym preview can you show rating and just how many people are going and not when".)
 8. **Words never used**: "squad" (say team), "missed" (say Log), "outing", "Strong fit",
    "Example" tags everywhere, "optional" (mark required fields with a red asterisk instead).
+   Made-up data does not say "Example" either, not as a tag and not in a name: the worked
+   boards, races, athlete pages and the coach walk's plan ("Fall block") look like real ones.
    (2026-10-11: "Don't ever mention squad again"; 2026-10-04: "nedávej všude example";
-   2026-10-11: "I don't want the strong fit".)
+   2026-10-11: "I don't want the strong fit"; 2026-11-10: "if its made up still dont write
+   there example", "i need the made up names that is good".)
 
 ## Look
 

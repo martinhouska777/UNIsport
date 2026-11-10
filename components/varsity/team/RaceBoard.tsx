@@ -98,7 +98,6 @@ import { saveFailureDetail, type SaveFailure } from "@/lib/saveFailure";
 import SaveState from "@/components/varsity/coach/SaveState";
 import RankBadge from "@/components/varsity/team/RankBadge";
 import TimeSheet from "@/components/varsity/team/TimeSheet";
-import ExampleTag from "@/components/varsity/ExampleTag";
 
 const COMBINED = "combined";
 const SWITCHES = "switches";
@@ -168,7 +167,6 @@ export default function RaceBoard({
   openOnSwitches = false,
   focus,
   practice = false,
-  example = false,
   onChange,
   onDeleted,
   onClose,
@@ -192,8 +190,6 @@ export default function RaceBoard({
   focus?: number;
   /** The console walk's run: on screen only, never saved (see the note up top). */
   practice?: boolean;
-  /** The walk's made-up race, for a squad with nothing to time: it says so. */
-  example?: boolean;
   /** The day as saved, so the list behind stays current. */
   onChange: (day: RaceDay) => void;
   onDeleted: () => void;
@@ -326,7 +322,6 @@ export default function RaceBoard({
       <div className="rounded-2xl bg-text px-4 py-3.5 text-background shadow-card">
         <div className="flex items-center justify-between gap-2">
           <div className="text-[11px] font-semibold uppercase tracking-[0.12em] opacity-70">{dateLabel}</div>
-          {example && <ExampleTag />}
         </div>
         <div className="mt-0.5 text-[16px] font-semibold leading-snug">{title || "Race pieces"}</div>
       </div>

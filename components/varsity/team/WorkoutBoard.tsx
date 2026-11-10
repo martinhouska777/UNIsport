@@ -27,7 +27,6 @@ import Medal from "@/components/leaderboards/Medal";
 import { MetalRankBadge } from "@/components/varsity/team/RankBadge";
 import { useMemo, useState } from "react";
 import Sheet from "@/components/varsity/Sheet";
-import ExampleTag from "@/components/varsity/ExampleTag";
 import ResultDetail from "@/components/varsity/team/ResultDetail";
 import BoardTable from "@/components/varsity/team/BoardTable";
 import Delta from "@/components/varsity/team/Delta";
@@ -47,7 +46,7 @@ import {
 } from "@/lib/varsity/teamBoard";
 import { secToClock, secToSplit } from "@/lib/varsity/ergMath";
 import type { TeamResult } from "@/lib/varsity/resultsStore";
-import { IconFloors, IconChevronRight } from "@/components/icons";
+import { IconChevronRight } from "@/components/icons";
 import { markColor } from "@/lib/colorMarks";
 
 // White like the cards around it (owner, 2026-10-02) — these were grey boxes.
@@ -233,8 +232,6 @@ export default function WorkoutBoard({
             <span className="text-[13px] font-semibold text-text">
               {workoutLabel(workout.session)}
             </span>
-            {/* A worked example says it is one (audit, 2026-09-27). */}
-            {example && <ExampleTag />}
             <span className="ml-auto text-[11px] text-muted">
               {workout.dateLabel} {workout.period}
             </span>
@@ -417,15 +414,9 @@ export default function WorkoutBoard({
                 <div className="line-clamp-2 break-words text-[13px] font-semibold leading-tight text-text">
                   {row.result.athleteName || "Unnamed"}
                 </div>
-                {/* How many REPS they logged — on a set of reps. A 2k also
-                    stores four rows, but those are its 500s, not four efforts,
-                    and "4" beside a 2k said nothing. */}
-                {reps && !!row.result.intervals?.length && (
-                  <div className="mt-0.5 flex items-center gap-0.5 text-[11px] text-muted">
-                    <IconFloors size={11} />
-                    {row.result.intervals.length}
-                  </div>
-                )}
+                {/* Just the name: no count of reps under it (owner,
+                    2026-11-10: "there is not like the 8 steps for the 8x500m
+                    for example just the name and then the rate"). */}
               </div>
               {showMiddle && (
                 <span className="w-11 flex-shrink-0 text-right text-[13px] tabular-nums text-text-2">

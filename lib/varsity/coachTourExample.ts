@@ -78,7 +78,7 @@ export function coachTourExample(today = new Date()): CoachTourExample {
     blocks: [
       {
         id: TOUR_EXAMPLE_BLOCK_ID,
-        name: "Example block",
+        name: "Fall block",
         start,
         end,
         status: "draft",

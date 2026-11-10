@@ -29,7 +29,6 @@
 import { useEffect, useMemo, useState } from "react";
 import Plot from "@/components/varsity/profile/Plot";
 import Dropdown from "@/components/varsity/profile/Dropdown";
-import ExampleTag from "@/components/varsity/ExampleTag";
 import { useUnits } from "@/components/useUnits";
 import {
   buildBuckets,
@@ -147,11 +146,6 @@ export default function AthleteStats({
 
   return (
     <div>
-      {loaded && example && (
-        <div className="mb-2">
-          <ExampleTag />
-        </div>
-      )}
       {/* WHAT IS BEING MEASURED, and OVER WHAT — the same two dropdowns, in the
           same order, as the athlete's own statistics. */}
       <div className="flex items-center gap-2">
